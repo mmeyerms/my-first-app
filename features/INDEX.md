@@ -14,7 +14,11 @@
 
 | ID | Feature | Status | Spec | Created |
 |----|---------|--------|------|---------|
+| PROJ-1 | User Onboarding & Profil | Planned | [PROJ-1-user-onboarding.md](PROJ-1-user-onboarding.md) | 2026-05-05 |
+| PROJ-2 | Geburtsplan-Wizard | Planned | [PROJ-2-geburtsplan-wizard.md](PROJ-2-geburtsplan-wizard.md) | 2026-05-05 |
+| PROJ-3 | Tägliches Tipp-Popup | Planned | [PROJ-3-taegliches-tipp-popup.md](PROJ-3-taegliches-tipp-popup.md) | 2026-05-05 |
+| PROJ-4 | Partner-Bereich | Planned | [PROJ-4-partner-bereich.md](PROJ-4-partner-bereich.md) | 2026-05-05 |
 
 <!-- Add features above this line -->
 
-## Next Available ID: PROJ-1
+## Next Available ID: PROJ-5
