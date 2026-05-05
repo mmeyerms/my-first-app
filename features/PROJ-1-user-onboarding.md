@@ -1,6 +1,6 @@
 # PROJ-1: User Onboarding & Profil
 
-## Status: Planned
+## Status: Architected
 **Created:** 2026-05-05
 **Last Updated:** 2026-05-05
 
@@ -45,7 +45,80 @@
 <!-- Sections below are added by subsequent skills -->
 
 ## Tech Design (Solution Architect)
-_To be added by /architecture_
+
+### Seiten & Komponenten-Struktur
+
+```
+/login                          ← Öffentlich
++-- LoginForm
+    +-- E-Mail-Feld
+    +-- Passwort-Feld
+    +-- "Anmelden"-Button
+    +-- "Passwort vergessen?"-Link
+    +-- "Noch kein Account?"-Link → /register
+
+/register                       ← Öffentlich
++-- RegisterForm
+    +-- E-Mail-Feld
+    +-- Passwort-Feld
+    +-- "Account erstellen"-Button
+    +-- "Bereits registriert?"-Link → /login
+
+/onboarding                     ← Nur nach erster Registrierung
++-- SchrittAnzeige (1 / 2 / 3)
++-- Schritt 1: Willkommen
+    +-- Vorname der Nutzerin
++-- Schritt 2: Baby-Details
+    +-- Datum des positiven Tests (Datumsfeld)
+    +-- Arbeitsname des Kindes
++-- Schritt 3: Geburtstermin
+    +-- Errechneter Geburtstermin (ET) — Datumsfeld
+    +-- SSW-Vorschau: "Du bist in SSW 12 🎉"
+    +-- "Alles fertig!"-Button
+
+/dashboard                      ← Geschützt (Login erforderlich)
++-- Begrüßung ("Hallo [Name], du bist in SSW [X]")
++-- Navigation zu Hauptbereichen (Geburtsplan, Tipps, Partner)
+
+/profil                         ← Geschützt
++-- ProfilFormular (alle Onboarding-Daten editierbar)
+    +-- Vorname, Babyname, Test-Datum, ET
+    +-- "Speichern"-Button
++-- Danger Zone
+    +-- "Account löschen"-Button (mit Bestätigungsdialog)
+
+/passwort-vergessen             ← Öffentlich
++-- E-Mail-Feld + "Link senden"-Button
+```
+
+### Datenmodell
+
+**Supabase Auth** (eingebaut): E-Mail, Passwort (verschlüsselt), Login-Session
+
+**Profil-Tabelle** (eigene Datenbanktabelle — eine Zeile pro Nutzerin):
+- Vorname der Nutzerin
+- Arbeitsname des Kindes
+- Datum des positiven Tests
+- Errechneter Geburtstermin (ET)
+- Erstellt am / Zuletzt geändert am
+
+**SSW wird nicht gespeichert** — wird immer live berechnet: `aktuelle SSW = 40 − (Tage bis ET ÷ 7)`
+
+### Tech-Entscheidungen
+
+| Entscheidung | Warum |
+|---|---|
+| Supabase Auth | Login, Registrierung, Passwort-Reset out-of-the-box — keine eigene Auth-Logik nötig |
+| Next.js Middleware | Schützt `/dashboard` und `/profil` automatisch — unauthentifizierte Nutzer → /login |
+| `@supabase/ssr` | Supabase-Auth SSR-kompatibel für Next.js (Sessions serverseitig zuverlässig) |
+| Zod + react-hook-form | Formularvalidierung — bereits installiert |
+| Natives Datumsfeld | `input type="date"` — kein extra Paket, funktioniert auf Mobile |
+
+### Neue Abhängigkeiten
+
+| Paket | Zweck |
+|---|---|
+| `@supabase/ssr` | Supabase-Auth serverseitig (Next.js SSR-kompatibel) |
 
 ## QA Test Results
 _To be added by /qa_
