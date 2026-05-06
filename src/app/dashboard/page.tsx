@@ -32,7 +32,7 @@ export default async function DashboardPage() {
       emoji: '📋',
       title: 'Geburtsplan',
       description: 'Plane deine Wunschgeburt Schritt für Schritt',
-      available: false,
+      available: true,
     },
     {
       href: '/tipps',
@@ -74,11 +74,8 @@ export default async function DashboardPage() {
 
         {/* Navigation cards */}
         <div className="space-y-3">
-          {navItems.map((item) => (
-            <Card
-              key={item.href}
-              className={`transition-shadow ${item.available ? 'cursor-pointer hover:shadow-md' : 'opacity-60'}`}
-            >
+          {navItems.map((item) => {
+            const cardContent = (
               <CardContent className="flex items-center gap-4 p-4">
                 <span className="text-3xl">{item.emoji}</span>
                 <div className="flex-1">
@@ -92,8 +89,19 @@ export default async function DashboardPage() {
                 </div>
                 <span className="text-gray-300">›</span>
               </CardContent>
-            </Card>
-          ))}
+            )
+            return item.available ? (
+              <Link key={item.href} href={item.href}>
+                <Card className="cursor-pointer transition-shadow hover:shadow-md">
+                  {cardContent}
+                </Card>
+              </Link>
+            ) : (
+              <Card key={item.href} className="opacity-60">
+                {cardContent}
+              </Card>
+            )
+          })}
         </div>
       </div>
     </main>

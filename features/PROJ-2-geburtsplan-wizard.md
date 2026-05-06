@@ -1,6 +1,6 @@
 # PROJ-2: Geburtsplan-Wizard
 
-## Status: Planned
+## Status: In Progress
 **Created:** 2026-05-05
 **Last Updated:** 2026-05-05
 
@@ -68,7 +68,38 @@
 <!-- Sections below are added by subsequent skills -->
 
 ## Tech Design (Solution Architect)
-_To be added by /architecture_
+
+### Seiten & Komponenten-Struktur
+```
+/geburtsplan                    ← Geschützt (SSR — lädt Profil + Antworten)
++-- GeburtsplanView (Client Component)
+    +-- Fortschrittsanzeige (beantwortet / gesamt)
+    +-- PDF-Export Button
+    +-- StageSection Stufe 1 (Kern — immer sichtbar)
+    |   +-- QuestionCard × 5 (single / multi / text)
+    +-- StageSection Stufe 2 (SSW 20+ — sonst Lock-Banner)
+    |   +-- QuestionCard × 7
+    +-- StageSection Stufe 3 (SSW 32+ — sonst Lock-Banner)
+        +-- QuestionCard × 5
+```
+
+### Datenmodell
+- `birth_plans` Tabelle: `user_id, answers (JSONB), updated_at`
+- `answers` Format: `{ "location": "Krankenhaus", "companions": ["Partner/in"], ... }`
+- SSW wird nicht gespeichert — live aus `profiles.due_date` berechnet
+
+### Tech-Entscheidungen
+| Entscheidung | Warum |
+|---|---|
+| JSONB für answers | Flexibel für 17 Fragen mit unterschiedlichen Typen |
+| Autosave (debounce 800ms) | Keine explizite Speichern-Schaltfläche nötig |
+| jspdf (Browser-seitig) | Kein Server-Roundtrip für PDF — läuft im Browser |
+| Fragen als Konstante | Typsicher, leicht erweiterbar |
+
+### Neue Abhängigkeiten
+| Paket | Zweck |
+|---|---|
+| `jspdf` | PDF-Generierung im Browser |
 
 ## QA Test Results
 _To be added by /qa_
