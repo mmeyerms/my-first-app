@@ -55,6 +55,27 @@ export default async function DashboardPage() {
       available: true,
     },
     {
+      href: '/tagebuch',
+      emoji: '📔',
+      title: 'Schwangerschaftstagebuch',
+      description: 'Halte besondere Momente fest',
+      available: true,
+    },
+    {
+      href: '/packliste',
+      emoji: '🏥',
+      title: 'Krankenhaustasche',
+      description: 'Checkliste für die Geburt',
+      available: true,
+    },
+    {
+      href: '/einkaufsliste',
+      emoji: '🛍️',
+      title: 'Baby-Ausstattung',
+      description: 'Was ihr wirklich braucht',
+      available: true,
+    },
+    {
       href: '/partner',
       emoji: '💑',
       title: 'Partner-Bereich',

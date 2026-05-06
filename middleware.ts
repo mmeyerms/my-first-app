@@ -33,6 +33,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/dashboard') ||
     pathname.startsWith('/profil') ||
     pathname.startsWith('/onboarding') ||
+    pathname.startsWith('/tagebuch') ||
+    pathname.startsWith('/geburtsplan') ||
     (pathname.startsWith('/partner') && !pathname.startsWith('/partner/accept'))
   const isAuthPage = ['/login', '/register', '/passwort-vergessen'].includes(pathname)
 

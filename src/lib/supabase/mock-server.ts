@@ -4,14 +4,14 @@ import fs from 'fs'
 const STORE_PATH = path.join(process.cwd(), '.mock-data.json')
 const MOCK_USER = { id: 'mock-user-00000000', email: 'demo@mamamap.de', aud: 'authenticated' }
 
-type Table = 'profiles' | 'birth_plans' | 'partner_invites' | 'partner_links'
+type Table = 'profiles' | 'birth_plans' | 'partner_invites' | 'partner_links' | 'diary_entries'
 type Row = Record<string, unknown>
 
 function read(): Record<Table, Row[]> {
   try {
     return JSON.parse(fs.readFileSync(STORE_PATH, 'utf-8'))
   } catch {
-    return { profiles: [], birth_plans: [], partner_invites: [], partner_links: [] }
+    return { profiles: [], birth_plans: [], partner_invites: [], partner_links: [], diary_entries: [] }
   }
 }
 
@@ -42,7 +42,7 @@ class Q {
   delete() { this._op = 'delete'; return this }
 
   then(
-    resolve: (v: { data: Row | null; error: null }) => unknown,
+    resolve: (v: { data: Row[] | Row | null; error: null }) => unknown,
     reject?: (e: unknown) => unknown,
   ) {
     return this._exec().then(resolve as never, reject)
@@ -62,13 +62,27 @@ class Q {
     return { data: rows[0] ?? null, error: null }
   }
 
-  private async _exec(): Promise<{ data: null; error: null }> {
+  private async _exec(): Promise<{ data: Row[] | Row | null; error: null }> {
     const s = read()
+    if (this._op === 'select') {
+      let rows = s[this._t].filter(r => this._preds.every(p => p(r)))
+      if (this._ord) {
+        const { field, asc } = this._ord
+        rows.sort((a, b) => {
+          const av = String(a[field] ?? ''), bv = String(b[field] ?? '')
+          return asc ? av.localeCompare(bv) : bv.localeCompare(av)
+        })
+      }
+      if (this._lim !== null) rows = rows.slice(0, this._lim)
+      return { data: rows, error: null }
+    }
     if (this._op === 'insert' && this._data) {
       s[this._t].push({ id: crypto.randomUUID(), created_at: new Date().toISOString(), ...this._data })
     } else if (this._op === 'upsert' && this._data) {
       const d = this._data
-      const matchKeys = d.user_id
+      const matchKeys = this._t === 'diary_entries' && d.user_id && d.ssw != null
+        ? ['user_id', 'ssw']
+        : d.user_id
         ? ['user_id']
         : d.mother_id && d.partner_user_id
           ? ['mother_id', 'partner_user_id']

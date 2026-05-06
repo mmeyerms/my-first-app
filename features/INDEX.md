@@ -18,7 +18,10 @@
 | PROJ-2 | Geburtsplan-Wizard | In Progress | [PROJ-2-geburtsplan-wizard.md](PROJ-2-geburtsplan-wizard.md) | 2026-05-05 |
 | PROJ-3 | Tägliches Tipp-Popup | In Progress | [PROJ-3-taegliches-tipp-popup.md](PROJ-3-taegliches-tipp-popup.md) | 2026-05-05 |
 | PROJ-4 | Partner-Bereich | In Progress | [PROJ-4-partner-bereich.md](PROJ-4-partner-bereich.md) | 2026-05-05 |
+| PROJ-5 | Krankenhaustasche | In Progress | — | 2026-05-07 |
+| PROJ-6 | Schwangerschaftstagebuch | In Progress | — | 2026-05-07 |
+| PROJ-7 | Baby-Ausstattung/Einkaufsliste | In Progress | — | 2026-05-07 |
 
 <!-- Add features above this line -->
 
-## Next Available ID: PROJ-5
+## Next Available ID: PROJ-8
