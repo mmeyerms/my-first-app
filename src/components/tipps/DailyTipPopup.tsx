@@ -47,7 +47,12 @@ export function DailyTipPopup({ tip, ssw }: Props) {
           </DialogHeader>
         </div>
         <div className="px-6 py-5 space-y-5">
-          <p className="text-sm leading-relaxed text-gray-700">{tip.text}</p>
+          <div className="space-y-3">
+            <p className="text-sm leading-relaxed text-gray-700">{tip.text}</p>
+            {tip.detail && (
+              <p className="text-xs leading-relaxed text-gray-500">{tip.detail}</p>
+            )}
+          </div>
           <div className="flex items-center justify-between">
             <Badge variant="secondary" className="text-xs capitalize">{CATEGORY_LABELS[tip.category]}</Badge>
             <Button onClick={handleClose} size="sm" className="px-5">

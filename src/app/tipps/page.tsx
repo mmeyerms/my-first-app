@@ -38,6 +38,9 @@ export default async function TippsPage() {
           </div>
           <div className="bg-white px-6 py-5">
             <p className="text-sm leading-relaxed text-gray-700">{tip.text}</p>
+            {tip.detail && (
+              <p className="mt-3 text-xs leading-relaxed text-gray-500">{tip.detail}</p>
+            )}
             <div className="mt-4">
               <Badge variant="secondary" className="text-xs">{CATEGORY_LABELS[tip.category]}</Badge>
             </div>

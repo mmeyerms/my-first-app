@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { Question } from '@/lib/questions'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
@@ -15,9 +16,10 @@ interface Props {
 
 export function QuestionCard({ question, value, onChange }: Props) {
   const isAnswered = Array.isArray(value) ? value.length > 0 : typeof value === 'string' && value.trim().length > 0
+  const [hintOpen, setHintOpen] = useState(false)
 
   return (
-    <div className={`rounded-xl border bg-white p-4 transition-all ${isAnswered ? 'border-rose-200' : 'border-gray-100'}`}>
+    <div id={question.id} className={`scroll-mt-4 rounded-xl border bg-white p-4 transition-all ${isAnswered ? 'border-rose-200' : 'border-orange-200 bg-orange-50/30'}`}>
       <div className="mb-3 flex items-start justify-between gap-2">
         <p className="text-sm font-medium leading-snug text-gray-800">{question.label}</p>
         {question.optional && !isAnswered && (
@@ -75,6 +77,29 @@ export function QuestionCard({ question, value, onChange }: Props) {
           onChange={(e) => onChange(question.id, e.target.value)}
           className="min-h-[80px] text-sm resize-none"
         />
+      )}
+
+      {question.hint && (
+        <div className="mt-3 border-t border-gray-100 pt-3">
+          <button
+            type="button"
+            onClick={() => setHintOpen(!hintOpen)}
+            aria-expanded={hintOpen}
+            aria-controls={`${question.id}-hint`}
+            className="flex items-center gap-1.5 text-xs text-blue-500 hover:text-blue-700"
+          >
+            <span>{hintOpen ? '▲' : '▼'}</span>
+            <span>Gedankenanstöße & Infos</span>
+          </button>
+          {hintOpen && (
+            <p
+              id={`${question.id}-hint`}
+              className="mt-2 text-xs leading-relaxed text-gray-600 rounded-lg bg-blue-50 p-3"
+            >
+              {question.hint}
+            </p>
+          )}
+        </div>
       )}
     </div>
   )

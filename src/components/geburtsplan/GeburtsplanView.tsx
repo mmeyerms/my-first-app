@@ -4,6 +4,7 @@ import { useRef, useState } from 'react'
 import { STAGE_UNLOCK, countAnswered, getStageQuestions } from '@/lib/questions'
 import { exportGeburtsplanPDF } from '@/lib/pdfExport'
 import { QuestionCard } from './QuestionCard'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
@@ -86,11 +87,23 @@ export function GeburtsplanView({ initialAnswers, ssw, babyName, dueDate }: Prop
 
         return (
           <section key={stage}>
-            <div className="mb-3 flex items-center gap-3">
+            <div className="mb-3 flex items-center gap-3 flex-wrap">
               <span className="text-xl">{meta.emoji}</span>
               <h2 className="font-semibold text-gray-800">{meta.title}</h2>
               {isUnlocked ? (
-                <Badge variant="secondary" className="text-xs">{answered} / {questions.length} beantwortet</Badge>
+                answered === questions.length
+                  ? <Badge className="text-xs bg-green-100 text-green-700 border-0">✓ Fertig</Badge>
+                  : <>
+                      <Badge variant="secondary" className="text-xs">{questions.length - answered} offen</Badge>
+                      {questions.filter(q => {
+                        const a = answers[q.id]
+                        return !(Array.isArray(a) ? a.length > 0 : typeof a === 'string' && a.trim().length > 0)
+                      }).slice(0, 1).map(q => (
+                        <a key={q.id} href={`#${q.id}`} className="text-xs text-rose-500 hover:underline">
+                          Zur nächsten offenen Frage →
+                        </a>
+                      ))}
+                    </>
               ) : (
                 <Badge variant="outline" className="text-xs text-gray-400">Ab SSW {unlockSSW}</Badge>
               )}
@@ -119,6 +132,19 @@ export function GeburtsplanView({ initialAnswers, ssw, babyName, dueDate }: Prop
           </section>
         )
       })}
+
+      {/* Bottom nav — always visible at end of page */}
+      <div className="rounded-2xl bg-white p-5 shadow-sm flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-700">
+            {totalAnswered === totalUnlocked ? '✅ Alles beantwortet!' : `${totalAnswered} / ${totalUnlocked} beantwortet`}
+          </p>
+          <p className="text-xs text-gray-400">Wird automatisch gespeichert</p>
+        </div>
+        <Link href="/dashboard">
+          <Button variant="outline">← Dashboard</Button>
+        </Link>
+      </div>
     </div>
   )
 }

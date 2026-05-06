@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { createClient } from '@/lib/supabase/client'
 import { calculateSSW } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -43,7 +42,7 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
 }
 
 function Step1({ onNext }: { onNext: (name: string) => void }) {
-  const form = useForm<{ name: string }>({ resolver: zodResolver(step1Schema) })
+  const form = useForm<{ name: string }>({ resolver: zodResolver(step1Schema), defaultValues: { name: '' } })
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit((d) => onNext(d.name))} className="space-y-6">
@@ -75,6 +74,7 @@ function Step1({ onNext }: { onNext: (name: string) => void }) {
 function Step2({ name, onNext, onBack }: { name: string; onNext: (data: Pick<WizardData, 'baby_name' | 'positive_test_date'>) => void; onBack: () => void }) {
   const form = useForm<{ baby_name: string; positive_test_date: string }>({
     resolver: zodResolver(step2Schema),
+    defaultValues: { baby_name: '', positive_test_date: '' },
   })
   return (
     <Form {...form}>
@@ -131,7 +131,7 @@ function Step3({
   loading: boolean
   error: string | null
 }) {
-  const form = useForm<{ due_date: string }>({ resolver: zodResolver(step3Schema) })
+  const form = useForm<{ due_date: string }>({ resolver: zodResolver(step3Schema), defaultValues: { due_date: '' } })
   const dueDate = form.watch('due_date')
   const ssw = dueDate ? calculateSSW(dueDate) : null
 
@@ -195,14 +195,15 @@ export function OnboardingWizard() {
     setLoading(true)
     setError(null)
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Nicht eingeloggt')
-      const { error: dbError } = await supabase.from('profiles').upsert({
-        user_id: user.id,
-        ...fullData,
+      const res = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(fullData),
       })
-      if (dbError) throw dbError
+      if (!res.ok) {
+        const body = await res.json()
+        throw new Error(typeof body.error === 'string' ? body.error : 'Fehler beim Speichern')
+      }
       window.location.href = '/dashboard'
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Fehler beim Speichern')
