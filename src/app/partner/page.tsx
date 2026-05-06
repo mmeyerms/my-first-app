@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { PartnerInviteManager } from '@/components/partner/PartnerInviteManager'
+import { PartnerContentView } from '@/components/partner/PartnerContentView'
+import { calculateSSW } from '@/lib/utils'
 
 export default async function PartnerPage() {
   const supabase = await createClient()
@@ -31,6 +33,15 @@ export default async function PartnerPage() {
     pendingExpiry: invite?.expires_at ?? null,
   }
 
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('baby_name, due_date')
+    .eq('user_id', user.id)
+    .single() as { data: { baby_name: string; due_date: string } | null }
+
+  const ssw = profile ? calculateSSW(profile.due_date) : 20
+  const babyName = profile?.baby_name ?? 'euer Baby'
+
   return (
     <main className="min-h-screen bg-rose-50">
       <div className="mx-auto max-w-sm px-4 py-8">
@@ -50,6 +61,8 @@ export default async function PartnerPage() {
         </div>
 
         <PartnerInviteManager initialStatus={initialStatus} />
+
+        <PartnerContentView ssw={ssw} babyName={babyName} />
       </div>
     </main>
   )

@@ -1,13 +1,12 @@
 'use client'
 
-import { useRef, useState } from 'react'
-import { STAGE_UNLOCK, countAnswered, getStageQuestions } from '@/lib/questions'
+import { useMemo, useRef, useState } from 'react'
+import { Question, STAGE_UNLOCK, getStageQuestions } from '@/lib/questions'
 import { exportGeburtsplanPDF } from '@/lib/pdfExport'
 import { QuestionCard } from './QuestionCard'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { Badge } from '@/components/ui/badge'
 
 interface Props {
   initialAnswers: Record<string, unknown>
@@ -16,10 +15,16 @@ interface Props {
   dueDate: string
 }
 
-const STAGE_LABELS = {
-  1: { title: 'Kern-Entscheidungen', emoji: '💛', total: 5 },
-  2: { title: 'Vertiefung', emoji: '🌿', total: 7 },
-  3: { title: 'Wochenbett', emoji: '🛏️', total: 5 },
+const STAGE_LABELS: Record<1 | 2 | 3, { title: string; emoji: string }> = {
+  1: { title: 'Kern-Entscheidungen', emoji: '💛' },
+  2: { title: 'Vertiefung', emoji: '🌿' },
+  3: { title: 'Wochenbett', emoji: '🛏️' },
+}
+
+function isAnsweredValue(value: unknown): boolean {
+  if (Array.isArray(value)) return value.length > 0
+  if (typeof value === 'string') return value.trim().length > 0
+  return false
 }
 
 export function GeburtsplanView({ initialAnswers, ssw, babyName, dueDate }: Props) {
@@ -27,6 +32,39 @@ export function GeburtsplanView({ initialAnswers, ssw, babyName, dueDate }: Prop
   const [saving, setSaving] = useState(false)
   const [exporting, setExporting] = useState(false)
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+
+  // Build the flat list of all unlocked questions, in stage order, preserving question order within each stage
+  const allQuestions: Question[] = useMemo(() => {
+    return ([1, 2, 3] as const).flatMap((stage) =>
+      ssw >= STAGE_UNLOCK[stage] ? getStageQuestions(stage) : [],
+    )
+  }, [ssw])
+
+  // Find first unanswered question to start at
+  const initialIndex = useMemo(() => {
+    if (allQuestions.length === 0) return 0
+    const idx = allQuestions.findIndex((q) => !isAnsweredValue(initialAnswers[q.id]))
+    return idx === -1 ? 0 : idx
+  }, [allQuestions, initialAnswers])
+
+  const initiallyAllAnswered = useMemo(() => {
+    return allQuestions.length > 0 && allQuestions.every((q) => isAnsweredValue(initialAnswers[q.id]))
+  }, [allQuestions, initialAnswers])
+
+  const [currentIndex, setCurrentIndex] = useState<number>(initialIndex)
+  const [showCompletion, setShowCompletion] = useState<boolean>(initiallyAllAnswered)
+
+  const lockedStages = useMemo(
+    () => ([1, 2, 3] as const).filter((stage) => ssw < STAGE_UNLOCK[stage]),
+    [ssw],
+  )
+
+  const answered = useMemo(
+    () => allQuestions.filter((q) => isAnsweredValue(answers[q.id])).length,
+    [allQuestions, answers],
+  )
+
+  const progressPct = allQuestions.length > 0 ? (answered / allQuestions.length) * 100 : 0
 
   function handleChange(id: string, value: string | string[]) {
     const updated = { ...answers, [id]: value }
@@ -57,92 +95,160 @@ export function GeburtsplanView({ initialAnswers, ssw, babyName, dueDate }: Prop
     }
   }
 
-  const totalAnswered = ([1, 2, 3] as const).reduce((sum, s) => sum + countAnswered(answers, s), 0)
-  const totalUnlocked = ([1, 2, 3] as const).reduce((sum, s) => ssw >= STAGE_UNLOCK[s] ? sum + getStageQuestions(s).length : sum, 0)
+  function prev() {
+    setCurrentIndex((i) => Math.max(0, i - 1))
+  }
 
-  return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="rounded-2xl bg-white p-5 shadow-sm">
-        <div className="mb-3 flex items-center justify-between">
-          <div>
-            <p className="text-xs text-gray-500">Gesamtfortschritt</p>
-            <p className="text-2xl font-bold text-rose-500">{totalAnswered} / {totalUnlocked}</p>
-          </div>
-          <Button onClick={handleExport} disabled={exporting} variant="outline" className="border-rose-200 text-rose-500 hover:bg-rose-50">
+  function next() {
+    if (currentIndex >= allQuestions.length - 1) {
+      setShowCompletion(true)
+      return
+    }
+    setCurrentIndex((i) => Math.min(allQuestions.length - 1, i + 1))
+  }
+
+  // Empty state — no unlocked questions at all (shouldn't happen since stage 1 is always unlocked, but guard anyway)
+  if (allQuestions.length === 0) {
+    return (
+      <div className="space-y-4">
+        <div className="rounded-2xl bg-white p-6 shadow-sm text-center space-y-3">
+          <p className="text-3xl">🔒</p>
+          <p className="text-sm text-gray-500">Es sind noch keine Fragen freigeschaltet.</p>
+        </div>
+        <div className="text-center">
+          <Link href="/dashboard">
+            <Button variant="ghost">← Zum Dashboard</Button>
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  // Completion screen
+  if (showCompletion) {
+    return (
+      <div className="space-y-4">
+        <div className="rounded-2xl bg-white p-6 shadow-sm text-center space-y-3">
+          <p className="text-4xl">🎉</p>
+          <h2 className="text-xl font-bold text-gray-800">Dein Geburtsplan ist vollständig!</h2>
+          <p className="text-sm text-gray-500">{answered} Fragen beantwortet</p>
+          <Button
+            onClick={handleExport}
+            disabled={exporting}
+            className="w-full bg-rose-500 hover:bg-rose-600 text-white"
+          >
             {exporting ? 'Erstelle PDF...' : '📄 Als PDF exportieren'}
           </Button>
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => {
+              setShowCompletion(false)
+              setCurrentIndex(0)
+            }}
+          >
+            Fragen nochmal ansehen
+          </Button>
         </div>
-        <Progress value={totalUnlocked > 0 ? (totalAnswered / totalUnlocked) * 100 : 0} className="h-2" />
+
+        {lockedStages.length > 0 && (
+          <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 space-y-2">
+            {lockedStages.map((stage) => (
+              <p key={stage} className="text-xs text-gray-500">
+                <span className="mr-1">🔒</span>
+                Stufe {stage} ({STAGE_LABELS[stage].title}) wird ab SSW {STAGE_UNLOCK[stage]} freigeschaltet
+              </p>
+            ))}
+          </div>
+        )}
+
+        <div className="text-center">
+          <Link href="/dashboard">
+            <Button variant="ghost">← Zum Dashboard</Button>
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  const currentQuestion = allQuestions[currentIndex]
+  const currentStage = currentQuestion.stage
+  const stageMeta = STAGE_LABELS[currentStage]
+  const isLastQuestion = currentIndex === allQuestions.length - 1
+
+  return (
+    <div className="space-y-4">
+      {/* Progress header */}
+      <div className="rounded-2xl bg-white p-4 shadow-sm">
+        <div className="mb-2 flex items-center justify-between text-xs text-gray-500">
+          <span>
+            Frage {currentIndex + 1} von {allQuestions.length}
+          </span>
+          <span>
+            {answered} von {allQuestions.length} beantwortet
+          </span>
+        </div>
+        <Progress value={progressPct} className="h-2" />
         {saving && <p className="mt-2 text-xs text-gray-400">Speichern...</p>}
       </div>
 
-      {/* Stages */}
-      {([1, 2, 3] as const).map((stage) => {
-        const isUnlocked = ssw >= STAGE_UNLOCK[stage]
-        const questions = getStageQuestions(stage)
-        const answered = countAnswered(answers, stage)
-        const meta = STAGE_LABELS[stage]
-        const unlockSSW = STAGE_UNLOCK[stage]
+      {/* Stage badge */}
+      <div className="flex items-center gap-2 px-1">
+        <span aria-hidden>{stageMeta.emoji}</span>
+        <span className="text-xs font-medium text-gray-500">
+          Stufe {currentStage} · {stageMeta.title}
+        </span>
+      </div>
 
-        return (
-          <section key={stage}>
-            <div className="mb-3 flex items-center gap-3 flex-wrap">
-              <span className="text-xl">{meta.emoji}</span>
-              <h2 className="font-semibold text-gray-800">{meta.title}</h2>
-              {isUnlocked ? (
-                answered === questions.length
-                  ? <Badge className="text-xs bg-green-100 text-green-700 border-0">✓ Fertig</Badge>
-                  : <>
-                      <Badge variant="secondary" className="text-xs">{questions.length - answered} offen</Badge>
-                      {questions.filter(q => {
-                        const a = answers[q.id]
-                        return !(Array.isArray(a) ? a.length > 0 : typeof a === 'string' && a.trim().length > 0)
-                      }).slice(0, 1).map(q => (
-                        <a key={q.id} href={`#${q.id}`} className="text-xs text-rose-500 hover:underline">
-                          Zur nächsten offenen Frage →
-                        </a>
-                      ))}
-                    </>
-              ) : (
-                <Badge variant="outline" className="text-xs text-gray-400">Ab SSW {unlockSSW}</Badge>
-              )}
+      {/* Current question */}
+      <QuestionCard
+        key={currentQuestion.id}
+        question={currentQuestion}
+        value={answers[currentQuestion.id] as string | string[] | undefined}
+        onChange={handleChange}
+      />
+
+      {/* Navigation */}
+      <div className="flex gap-3">
+        <Button
+          variant="outline"
+          onClick={prev}
+          disabled={currentIndex === 0}
+          aria-label="Vorherige Frage"
+        >
+          ← Zurück
+        </Button>
+        <Button
+          className="flex-1 bg-rose-500 hover:bg-rose-600 text-white"
+          onClick={next}
+          aria-label={isLastQuestion ? 'Geburtsplan abschließen' : 'Nächste Frage'}
+        >
+          {isLastQuestion ? 'Fertig ✓' : 'Weiter →'}
+        </Button>
+      </div>
+
+      {/* Locked stages info */}
+      {lockedStages.length > 0 && (
+        <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 space-y-2">
+          {lockedStages.map((stage) => (
+            <div key={stage} className="flex items-start gap-2">
+              <span aria-hidden>🔒</span>
+              <p className="text-xs text-gray-500">
+                Stufe {stage} ({STAGE_LABELS[stage].title}) wird ab SSW {STAGE_UNLOCK[stage]} freigeschaltet — du bist
+                in SSW {ssw}.
+              </p>
             </div>
-
-            {!isUnlocked ? (
-              <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-5 py-8 text-center">
-                <p className="text-2xl">🔒</p>
-                <p className="mt-2 text-sm font-medium text-gray-500">
-                  Wird in SSW {unlockSSW} freigeschaltet
-                </p>
-                <p className="text-xs text-gray-400">Du bist in SSW {ssw} — noch {unlockSSW - ssw} Wochen</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {questions.map((q) => (
-                  <QuestionCard
-                    key={q.id}
-                    question={q}
-                    value={answers[q.id] as string | string[] | undefined}
-                    onChange={handleChange}
-                  />
-                ))}
-              </div>
-            )}
-          </section>
-        )
-      })}
-
-      {/* Bottom nav — always visible at end of page */}
-      <div className="rounded-2xl bg-white p-5 shadow-sm flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-700">
-            {totalAnswered === totalUnlocked ? '✅ Alles beantwortet!' : `${totalAnswered} / ${totalUnlocked} beantwortet`}
-          </p>
-          <p className="text-xs text-gray-400">Wird automatisch gespeichert</p>
+          ))}
+          <Link href="/dashboard" className="text-xs text-rose-500 hover:underline">
+            Zum Dashboard →
+          </Link>
         </div>
-        <Link href="/dashboard">
-          <Button variant="outline">← Dashboard</Button>
+      )}
+
+      {/* Bottom dashboard link */}
+      <div className="text-center">
+        <Link href="/dashboard" className="text-xs text-gray-400 hover:text-gray-600">
+          ← Zurück zum Dashboard
         </Link>
       </div>
     </div>
