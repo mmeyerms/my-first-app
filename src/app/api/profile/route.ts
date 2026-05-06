@@ -31,6 +31,17 @@ export async function GET() {
   return NextResponse.json(data)
 }
 
+export async function DELETE() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Nicht eingeloggt' }, { status: 401 })
+
+  await supabase.from('profiles').delete().eq('user_id', user.id)
+  await supabase.from('birth_plans').delete().eq('user_id', user.id)
+
+  return NextResponse.json({ success: true })
+}
+
 export async function PUT(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

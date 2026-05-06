@@ -18,23 +18,23 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Partners have no profile — redirect them to their own view
-  const { data: partnerLink } = await supabase
-    .from('partner_links')
-    .select('mother_id')
-    .eq('partner_user_id', user.id)
-    .eq('active', true)
-    .single()
-
-  if (partnerLink) redirect('/partner/dashboard')
-
   const { data: profile } = await supabase
     .from('profiles')
     .select('name, baby_name, due_date')
     .eq('user_id', user.id)
     .single() as { data: Profile | null }
 
-  if (!profile) redirect('/onboarding')
+  if (!profile) {
+    // No profile: check if this user is a partner (not a mother)
+    const { data: partnerLink } = await supabase
+      .from('partner_links')
+      .select('mother_id')
+      .eq('partner_user_id', user.id)
+      .eq('active', true)
+      .single()
+    if (partnerLink) redirect('/partner/dashboard')
+    redirect('/onboarding')
+  }
 
   const ssw = calculateSSW(profile.due_date)
   const tip = getTipForDay(ssw)

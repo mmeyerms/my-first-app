@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { createClient } from '@/lib/supabase/client'
 import { calculateSSW } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -56,11 +55,15 @@ export function ProfilForm({ profile }: { profile: Profile }) {
     setSaveSuccess(false)
     setSaveError(null)
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Nicht eingeloggt')
-      const { error } = await supabase.from('profiles').upsert({ user_id: user.id, ...data })
-      if (error) throw error
+      const res = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (!res.ok) {
+        const body = await res.json()
+        throw new Error(typeof body.error === 'string' ? body.error : 'Fehler beim Speichern')
+      }
       setSaveSuccess(true)
     } catch (err: unknown) {
       setSaveError(err instanceof Error ? err.message : 'Fehler beim Speichern')
@@ -72,8 +75,7 @@ export function ProfilForm({ profile }: { profile: Profile }) {
   async function handleDeleteAccount() {
     setDeleting(true)
     try {
-      const supabase = createClient()
-      await supabase.auth.signOut()
+      await fetch('/api/profile', { method: 'DELETE' })
       window.location.href = '/login'
     } finally {
       setDeleting(false)

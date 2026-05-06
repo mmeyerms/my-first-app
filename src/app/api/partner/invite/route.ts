@@ -93,10 +93,12 @@ export async function PUT(request: NextRequest) {
     .eq('token', result.data.token)
     .single()
 
-  if (!invite || invite.used_at || new Date(invite.expires_at) < new Date()) {
+  if (!invite || invite.used_at || new Date(invite.expires_at as string) < new Date()) {
     return NextResponse.json({ error: 'Ungültiger oder abgelaufener Einladungslink' }, { status: 400 })
   }
-  if (invite.mother_id === user.id) {
+  // Allow self-linking only in mock/dev mode (no Supabase configured)
+  const isMock = !process.env.NEXT_PUBLIC_SUPABASE_URL
+  if (!isMock && invite.mother_id === user.id) {
     return NextResponse.json({ error: 'Du kannst nicht dein eigener Partner sein' }, { status: 400 })
   }
 

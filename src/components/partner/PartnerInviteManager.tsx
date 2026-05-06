@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -77,6 +78,11 @@ export function PartnerInviteManager({ initialStatus }: Props) {
             >
               Widerrufen
             </Button>
+          </div>
+          <div className="mt-3 border-t border-green-200 pt-3">
+            <Link href="/partner/dashboard" className="text-sm text-blue-600 hover:underline">
+              Partner-Ansicht anzeigen →
+            </Link>
           </div>
         </CardContent>
       </Card>
