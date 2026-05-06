@@ -1,6 +1,6 @@
 # PROJ-3: Tägliches Tipp-Popup
 
-## Status: Planned
+## Status: In Progress
 **Created:** 2026-05-05
 **Last Updated:** 2026-05-05
 

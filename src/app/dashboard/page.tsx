@@ -2,8 +2,10 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { calculateSSW } from '@/lib/utils'
+import { getTipForDay } from '@/lib/tips'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { DailyTipPopup } from '@/components/tipps/DailyTipPopup'
 
 interface Profile {
   name: string
@@ -25,6 +27,7 @@ export default async function DashboardPage() {
   if (!profile) redirect('/onboarding')
 
   const ssw = calculateSSW(profile.due_date)
+  const tip = getTipForDay(ssw)
 
   const navItems = [
     {
@@ -39,7 +42,7 @@ export default async function DashboardPage() {
       emoji: '💡',
       title: 'Tägliche Tipps',
       description: `Impulse für SSW ${ssw}`,
-      available: false,
+      available: true,
     },
     {
       href: '/partner',
@@ -52,6 +55,7 @@ export default async function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-rose-50">
+      <DailyTipPopup tip={tip} ssw={ssw} />
       <div className="mx-auto max-w-sm px-4 py-8">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
