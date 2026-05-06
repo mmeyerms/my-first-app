@@ -120,6 +120,13 @@
 |---|---|
 | `@supabase/ssr` | Supabase-Auth serverseitig (Next.js SSR-kompatibel) |
 
+## Backend Implementation Notes
+
+- **Migration:** `supabase/migrations/001_profiles.sql` — Tabelle + RLS-Policies + Constraint (due_date > positive_test_date)
+- **API Route:** `GET /api/profile` + `PUT /api/profile` mit Zod-Validierung
+- **Tests:** 8 Unit-Tests für API Route (auth, validation, happy path)
+- **Frontend:** Nutzt Supabase direkt (client + server) — API-Route als alternatives Backend verfügbar
+
 ## QA Test Results
 _To be added by /qa_
 
