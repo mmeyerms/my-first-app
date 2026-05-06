@@ -1,8 +1,8 @@
 # PROJ-4: Partner-Bereich
 
-## Status: Planned
+## Status: In Progress
 **Created:** 2026-05-05
-**Last Updated:** 2026-05-05
+**Last Updated:** 2026-05-07
 
 ## Dependencies
 - Requires: PROJ-1 (User Onboarding & Profil) — SSW muss bekannt sein für phasengerechte Tipps
@@ -55,7 +55,31 @@
 <!-- Sections below are added by subsequent skills -->
 
 ## Tech Design (Solution Architect)
-_To be added by /architecture_
+
+### API Routes
+- `POST /api/partner/invite` — Generiert UUID-Token, invalidiert alte pending Invites, speichert in `partner_invites`
+- `DELETE /api/partner/invite` — Setzt `partner_links.active=false`, invalidiert pending Invites
+- `GET /api/partner/invite` — Gibt `{ hasPartner, pendingToken, pendingExpiry }` zurück
+- `PUT /api/partner/invite` — Validiert Token, prüft Ablauf, verhindert Self-Linking, erstellt `partner_links`-Eintrag
+
+### Pages
+- `/partner` — Mutter-Einstellungsseite (Server Component + PartnerInviteManager Client Component)
+- `/partner/accept/[token]` — Einladungsannahme (ungeschützt; zeigt Login-Prompt wenn nicht auth)
+- `/partner/dashboard` — Read-only Partneransicht mit SSW, Tipp & Geburtsplan
+
+### Components
+- `PartnerInviteManager` — 3 Zustände: leer (Invite erstellen), pending (Link anzeigen + kopieren), verbunden (Widerrufen)
+- `PartnerAcceptForm` — Ruft PUT-Endpunkt auf, leitet zu /partner/dashboard weiter
+
+### Database (Migration 003_partner.sql)
+- `partner_invites`: id, mother_id, token (UNIQUE), expires_at, used_at, created_at
+- `partner_links`: id, mother_id, partner_user_id, active, UNIQUE(mother_id, partner_user_id)
+- Extended RLS auf `profiles` + `birth_plans`: Partner kann Mutter-Daten lesen
+
+### Implementation Notes
+- LoginForm unterstützt jetzt `?next=` Query-Param für Redirect nach Login
+- Dashboard leitet Partner automatisch zu `/partner/dashboard` weiter (kein Profil → check partner_links)
+- Middleware schützt `/partner*` außer `/partner/accept/*`
 
 ## QA Test Results
 _To be added by /qa_

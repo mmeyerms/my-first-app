@@ -33,7 +33,8 @@ export function LoginForm() {
       })
       if (authError) throw authError
       if (result.session) {
-        window.location.href = '/dashboard'
+        const params = new URLSearchParams(window.location.search)
+        window.location.href = params.get('next') ?? '/dashboard'
       }
     } catch (err: unknown) {
       setError(translateAuthError(err instanceof Error ? err.message : ''))
