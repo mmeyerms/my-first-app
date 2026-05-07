@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { ManifestCertificate } from './ManifestCertificate'
 
 const STORAGE_KEY = 'mamamap-kw-manifest'
 
@@ -27,19 +28,6 @@ type ManifestState = {
 const EMPTY_STATE: ManifestState = {
   agreed: [],
   custom: [],
-}
-
-function formatDate(iso: string): string {
-  try {
-    const d = new Date(iso)
-    if (Number.isNaN(d.getTime())) return ''
-    const dd = String(d.getDate()).padStart(2, '0')
-    const mm = String(d.getMonth() + 1).padStart(2, '0')
-    const yyyy = d.getFullYear()
-    return `${dd}.${mm}.${yyyy}`
-  } catch {
-    return ''
-  }
 }
 
 export function ManifestView() {
@@ -134,63 +122,16 @@ export function ManifestView() {
     window.print()
   }
 
-  // Sealed view (also styled for print)
+  // Sealed view — Zertifikat-Design
   if (isSigned) {
     return (
-      <div className="space-y-5 print:space-y-8">
-        {/* Sealed card (screen) */}
-        <section
-          aria-label="Besiegeltes Manifest"
-          className="rounded-2xl border-2 border-rose-200 bg-white p-6 shadow-sm print:border-0 print:p-0 print:shadow-none"
-        >
-          <div className="text-center print:mb-8">
-            <p className="text-xs uppercase tracking-widest text-rose-500 print:text-base print:tracking-wider">
-              Unser Eltern-Manifest
-            </p>
-            <div className="mt-2 text-4xl print:hidden">📜</div>
-            <h2 className="mt-2 text-lg font-bold text-gray-800 print:mt-6 print:text-3xl">
-              Wir verpflichten uns
-            </h2>
-          </div>
-
-          <ol className="mt-6 space-y-3 print:mt-10 print:space-y-5">
-            {allStatements.map((s, idx) => (
-              <li
-                key={s.id}
-                className="flex gap-3 text-sm leading-relaxed text-gray-800 print:text-base"
-              >
-                <span className="font-semibold text-rose-500 print:text-black">
-                  {idx + 1}.
-                </span>
-                <span>{s.text}</span>
-              </li>
-            ))}
-          </ol>
-
-          <div className="mt-6 border-t border-rose-100 pt-4 text-center text-xs text-gray-500 print:mt-12 print:border-t-2 print:border-black print:pt-6 print:text-sm print:text-black">
-            <p>
-              Besiegelt am {formatDate(state.signedAt!)}
-              {(state.mama || state.partner) && (
-                <>
-                  {' — '}
-                  {[state.mama, state.partner].filter(Boolean).join(' & ')}
-                </>
-              )}
-            </p>
-          </div>
-
-          {/* Print-only signature lines */}
-          <div className="mt-8 hidden grid-cols-2 gap-8 print:grid">
-            <div className="text-center text-sm">
-              <div className="border-b-2 border-black pb-1">&nbsp;</div>
-              <p className="mt-2">{state.mama || 'Mama'}</p>
-            </div>
-            <div className="text-center text-sm">
-              <div className="border-b-2 border-black pb-1">&nbsp;</div>
-              <p className="mt-2">{state.partner || 'Partner/in'}</p>
-            </div>
-          </div>
-        </section>
+      <div className="space-y-5">
+        <ManifestCertificate
+          statements={allStatements}
+          signedAt={state.signedAt!}
+          mama={state.mama}
+          partner={state.partner}
+        />
 
         {/* Action buttons (hidden in print) */}
         <div className="space-y-3 print:hidden">
@@ -198,8 +139,11 @@ export function ManifestView() {
             onClick={handlePrint}
             className="w-full bg-rose-500 text-white hover:bg-rose-600"
           >
-            🖨️ Drucken / Als PDF speichern
+            🖨️ Zertifikat drucken / als PDF speichern
           </Button>
+          <p className="text-center text-xs text-gray-500">
+            Tipp: Im Druck-Dialog „Als PDF speichern" wählen, um das Zertifikat digital aufzubewahren.
+          </p>
           <Button
             variant="outline"
             onClick={breakSeal}
