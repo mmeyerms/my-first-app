@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ManifestCertificate } from './ManifestCertificate'
+import { buildManifestCertificateHtml } from '@/lib/kinderwunsch/certificateHtml'
 
 const STORAGE_KEY = 'mamamap-kw-manifest'
 
@@ -119,7 +120,23 @@ export function ManifestView() {
   }
 
   function handlePrint() {
-    window.print()
+    if (!state.signedAt) return
+    const html = buildManifestCertificateHtml({
+      statements: allStatements,
+      signedAt: state.signedAt,
+      mama: state.mama,
+      partner: state.partner,
+    })
+    const win = window.open('', '_blank', 'width=900,height=1200,scrollbars=yes')
+    if (!win) {
+      alert(
+        'Pop-ups sind blockiert. Bitte erlaube Pop-ups für diese Seite, um das Zertifikat zu drucken oder als PDF zu speichern.',
+      )
+      return
+    }
+    win.document.open()
+    win.document.write(html)
+    win.document.close()
   }
 
   // Sealed view — Zertifikat-Design
