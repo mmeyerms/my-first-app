@@ -21,7 +21,8 @@
 | PROJ-5 | Krankenhaustasche | In Progress | — | 2026-05-07 |
 | PROJ-6 | Schwangerschaftstagebuch | In Progress | — | 2026-05-07 |
 | PROJ-7 | Baby-Ausstattung/Einkaufsliste | In Progress | — | 2026-05-07 |
+| PROJ-8 | Kinderwunsch-Garten | In Progress | — | 2026-05-07 |
 
 <!-- Add features above this line -->
 
-## Next Available ID: PROJ-8
+## Next Available ID: PROJ-9

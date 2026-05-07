@@ -41,6 +41,13 @@ export default async function DashboardPage() {
 
   const navItems = [
     {
+      href: '/kinderwunsch',
+      emoji: '🌷',
+      title: 'Kinderwunsch & Vorfreude',
+      description: 'Vorbereitung & Reflexion vor und um den positiven Test',
+      available: true,
+    },
+    {
       href: '/geburtsplan',
       emoji: '📋',
       title: 'Geburtsplan',
@@ -62,17 +69,17 @@ export default async function DashboardPage() {
       available: true,
     },
     {
-      href: '/packliste',
-      emoji: '🏥',
-      title: 'Krankenhaustasche',
-      description: 'Checkliste für die Geburt',
-      available: true,
-    },
-    {
       href: '/einkaufsliste',
       emoji: '🛍️',
       title: 'Baby-Ausstattung',
       description: 'Was ihr wirklich braucht',
+      available: true,
+    },
+    {
+      href: '/packliste',
+      emoji: '🏥',
+      title: 'Krankenhaustasche',
+      description: 'Checkliste für die Geburt',
       available: true,
     },
     {

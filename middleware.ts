@@ -35,6 +35,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/onboarding') ||
     pathname.startsWith('/tagebuch') ||
     pathname.startsWith('/geburtsplan') ||
+    pathname.startsWith('/kinderwunsch') ||
     (pathname.startsWith('/partner') && !pathname.startsWith('/partner/accept'))
   const isAuthPage = ['/login', '/register', '/passwort-vergessen'].includes(pathname)
 

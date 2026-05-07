@@ -1,0 +1,32 @@
+export const ERSTE_30_MIN_VORSCHLAEGE = [
+  'Ein gemeinsames Foto machen — den Test in der Hand',
+  'Ein Glas alkoholfreien Sekt öffnen',
+  'Mama anrufen (wenn sie es als Erste wissen soll)',
+  'Eine Notiz im Tagebuch schreiben — wie es sich JETZT anfühlt',
+  'Eine Sprachnachricht an euer zukünftiges Kind aufnehmen',
+  'Auf den Bauch legen und einfach atmen',
+  'Den Test verstecken, um ihn später nochmal anzuschauen',
+  'Spazieren gehen — ohne Plan, ohne Worte',
+  'Ein Lieblingslied gemeinsam hören',
+  'Erstmal niemandem etwas sagen — nur ihr beide',
+  'In den Spiegel schauen und „Hallo Mama" sagen',
+  'Den Brief an dein zukünftiges Ich öffnen',
+]
+
+export const REVERSE_BUCKET_VORSCHLAEGE = [
+  'Eine spontane Reise machen — auch ein langes Wochenende reicht',
+  'Ein Lieblings-Restaurant besuchen, ohne Babyplanung im Kopf',
+  'Eine durchgemachte Nacht aus Spaß',
+  'Ein Konzert besuchen, das ihr lange aufgeschoben habt',
+  'Einen ganzen Sonntag im Bett verbringen',
+  'Eine Sushi-/Rohmilchkäse-Tour (genießen, was später Pause hat)',
+  'Sport machen, der später nicht geht (Klettern, Reiten, Skifahren)',
+  'Einmal im Bikini ans Meer — bevor der Bauch wächst',
+  'In Ruhe lange Bücher lesen',
+  'Mit Freunden bis tief in die Nacht reden',
+  'Date Nights ohne Babyphone-Sorge',
+  'Eine Sauna oder ein Hot-Tub besuchen',
+  'Das Lieblings-Lied richtig laut hören und tanzen',
+  'Ein langes, ungestörtes Frühstück',
+  'Etwas tun, was sich „kindisch" anfühlt — Kino, Achterbahn, Eis um 22 Uhr',
+]
