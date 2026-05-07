@@ -1,7 +1,9 @@
 import path from 'path'
 import fs from 'fs'
 
-const STORE_PATH = path.join(process.cwd(), '.mock-data.json')
+const STORE_PATH = process.env.VERCEL
+  ? '/tmp/mamamap-mock-data.json'
+  : path.join(process.cwd(), '.mock-data.json')
 const MOCK_USER = { id: 'mock-user-00000000', email: 'demo@mamamap.de', aud: 'authenticated' }
 
 type Table = 'profiles' | 'birth_plans' | 'partner_invites' | 'partner_links' | 'diary_entries'
