@@ -69,7 +69,7 @@ export function LoginForm() {
             <FormItem>
               <div className="flex items-center justify-between">
                 <FormLabel>Passwort</FormLabel>
-                <Link href="/passwort-vergessen" className="text-xs text-rose-500 hover:underline">
+                <Link href="/passwort-vergessen" className="text-xs text-primary hover:underline">
                   Vergessen?
                 </Link>
               </div>
@@ -83,9 +83,9 @@ export function LoginForm() {
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? 'Anmelden...' : 'Anmelden'}
         </Button>
-        <p className="text-center text-sm text-gray-500">
+        <p className="text-center text-sm text-muted-foreground">
           Noch kein Account?{' '}
-          <Link href="/register" className="font-medium text-rose-500 hover:underline">
+          <Link href="/register" className="font-medium text-primary hover:underline">
             Jetzt registrieren
           </Link>
         </p>

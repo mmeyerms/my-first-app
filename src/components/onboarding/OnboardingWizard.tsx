@@ -36,7 +36,7 @@ const step3Schema = z.object({
 function StepIndicator({ current, total }: { current: number; total: number }) {
   return (
     <div className="mb-8 space-y-2">
-      <div className="flex justify-between text-xs text-gray-400">
+      <div className="flex justify-between font-display text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
         <span>Schritt {current} von {total}</span>
       </div>
       <Progress value={(current / total) * 100} className="h-1.5" />
@@ -50,9 +50,9 @@ function Step1({ onNext }: { onNext: (name: string) => void }) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit((d) => onNext(d.name))} className="space-y-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Herzlich Willkommen 🌸</h2>
-          <p className="mt-2 text-sm text-gray-500">
-            Wir begleiten dich durch deine Schwangerschaft. Lass uns starten!
+          <h2 className="font-display text-3xl font-medium text-foreground">Herzlich willkommen</h2>
+          <p className="mt-2 font-display text-sm italic text-muted-foreground">
+            Wir begleiten dich durch deine Schwangerschaft. Lass uns starten.
           </p>
         </div>
         <FormField
@@ -83,8 +83,8 @@ function Step2({ name, onNext, onBack }: { name: string; onNext: (data: Pick<Wiz
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onNext)} className="space-y-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Hallo, {name}! 💛</h2>
-          <p className="mt-2 text-sm text-gray-500">Erzähl uns ein bisschen über dein Baby.</p>
+          <h2 className="font-display text-3xl font-medium text-foreground">Hallo, {name}.</h2>
+          <p className="mt-2 font-display text-sm italic text-muted-foreground">Erzähl uns ein bisschen über dein Baby.</p>
         </div>
         <FormField
           control={form.control}
@@ -142,8 +142,8 @@ function Step3({
     <Form {...form}>
       <form onSubmit={form.handleSubmit((d) => onSubmit(d.due_date))} className="space-y-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Fast geschafft! 🎉</h2>
-          <p className="mt-2 text-sm text-gray-500">
+          <h2 className="font-display text-3xl font-medium text-foreground">Fast geschafft</h2>
+          <p className="mt-2 font-display text-sm italic text-muted-foreground">
             Der errechnete Geburtstermin hilft uns, dir die richtigen Inhalte zu zeigen.
           </p>
         </div>
@@ -161,20 +161,22 @@ function Step3({
           )}
         />
         {ssw !== null && (
-          <div className="rounded-xl bg-rose-50 px-4 py-3 text-center">
-            <p className="text-sm text-gray-500">Du bist aktuell in</p>
-            <p className="text-3xl font-bold text-rose-500">SSW {ssw}</p>
+          <div className="rounded-xl bg-secondary px-4 py-3 text-center">
+            <p className="font-display text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+              Du bist aktuell in
+            </p>
+            <p className="mt-1 font-display text-3xl font-medium text-primary">SSW {ssw}</p>
           </div>
         )}
         {error && (
-          <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">{error}</p>
+          <p className="rounded-lg bg-destructive/10 px-4 py-2 text-sm text-destructive">{error}</p>
         )}
         <div className="flex gap-3">
           <Button type="button" variant="outline" className="flex-1" onClick={onBack} disabled={loading}>
             ← Zurück
           </Button>
           <Button type="submit" className="flex-1" disabled={loading}>
-            {loading ? 'Speichern...' : 'Los geht\'s! 🌸'}
+            {loading ? 'Speichern...' : 'Los geht\'s'}
           </Button>
         </div>
       </form>

@@ -20,11 +20,11 @@ export default async function TagebuchPage() {
   const ssw = calculateSSW(profile.due_date)
 
   return (
-    <main className="min-h-screen bg-rose-50">
+    <main className="min-h-screen bg-background">
       <div className="mx-auto max-w-sm px-4 py-8">
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-800">📔 Schwangerschafts&shy;tagebuch</h1>
-          <Link href="/dashboard" className="text-sm text-rose-500 hover:underline shrink-0">← Dashboard</Link>
+          <h1 className="font-display text-2xl font-medium text-foreground">Schwangerschafts&shy;tagebuch</h1>
+          <Link href="/dashboard" className="shrink-0 text-sm text-muted-foreground transition-colors hover:text-primary">← Dashboard</Link>
         </div>
         <TagebuchView ssw={ssw} babyName={profile.baby_name} />
       </div>

@@ -8,7 +8,7 @@ export default async function KinderwunschPage() {
   if (!user) redirect('/login')
 
   return (
-    <main className="min-h-screen bg-rose-50">
+    <main className="min-h-screen bg-background">
       <KinderwunschHub />
     </main>
   )

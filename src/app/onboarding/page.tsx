@@ -1,17 +1,18 @@
 import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard'
 import { LocaleSelector } from '@/components/i18n/LocaleSelector'
+import { Logo } from '@/components/brand/Logo'
 
 export default function OnboardingPage() {
   return (
-    <main className="relative flex min-h-screen items-center justify-center bg-rose-50 p-4">
+    <main className="relative flex min-h-screen items-center justify-center bg-background p-4">
       <div className="absolute right-4 top-4">
         <LocaleSelector variant="compact" />
       </div>
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-rose-500">🌸 MamaMap</h1>
+          <Logo size="md" href="/" />
         </div>
-        <div className="rounded-2xl bg-white p-8 shadow-sm">
+        <div className="card-elevated rounded-2xl bg-card p-8">
           <OnboardingWizard />
         </div>
       </div>

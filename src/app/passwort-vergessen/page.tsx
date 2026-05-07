@@ -1,14 +1,17 @@
 import { ForgotPasswordForm } from '@/components/auth/ForgotPasswordForm'
+import { Logo } from '@/components/brand/Logo'
 
 export default function ForgotPasswordPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-rose-50 p-4">
+    <main className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-rose-500">🌸 MamaMap</h1>
+          <Logo size="lg" href="/" />
         </div>
-        <div className="rounded-2xl bg-white p-8 shadow-sm">
-          <h2 className="mb-6 text-xl font-semibold text-gray-800">Passwort vergessen</h2>
+        <div className="card-elevated rounded-2xl bg-card p-8">
+          <h2 className="mb-6 font-display text-2xl font-medium text-foreground">
+            Passwort vergessen
+          </h2>
           <ForgotPasswordForm />
         </div>
       </div>

@@ -26,16 +26,16 @@ export default async function GeburtsplanPage() {
   const ssw = calculateSSW(profile.due_date)
 
   return (
-    <main className="min-h-screen bg-rose-50">
+    <main className="min-h-screen bg-background">
       <div className="mx-auto max-w-lg px-4 py-8">
         <div className="mb-6 flex items-center gap-3">
-          <Link href="/dashboard" className="text-sm text-gray-500 hover:text-gray-700">
+          <Link href="/dashboard" className="text-sm text-muted-foreground transition-colors hover:text-primary">
             ← Dashboard
           </Link>
         </div>
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">📋 Mein Geburtsplan</h1>
-          <p className="mt-1 text-sm text-gray-500">
+        <div className="mb-8">
+          <h1 className="font-display text-3xl font-medium text-foreground">Mein Geburtsplan</h1>
+          <p className="mt-2 font-display text-sm italic text-muted-foreground">
             Für {profile.baby_name} · SSW {ssw}
           </p>
         </div>

@@ -130,7 +130,7 @@ export function ProfilForm({ profile }: { profile: Profile }) {
                 <FormControl><Input type="date" {...field} /></FormControl>
                 <FormMessage />
                 {ssw !== null && (
-                  <p className="text-xs text-rose-500">Aktuell SSW {ssw}</p>
+                  <p className="text-xs text-primary">Aktuell SSW {ssw}</p>
                 )}
               </FormItem>
             )}

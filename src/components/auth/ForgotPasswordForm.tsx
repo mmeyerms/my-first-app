@@ -37,11 +37,11 @@ export function ForgotPasswordForm() {
     return (
       <div className="space-y-3 text-center">
         <div className="text-4xl">💌</div>
-        <h3 className="font-semibold text-gray-800">E-Mail verschickt</h3>
-        <p className="text-sm text-gray-500">
+        <h3 className="font-display text-xl font-medium text-foreground">E-Mail verschickt</h3>
+        <p className="text-sm text-muted-foreground">
           Schau in dein Postfach — dort findest du einen Link, um dein Passwort zurückzusetzen.
         </p>
-        <Link href="/login" className="block text-sm font-medium text-rose-500 hover:underline">
+        <Link href="/login" className="block text-sm font-medium text-primary hover:underline">
           Zurück zum Login
         </Link>
       </div>
@@ -51,7 +51,7 @@ export function ForgotPasswordForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-muted-foreground">
           Gib deine E-Mail-Adresse ein und wir schicken dir einen Reset-Link.
         </p>
         <FormField
@@ -70,8 +70,8 @@ export function ForgotPasswordForm() {
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? 'Senden...' : 'Reset-Link senden'}
         </Button>
-        <p className="text-center text-sm text-gray-500">
-          <Link href="/login" className="font-medium text-rose-500 hover:underline">
+        <p className="text-center text-sm text-muted-foreground">
+          <Link href="/login" className="font-medium text-primary hover:underline">
             Zurück zum Login
           </Link>
         </p>

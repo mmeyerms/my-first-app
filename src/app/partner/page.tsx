@@ -43,17 +43,17 @@ export default async function PartnerPage() {
   const babyName = profile?.baby_name ?? 'euer Baby'
 
   return (
-    <main className="min-h-screen bg-rose-50">
+    <main className="min-h-screen bg-background">
       <div className="mx-auto max-w-sm px-4 py-8">
         <div className="mb-6 flex items-center gap-3">
-          <Link href="/dashboard" className="text-gray-400 hover:text-gray-600">
+          <Link href="/dashboard" className="text-muted-foreground transition-colors hover:text-primary">
             ‹
           </Link>
-          <h1 className="text-xl font-bold text-gray-800">Partner-Bereich</h1>
+          <h1 className="font-display text-2xl font-medium text-foreground">Partner-Bereich</h1>
         </div>
 
-        <div className="mb-6 rounded-2xl bg-white p-5 shadow-sm">
-          <p className="text-sm leading-relaxed text-gray-600">
+        <div className="card-elevated mb-6 rounded-2xl bg-card p-5">
+          <p className="text-sm leading-relaxed text-foreground">
             Gib deinem Partner Zugang zu deiner MamaMap. Er sieht die aktuelle
             Schwangerschaftswoche, phasenspezifische Tipps und deinen Geburtsplan — kann aber
             nichts bearbeiten.

@@ -42,25 +42,27 @@ export function DailyTipPopup({ tip, ssw }: Props) {
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose() }}>
       <DialogContent className="max-w-sm rounded-2xl p-0 overflow-hidden">
-        <div className="bg-rose-500 px-6 pt-6 pb-4 text-white">
+        <div className="bg-primary px-6 pt-6 pb-5 text-primary-foreground">
           <DialogHeader>
-            <p className="text-xs font-medium text-rose-100 mb-1">Dein Tipp für heute · SSW {ssw}</p>
-            <DialogTitle className="text-lg font-bold text-white leading-snug">
+            <p className="mb-1 font-display text-[10px] uppercase tracking-[0.2em] text-primary-foreground/75">
+              Dein Tipp für heute · SSW {ssw}
+            </p>
+            <DialogTitle className="font-display text-2xl font-medium leading-snug text-primary-foreground">
               {tip.emoji} {categoryLabel}
             </DialogTitle>
           </DialogHeader>
         </div>
         <div className="px-6 py-5 space-y-5">
           <div className="space-y-3">
-            <p className="text-sm leading-relaxed text-gray-700">{getTipText(tip, locale)}</p>
+            <p className="text-sm leading-relaxed text-foreground">{getTipText(tip, locale)}</p>
             {detailText && (
-              <p className="text-xs leading-relaxed text-gray-500">{detailText}</p>
+              <p className="text-xs leading-relaxed text-muted-foreground">{detailText}</p>
             )}
           </div>
           <div className="flex items-center justify-between">
             <Badge variant="secondary" className="text-xs capitalize">{categoryLabel}</Badge>
             <Button onClick={handleClose} size="sm" className="px-5">
-              Verstanden 🌸
+              Verstanden
             </Button>
           </div>
         </div>

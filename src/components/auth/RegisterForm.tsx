@@ -50,12 +50,12 @@ export function RegisterForm() {
     return (
       <div className="space-y-3 text-center">
         <div className="text-4xl">📬</div>
-        <h3 className="font-semibold text-gray-800">E-Mail bestätigen</h3>
-        <p className="text-sm text-gray-500">
+        <h3 className="font-display text-xl font-medium text-foreground">E-Mail bestätigen</h3>
+        <p className="text-sm text-muted-foreground">
           Wir haben dir eine Bestätigungs-E-Mail geschickt.
           Bitte klicke auf den Link in der E-Mail, um deinen Account zu aktivieren.
         </p>
-        <Link href="/login" className="block text-sm font-medium text-rose-500 hover:underline">
+        <Link href="/login" className="block text-sm font-medium text-primary hover:underline">
           Zurück zum Login
         </Link>
       </div>
@@ -97,9 +97,9 @@ export function RegisterForm() {
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? 'Registrieren...' : 'Account erstellen'}
         </Button>
-        <p className="text-center text-sm text-gray-500">
+        <p className="text-center text-sm text-muted-foreground">
           Bereits registriert?{' '}
-          <Link href="/login" className="font-medium text-rose-500 hover:underline">
+          <Link href="/login" className="font-medium text-primary hover:underline">
             Anmelden
           </Link>
         </p>

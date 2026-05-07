@@ -30,7 +30,7 @@ export function LocaleSelector({ variant = 'compact', className = '' }: Props) {
       <SelectTrigger
         aria-label={t.locale.switch}
         className={cn(
-          'border-rose-200 bg-white text-sm text-gray-700 shadow-sm transition-colors hover:bg-rose-50 focus:ring-rose-300',
+          'border-border bg-card text-sm text-foreground shadow-sm transition-colors hover:bg-secondary focus:ring-ring',
           isCompact ? 'h-9 w-auto min-w-[5rem] gap-1.5 px-2.5' : 'h-10 w-full',
           className,
         )}

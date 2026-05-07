@@ -137,7 +137,7 @@ export function GeburtsplanView({ initialAnswers, ssw, babyName, dueDate }: Prop
           <Button
             onClick={handleExport}
             disabled={exporting}
-            className="w-full bg-rose-500 hover:bg-rose-600 text-white"
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
           >
             {exporting ? 'Erstelle PDF...' : '📄 Als PDF exportieren'}
           </Button>
@@ -221,7 +221,7 @@ export function GeburtsplanView({ initialAnswers, ssw, babyName, dueDate }: Prop
           ← Zurück
         </Button>
         <Button
-          className="flex-1 bg-rose-500 hover:bg-rose-600 text-white"
+          className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
           onClick={next}
           aria-label={isLastQuestion ? 'Geburtsplan abschließen' : 'Nächste Frage'}
         >
@@ -241,7 +241,7 @@ export function GeburtsplanView({ initialAnswers, ssw, babyName, dueDate }: Prop
               </p>
             </div>
           ))}
-          <Link href="/dashboard" className="text-xs text-rose-500 hover:underline">
+          <Link href="/dashboard" className="text-xs text-primary hover:underline">
             Zum Dashboard →
           </Link>
         </div>

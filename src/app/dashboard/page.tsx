@@ -1,5 +1,17 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import {
+  Sprout,
+  ScrollText,
+  Sparkle,
+  NotebookPen,
+  ShoppingBag,
+  Briefcase,
+  HeartHandshake,
+  ChevronRight,
+  UserCircle2,
+  type LucideIcon,
+} from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { calculateSSW } from '@/lib/utils'
 import { getTipForDay } from '@/lib/tips'
@@ -7,11 +19,20 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { DailyTipPopup } from '@/components/tipps/DailyTipPopup'
 import { LocaleSelector } from '@/components/i18n/LocaleSelector'
+import { Logo } from '@/components/brand/Logo'
 
 interface Profile {
   name: string
   baby_name: string
   due_date: string
+}
+
+interface NavItem {
+  href: string
+  icon: LucideIcon
+  title: string
+  description: string
+  available: boolean
 }
 
 export default async function DashboardPage() {
@@ -40,52 +61,52 @@ export default async function DashboardPage() {
   const ssw = calculateSSW(profile.due_date)
   const tip = getTipForDay(ssw)
 
-  const navItems = [
+  const navItems: NavItem[] = [
     {
       href: '/kinderwunsch',
-      emoji: '🌷',
+      icon: Sprout,
       title: 'Kinderwunsch & Vorfreude',
       description: 'Vorbereitung & Reflexion vor und um den positiven Test',
       available: true,
     },
     {
       href: '/geburtsplan',
-      emoji: '📋',
+      icon: ScrollText,
       title: 'Geburtsplan',
       description: 'Plane deine Wunschgeburt Schritt für Schritt',
       available: true,
     },
     {
       href: '/tipps',
-      emoji: '💡',
+      icon: Sparkle,
       title: 'Tägliche Tipps',
       description: `Impulse für SSW ${ssw}`,
       available: true,
     },
     {
       href: '/tagebuch',
-      emoji: '📔',
+      icon: NotebookPen,
       title: 'Schwangerschaftstagebuch',
       description: 'Halte besondere Momente fest',
       available: true,
     },
     {
       href: '/einkaufsliste',
-      emoji: '🛍️',
+      icon: ShoppingBag,
       title: 'Baby-Ausstattung',
       description: 'Was ihr wirklich braucht',
       available: true,
     },
     {
       href: '/packliste',
-      emoji: '🏥',
+      icon: Briefcase,
       title: 'Krankenhaustasche',
       description: 'Checkliste für die Geburt',
       available: true,
     },
     {
       href: '/partner',
-      emoji: '💑',
+      icon: HeartHandshake,
       title: 'Partner-Bereich',
       description: 'Tipps für deinen Partner',
       available: true,
@@ -93,62 +114,97 @@ export default async function DashboardPage() {
   ]
 
   return (
-    <main className="min-h-screen bg-rose-50">
+    <main className="min-h-screen bg-background">
       <DailyTipPopup tip={tip} ssw={ssw} />
       <div className="mx-auto max-w-sm px-4 py-8">
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-rose-500">🌸 MamaMap</h1>
+        <header className="mb-8 flex items-center justify-between">
+          <Logo size="md" />
           <div className="flex items-center gap-2">
             <LocaleSelector variant="compact" />
-            <Link href="/profil" className="text-sm text-gray-500 hover:text-gray-700">
-              Profil
+            <Link
+              href="/profil"
+              aria-label="Profil"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-primary"
+            >
+              <UserCircle2 className="h-5 w-5" strokeWidth={1.5} />
             </Link>
           </div>
-        </div>
+        </header>
 
         {/* Welcome card */}
-        <div className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
-          <p className="text-sm text-gray-500">Hallo, {profile.name}! 👋</p>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-5xl font-bold text-rose-500">SSW {ssw}</span>
+        <section className="card-elevated mb-8 rounded-2xl bg-card p-7">
+          <h1 className="font-display text-2xl font-medium leading-tight text-foreground">
+            Hallo, <span className="font-semibold">{profile.name}</span>.
+          </h1>
+          <div className="mt-5">
+            <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+              Schwangerschaftswoche
+            </p>
+            <p className="mt-1 font-display text-6xl font-medium leading-none text-primary">
+              {ssw}
+            </p>
           </div>
-          <p className="mt-1 text-sm text-gray-500">
-            {profile.baby_name} ist auf dem Weg 💛
+          <div
+            aria-hidden="true"
+            className="my-5 h-px w-12"
+            style={{ backgroundColor: 'hsl(var(--accent))' }}
+          />
+          <p className="font-display text-base italic text-muted-foreground">
+            {profile.baby_name} ist auf dem Weg.
           </p>
-        </div>
+        </section>
 
         {/* Navigation cards */}
-        <div className="space-y-3">
+        <nav aria-label="Bereiche" className="space-y-3">
           {navItems.map((item) => {
+            const Icon = item.icon
             const cardContent = (
-              <CardContent className="flex items-center gap-4 p-4">
-                <span className="text-3xl">{item.emoji}</span>
-                <div className="flex-1">
+              <CardContent className="flex items-start gap-4 p-5">
+                <span
+                  aria-hidden="true"
+                  className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-secondary"
+                >
+                  <Icon
+                    className="h-6 w-6 text-primary"
+                    strokeWidth={1.5}
+                  />
+                </span>
+                <div className="flex-1 min-w-0 pt-0.5">
                   <div className="flex items-center gap-2">
-                    <p className="font-semibold text-gray-800">{item.title}</p>
+                    <p className="font-display text-lg font-semibold leading-tight text-foreground">
+                      {item.title}
+                    </p>
                     {!item.available && (
-                      <Badge variant="secondary" className="text-xs">Bald</Badge>
+                      <Badge variant="secondary" className="text-[10px] uppercase tracking-wider">
+                        Bald
+                      </Badge>
                     )}
                   </div>
-                  <p className="text-xs text-gray-500">{item.description}</p>
+                  <p className="mt-1 font-display text-sm italic text-muted-foreground">
+                    {item.description}
+                  </p>
                 </div>
-                <span className="text-gray-300">›</span>
+                <ChevronRight
+                  className="mt-3 h-4 w-4 shrink-0 text-muted-foreground"
+                  strokeWidth={1.5}
+                  aria-hidden="true"
+                />
               </CardContent>
             )
             return item.available ? (
-              <Link key={item.href} href={item.href}>
-                <Card className="cursor-pointer transition-shadow hover:shadow-md">
+              <Link key={item.href} href={item.href} aria-label={item.title}>
+                <Card className="card-elevated cursor-pointer border-border/60 bg-card transition-all hover:-translate-y-0.5 hover:shadow-md">
                   {cardContent}
                 </Card>
               </Link>
             ) : (
-              <Card key={item.href} className="opacity-60">
+              <Card key={item.href} className="card-elevated border-border/60 bg-card opacity-60">
                 {cardContent}
               </Card>
             )
           })}
-        </div>
+        </nav>
       </div>
     </main>
   )

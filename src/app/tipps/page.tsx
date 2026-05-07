@@ -27,24 +27,26 @@ export default async function TippsPage() {
   const dateLocale = locale === 'de' ? 'de-DE' : 'en-GB'
 
   return (
-    <main className="min-h-screen bg-rose-50">
+    <main className="min-h-screen bg-background">
       <div className="mx-auto max-w-sm px-4 py-8">
         <div className="mb-6 flex items-center gap-3">
-          <Link href="/dashboard" className="text-sm text-gray-500 hover:text-gray-700">
+          <Link href="/dashboard" className="text-sm text-muted-foreground transition-colors hover:text-primary">
             ← Dashboard
           </Link>
         </div>
-        <h1 className="mb-6 text-2xl font-bold text-gray-800">💡 Tipp des Tages</h1>
+        <h1 className="mb-8 font-display text-3xl font-medium text-foreground">Tipp des Tages</h1>
 
-        <div className="rounded-2xl overflow-hidden shadow-sm">
-          <div className="bg-rose-500 px-6 py-5 text-white">
-            <p className="text-xs text-rose-100 mb-1">SSW {ssw} · {new Date().toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'long' })}</p>
-            <p className="text-xl font-bold">{tip.emoji} {categoryLabel}</p>
+        <div className="card-elevated overflow-hidden rounded-2xl">
+          <div className="bg-primary px-6 py-5 text-primary-foreground">
+            <p className="mb-1 font-display text-[10px] uppercase tracking-[0.2em] text-primary-foreground/75">
+              SSW {ssw} · {new Date().toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'long' })}
+            </p>
+            <p className="font-display text-2xl font-medium">{tip.emoji} {categoryLabel}</p>
           </div>
-          <div className="bg-white px-6 py-5">
-            <p className="text-sm leading-relaxed text-gray-700">{getTipText(tip, locale)}</p>
+          <div className="bg-card px-6 py-5">
+            <p className="text-sm leading-relaxed text-foreground">{getTipText(tip, locale)}</p>
             {tip.detail && (
-              <p className="mt-3 text-xs leading-relaxed text-gray-500">{getTipDetail(tip, locale)}</p>
+              <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{getTipDetail(tip, locale)}</p>
             )}
             <div className="mt-4">
               <Badge variant="secondary" className="text-xs">{categoryLabel}</Badge>
@@ -52,8 +54,8 @@ export default async function TippsPage() {
           </div>
         </div>
 
-        <div className="mt-6 rounded-xl bg-white p-4 shadow-sm">
-          <p className="text-xs text-gray-400 text-center">
+        <div className="card-elevated mt-6 rounded-xl bg-card p-4">
+          <p className="text-center font-display text-xs italic text-muted-foreground">
             Jeden Tag ein neuer Tipp — abgestimmt auf deine aktuelle Schwangerschaftswoche.
           </p>
         </div>
