@@ -6,10 +6,13 @@ import { TEAM_FRAGEN } from '@/lib/kinderwunsch/teamFragen'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Textarea } from '@/components/ui/textarea'
+import { useLocale } from '@/lib/i18n/client'
+import { localized } from '@/lib/i18n/localized'
 
 const STORAGE_KEY = 'mamamap-kw-team'
 
 export function TeamFragen() {
+  const { locale } = useLocale()
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [hydrated, setHydrated] = useState(false)
   const [savedAt, setSavedAt] = useState<number | null>(null)
@@ -108,10 +111,10 @@ export function TeamFragen() {
                   Frage {idx + 1} / {total}
                 </p>
                 <p className="mt-1 text-base font-semibold leading-snug text-gray-800">
-                  {frage.question}
+                  {localized(frage.question, locale)}
                 </p>
                 {frage.hint && (
-                  <p className="mt-2 text-xs text-gray-500">{frage.hint}</p>
+                  <p className="mt-2 text-xs text-gray-500">{localized(frage.hint, locale)}</p>
                 )}
               </div>
               {isAnswered && (
@@ -125,7 +128,7 @@ export function TeamFragen() {
                 value={value}
                 onChange={(e) => updateAnswer(frage.id, e.target.value)}
                 placeholder="Eure gemeinsame Antwort..."
-                aria-label={`Antwort auf Frage ${idx + 1}: ${frage.question}`}
+                aria-label={`Antwort auf Frage ${idx + 1}: ${localized(frage.question, locale)}`}
                 className="min-h-[80px] resize-y border-rose-100 focus-visible:ring-rose-500"
               />
             </div>

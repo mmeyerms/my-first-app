@@ -8,6 +8,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Badge } from '@/components/ui/badge'
+import { useLocale } from '@/lib/i18n/client'
+import { localized } from '@/lib/i18n/localized'
 
 interface Props {
   question: Question
@@ -18,13 +20,14 @@ interface Props {
 const CUSTOM_SENTINEL = '__custom__'
 
 export function QuestionCard({ question, value, onChange }: Props) {
+  const { locale } = useLocale()
   const isAnswered = Array.isArray(value) ? value.length > 0 : typeof value === 'string' && value.trim().length > 0
   const [hintOpen, setHintOpen] = useState(false)
 
   return (
     <div id={question.id} className={`scroll-mt-4 rounded-xl border bg-white p-4 transition-all ${isAnswered ? 'border-rose-200' : 'border-orange-200 bg-orange-50/30'}`}>
       <div className="mb-3 flex items-start justify-between gap-2">
-        <p className="text-sm font-medium leading-snug text-gray-800">{question.label}</p>
+        <p className="text-sm font-medium leading-snug text-gray-800">{localized(question.label, locale)}</p>
         {question.optional && !isAnswered && (
           <Badge variant="secondary" className="shrink-0 text-xs">Optional</Badge>
         )}
@@ -67,7 +70,7 @@ export function QuestionCard({ question, value, onChange }: Props) {
               id={`${question.id}-hint`}
               className="mt-2 text-xs leading-relaxed text-gray-600 rounded-lg bg-blue-50 p-3"
             >
-              {question.hint}
+              {localized(question.hint, locale)}
             </p>
           )}
         </div>
@@ -77,10 +80,12 @@ export function QuestionCard({ question, value, onChange }: Props) {
 }
 
 function SingleChoice({ question, value, onChange }: Props) {
+  const { locale } = useLocale()
   const options = question.options ?? []
+  const optionKeys = options.map((opt) => opt.de)
   const stringValue = typeof value === 'string' ? value : ''
   const isCustomValue =
-    stringValue.length > 0 && stringValue !== CUSTOM_SENTINEL && !options.includes(stringValue)
+    stringValue.length > 0 && stringValue !== CUSTOM_SENTINEL && !optionKeys.includes(stringValue)
   const [customSelected, setCustomSelected] = useState(isCustomValue || stringValue === CUSTOM_SENTINEL)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -116,10 +121,10 @@ function SingleChoice({ question, value, onChange }: Props) {
       className="space-y-2"
     >
       {options.map((opt) => (
-        <div key={opt} className="flex items-center gap-2">
-          <RadioGroupItem value={opt} id={`${question.id}-${opt}`} />
-          <Label htmlFor={`${question.id}-${opt}`} className="text-sm font-normal text-gray-700 cursor-pointer">
-            {opt}
+        <div key={opt.de} className="flex items-center gap-2">
+          <RadioGroupItem value={opt.de} id={`${question.id}-${opt.de}`} />
+          <Label htmlFor={`${question.id}-${opt.de}`} className="text-sm font-normal text-gray-700 cursor-pointer">
+            {localized(opt, locale)}
           </Label>
         </div>
       ))}
@@ -143,22 +148,24 @@ function SingleChoice({ question, value, onChange }: Props) {
 }
 
 function MultiChoice({ question, value, onChange }: Props) {
+  const { locale } = useLocale()
   const options = question.options ?? []
+  const optionKeys = options.map((opt) => opt.de)
   const valueArray = Array.isArray(value) ? value : []
-  const initialCustom = valueArray.find((v) => !options.includes(v)) ?? ''
+  const initialCustom = valueArray.find((v) => !optionKeys.includes(v)) ?? ''
 
   const [customChecked, setCustomChecked] = useState(initialCustom.length > 0)
   const [customText, setCustomText] = useState(initialCustom)
 
-  const toggleOption = (opt: string, checked: boolean) => {
+  const toggleOption = (optKey: string, checked: boolean) => {
     const current = Array.isArray(value) ? value : []
-    onChange(question.id, checked ? [...current, opt] : current.filter((v) => v !== opt))
+    onChange(question.id, checked ? [...current, optKey] : current.filter((v) => v !== optKey))
   }
 
   const handleCustomCheckedChange = (checked: boolean) => {
     setCustomChecked(checked)
     const current = Array.isArray(value) ? value : []
-    const withoutCustom = current.filter((v) => options.includes(v))
+    const withoutCustom = current.filter((v) => optionKeys.includes(v))
     if (checked && customText.trim().length > 0) {
       onChange(question.id, [...withoutCustom, customText])
     } else {
@@ -170,7 +177,7 @@ function MultiChoice({ question, value, onChange }: Props) {
     setCustomText(next)
     if (customChecked) {
       const current = Array.isArray(value) ? value : []
-      const withoutCustom = current.filter((v) => options.includes(v))
+      const withoutCustom = current.filter((v) => optionKeys.includes(v))
       if (next.trim().length > 0) {
         onChange(question.id, [...withoutCustom, next])
       } else {
@@ -182,16 +189,16 @@ function MultiChoice({ question, value, onChange }: Props) {
   return (
     <div className="space-y-2">
       {options.map((opt) => {
-        const checked = valueArray.includes(opt)
+        const checked = valueArray.includes(opt.de)
         return (
-          <div key={opt} className="flex items-center gap-2">
+          <div key={opt.de} className="flex items-center gap-2">
             <Checkbox
-              id={`${question.id}-${opt}`}
+              id={`${question.id}-${opt.de}`}
               checked={checked}
-              onCheckedChange={(c) => toggleOption(opt, Boolean(c))}
+              onCheckedChange={(c) => toggleOption(opt.de, Boolean(c))}
             />
-            <Label htmlFor={`${question.id}-${opt}`} className="text-sm font-normal text-gray-700 cursor-pointer">
-              {opt}
+            <Label htmlFor={`${question.id}-${opt.de}`} className="text-sm font-normal text-gray-700 cursor-pointer">
+              {localized(opt, locale)}
             </Label>
           </div>
         )

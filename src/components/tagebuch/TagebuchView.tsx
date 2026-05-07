@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { getMilestonesUpToSSW, getNextMilestone } from '@/lib/milestones'
+import { getMilestonesUpToSSW, getNextMilestone, getMilestoneTitle, getMilestoneDescription } from '@/lib/milestones'
+import { useLocale } from '@/lib/i18n/client'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
@@ -27,6 +28,7 @@ interface Props {
 }
 
 export function TagebuchView({ ssw, babyName }: Props) {
+  const { locale } = useLocale()
   const [entries, setEntries] = useState<DiaryEntry[]>([])
   const [currentEntry, setCurrentEntry] = useState<DiaryEntry>({ ssw, rating: null, word: null, surprise: null })
   const [saving, setSaving] = useState(false)
@@ -95,15 +97,15 @@ export function TagebuchView({ ssw, babyName }: Props) {
               <div key={m.ssw} className="flex items-start gap-3">
                 <span className="text-xl">{m.emoji}</span>
                 <div>
-                  <p className="text-sm font-medium text-gray-800">SSW {m.ssw} — {m.title}</p>
-                  <p className="text-xs text-gray-500">{m.description}</p>
+                  <p className="text-sm font-medium text-gray-800">SSW {m.ssw} — {getMilestoneTitle(m, locale)}</p>
+                  <p className="text-xs text-gray-500">{getMilestoneDescription(m, locale)}</p>
                 </div>
               </div>
             ))}
           </div>
           {next && (
             <div className="mt-3 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-600">
-              Nächster Meilenstein: <strong>SSW {next.ssw} — {next.title}</strong> ({next.ssw - ssw} Wochen)
+              Nächster Meilenstein: <strong>SSW {next.ssw} — {getMilestoneTitle(next, locale)}</strong> ({next.ssw - ssw} Wochen)
             </div>
           )}
         </div>

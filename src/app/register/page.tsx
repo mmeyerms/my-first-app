@@ -1,8 +1,12 @@
 import { RegisterForm } from '@/components/auth/RegisterForm'
+import { LocaleSelector } from '@/components/i18n/LocaleSelector'
 
 export default function RegisterPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-rose-50 p-4">
+    <main className="relative flex min-h-screen items-center justify-center bg-rose-50 p-4">
+      <div className="absolute right-4 top-4">
+        <LocaleSelector variant="compact" />
+      </div>
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-rose-500">🌸 MamaMap</h1>

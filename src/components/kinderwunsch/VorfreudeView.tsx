@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
+import { useLocale } from '@/lib/i18n/client'
+import { localized } from '@/lib/i18n/localized'
 
 const STORAGE_KEY = 'mamamap-kw-vorfreude'
 
@@ -56,6 +58,7 @@ function formatDate(iso: string): string {
 }
 
 export function VorfreudeView() {
+  const { locale } = useLocale()
   const [hydrated, setHydrated] = useState(false)
   const [state, setState] = useState<VorfreudeState>(DEFAULT_STATE)
 
@@ -404,12 +407,13 @@ export function VorfreudeView() {
             </h3>
             <ul className="space-y-2">
               {ERSTE_30_MIN_VORSCHLAEGE.map((suggestion) => {
-                const added = first30Texts.has(suggestion)
+                const text = localized(suggestion, locale)
+                const added = first30Texts.has(text)
                 return (
-                  <li key={suggestion}>
+                  <li key={text}>
                     <button
                       type="button"
-                      onClick={() => addFirst30FromSuggestion(suggestion)}
+                      onClick={() => addFirst30FromSuggestion(text)}
                       disabled={added}
                       className={`flex w-full items-start gap-3 rounded-2xl px-4 py-3 text-left text-sm shadow-sm transition-colors ${
                         added
@@ -427,7 +431,7 @@ export function VorfreudeView() {
                       >
                         {added ? '✓' : '+'}
                       </span>
-                      <span className="flex-1 leading-snug">{suggestion}</span>
+                      <span className="flex-1 leading-snug">{text}</span>
                     </button>
                   </li>
                 )
@@ -544,12 +548,13 @@ export function VorfreudeView() {
             </h3>
             <ul className="space-y-2">
               {REVERSE_BUCKET_VORSCHLAEGE.map((suggestion) => {
-                const added = bucketTexts.has(suggestion)
+                const text = localized(suggestion, locale)
+                const added = bucketTexts.has(text)
                 return (
-                  <li key={suggestion}>
+                  <li key={text}>
                     <button
                       type="button"
-                      onClick={() => addBucketFromSuggestion(suggestion)}
+                      onClick={() => addBucketFromSuggestion(text)}
                       disabled={added}
                       className={`flex w-full items-start gap-3 rounded-2xl px-4 py-3 text-left text-sm shadow-sm transition-colors ${
                         added
@@ -567,7 +572,7 @@ export function VorfreudeView() {
                       >
                         {added ? '✓' : '+'}
                       </span>
-                      <span className="flex-1 leading-snug">{suggestion}</span>
+                      <span className="flex-1 leading-snug">{text}</span>
                     </button>
                   </li>
                 )

@@ -6,6 +6,7 @@ import { getTipForDay } from '@/lib/tips'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { DailyTipPopup } from '@/components/tipps/DailyTipPopup'
+import { LocaleSelector } from '@/components/i18n/LocaleSelector'
 
 interface Profile {
   name: string
@@ -98,9 +99,12 @@ export default async function DashboardPage() {
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <h1 className="text-2xl font-bold text-rose-500">🌸 MamaMap</h1>
-          <Link href="/profil" className="text-sm text-gray-500 hover:text-gray-700">
-            Profil
-          </Link>
+          <div className="flex items-center gap-2">
+            <LocaleSelector variant="compact" />
+            <Link href="/profil" className="text-sm text-gray-500 hover:text-gray-700">
+              Profil
+            </Link>
+          </div>
         </div>
 
         {/* Welcome card */}

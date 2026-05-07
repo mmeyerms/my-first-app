@@ -8,11 +8,14 @@ import { ANTI_ANGST_KARTEN } from '@/lib/kinderwunsch/antiAngstKarten'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { useLocale } from '@/lib/i18n/client'
+import { localized } from '@/lib/i18n/localized'
 
 const FAV_STORAGE_KEY = 'mamamap-kw-aengste-fav'
 const READ_STORAGE_KEY = 'mamamap-kw-aengste-read'
 
 export function AengsteView() {
+  const { locale } = useLocale()
   const [hydrated, setHydrated] = useState(false)
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
   const [readCards, setReadCards] = useState<Set<string>>(new Set())
@@ -123,10 +126,10 @@ export function AengsteView() {
                 {currentSlip.emoji}
               </span>
               <h2 className="mb-3 text-xl font-bold text-rose-900">
-                {currentSlip.title}
+                {localized(currentSlip.title, locale)}
               </h2>
               <p className="text-sm leading-relaxed text-gray-700">
-                {currentSlip.body}
+                {localized(currentSlip.body, locale)}
               </p>
             </div>
 
@@ -223,7 +226,7 @@ export function AengsteView() {
                   </span>
                   <div className="flex-1">
                     <p className="text-sm font-medium leading-snug text-gray-800">
-                      {karte.fear}
+                      {localized(karte.fear, locale)}
                     </p>
                     {isRead && !isOpen && (
                       <Badge
@@ -239,7 +242,7 @@ export function AengsteView() {
                 {isOpen && (
                   <div className="border-t border-blue-100 bg-blue-50 px-4 py-4">
                     <p className="text-sm leading-relaxed text-blue-900">
-                      {karte.fact}
+                      {localized(karte.fact, locale)}
                     </p>
                   </div>
                 )}

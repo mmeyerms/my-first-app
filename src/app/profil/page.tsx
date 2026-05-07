@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ProfilForm } from '@/components/profil/ProfilForm'
+import { LocaleSection } from '@/components/profil/LocaleSection'
 
 export default async function ProfilPage() {
   const supabase = await createClient()
@@ -25,8 +26,13 @@ export default async function ProfilPage() {
           </Link>
         </div>
         <h1 className="mb-6 text-2xl font-bold text-gray-800">Mein Profil</h1>
-        <div className="rounded-2xl bg-white p-6 shadow-sm">
-          <ProfilForm profile={profile} />
+        <div className="space-y-6">
+          <div className="rounded-2xl bg-white p-6 shadow-sm">
+            <ProfilForm profile={profile} />
+          </div>
+          <div className="rounded-2xl bg-white p-6 shadow-sm">
+            <LocaleSection />
+          </div>
         </div>
       </div>
     </main>

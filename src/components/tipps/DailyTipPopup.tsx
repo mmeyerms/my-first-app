@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Tip, CATEGORY_LABELS } from '@/lib/tips'
+import { Tip, getTipText, getTipDetail, getCategoryLabel } from '@/lib/tips'
+import { useLocale } from '@/lib/i18n/client'
 import {
   Dialog,
   DialogContent,
@@ -20,6 +21,9 @@ interface Props {
 
 export function DailyTipPopup({ tip, ssw }: Props) {
   const [open, setOpen] = useState(false)
+  const { locale } = useLocale()
+  const categoryLabel = getCategoryLabel(tip.category, locale)
+  const detailText = getTipDetail(tip, locale)
 
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0]
@@ -42,19 +46,19 @@ export function DailyTipPopup({ tip, ssw }: Props) {
           <DialogHeader>
             <p className="text-xs font-medium text-rose-100 mb-1">Dein Tipp für heute · SSW {ssw}</p>
             <DialogTitle className="text-lg font-bold text-white leading-snug">
-              {tip.emoji} {CATEGORY_LABELS[tip.category]}
+              {tip.emoji} {categoryLabel}
             </DialogTitle>
           </DialogHeader>
         </div>
         <div className="px-6 py-5 space-y-5">
           <div className="space-y-3">
-            <p className="text-sm leading-relaxed text-gray-700">{tip.text}</p>
-            {tip.detail && (
-              <p className="text-xs leading-relaxed text-gray-500">{tip.detail}</p>
+            <p className="text-sm leading-relaxed text-gray-700">{getTipText(tip, locale)}</p>
+            {detailText && (
+              <p className="text-xs leading-relaxed text-gray-500">{detailText}</p>
             )}
           </div>
           <div className="flex items-center justify-between">
-            <Badge variant="secondary" className="text-xs capitalize">{CATEGORY_LABELS[tip.category]}</Badge>
+            <Badge variant="secondary" className="text-xs capitalize">{categoryLabel}</Badge>
             <Button onClick={handleClose} size="sm" className="px-5">
               Verstanden 🌸
             </Button>

@@ -9,12 +9,15 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { useLocale } from '@/lib/i18n/client'
+import type { Locale } from '@/lib/i18n/types'
 
 type WizardData = {
   name: string
   baby_name: string
   positive_test_date: string
   due_date: string
+  locale: Locale
 }
 
 const step1Schema = z.object({
@@ -184,6 +187,7 @@ export function OnboardingWizard() {
   const [data, setData] = useState<Partial<WizardData>>({})
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { locale } = useLocale()
 
   async function handleFinish(due_date: string) {
     const fullData: WizardData = {
@@ -191,6 +195,7 @@ export function OnboardingWizard() {
       baby_name: data.baby_name!,
       positive_test_date: data.positive_test_date!,
       due_date,
+      locale,
     }
     setLoading(true)
     setError(null)

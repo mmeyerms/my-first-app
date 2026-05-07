@@ -2,13 +2,16 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { calculateSSW } from '@/lib/utils'
-import { getTipForDay, CATEGORY_LABELS } from '@/lib/tips'
+import { getTipForDay, getTipText, getTipDetail, getCategoryLabel } from '@/lib/tips'
+import { getServerLocale } from '@/lib/i18n/server'
 import { Badge } from '@/components/ui/badge'
 
 export default async function TippsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+
+  const locale = await getServerLocale()
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -20,6 +23,8 @@ export default async function TippsPage() {
 
   const ssw = calculateSSW(profile.due_date)
   const tip = getTipForDay(ssw)
+  const categoryLabel = getCategoryLabel(tip.category, locale)
+  const dateLocale = locale === 'de' ? 'de-DE' : 'en-GB'
 
   return (
     <main className="min-h-screen bg-rose-50">
@@ -33,16 +38,16 @@ export default async function TippsPage() {
 
         <div className="rounded-2xl overflow-hidden shadow-sm">
           <div className="bg-rose-500 px-6 py-5 text-white">
-            <p className="text-xs text-rose-100 mb-1">SSW {ssw} · {new Date().toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
-            <p className="text-xl font-bold">{tip.emoji} {CATEGORY_LABELS[tip.category]}</p>
+            <p className="text-xs text-rose-100 mb-1">SSW {ssw} · {new Date().toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+            <p className="text-xl font-bold">{tip.emoji} {categoryLabel}</p>
           </div>
           <div className="bg-white px-6 py-5">
-            <p className="text-sm leading-relaxed text-gray-700">{tip.text}</p>
+            <p className="text-sm leading-relaxed text-gray-700">{getTipText(tip, locale)}</p>
             {tip.detail && (
-              <p className="mt-3 text-xs leading-relaxed text-gray-500">{tip.detail}</p>
+              <p className="mt-3 text-xs leading-relaxed text-gray-500">{getTipDetail(tip, locale)}</p>
             )}
             <div className="mt-4">
-              <Badge variant="secondary" className="text-xs">{CATEGORY_LABELS[tip.category]}</Badge>
+              <Badge variant="secondary" className="text-xs">{categoryLabel}</Badge>
             </div>
           </div>
         </div>

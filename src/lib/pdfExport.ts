@@ -1,9 +1,12 @@
 import { QUESTIONS, getStageQuestions } from './questions'
+import { localized } from './i18n/localized'
+import type { Locale } from './i18n/types'
 
 export async function exportGeburtsplanPDF(params: {
   babyName: string
   dueDate: string
   answers: Record<string, unknown>
+  locale: Locale
 }) {
   const { jsPDF } = await import('jspdf')
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
@@ -74,7 +77,7 @@ export async function exportGeburtsplanPDF(params: {
     for (const q of answered) {
       if (y > 255) { doc.addPage(); y = 20 }
       const questionDef = QUESTIONS.find((x) => x.id === q.id)!
-      addText(questionDef.label, 10, true, '#374151')
+      addText(localized(questionDef.label, params.locale), 10, true, '#374151')
       const answer = params.answers[q.id]
       const answerText = Array.isArray(answer) ? answer.join(', ') : (answer as string) || 'Noch nicht entschieden'
       addWrappedText(answerText)

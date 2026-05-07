@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Progress } from '@/components/ui/progress'
+import { useLocale } from '@/lib/i18n/client'
+import { localized } from '@/lib/i18n/localized'
 
 const STORAGE_KEY = 'mamamap-einkaufsliste'
 
@@ -37,6 +39,7 @@ const PRIORITY_META: Record<
 }
 
 export function EinkaufslisteView() {
+  const { locale } = useLocale()
   const [checked, setChecked] = useState<Set<string>>(new Set())
   const [hydrated, setHydrated] = useState(false)
 
@@ -173,7 +176,7 @@ export function EinkaufslisteView() {
                         }`}
                       >
                         <span aria-hidden="true">{cat.emoji}</span>
-                        {cat.title}
+                        {localized(cat.title, locale)}
                       </h3>
                       <span className="text-xs text-gray-400">
                         {catChecked} / {cat.items.length}
@@ -207,7 +210,7 @@ export function EinkaufslisteView() {
                                       : 'text-gray-800'
                                 }`}
                               >
-                                {item.label}
+                                {localized(item.label, locale)}
                               </Label>
                               {item.tip && (
                                 <p
@@ -215,7 +218,7 @@ export function EinkaufslisteView() {
                                     isSkip ? 'text-gray-400' : 'text-gray-500'
                                   }`}
                                 >
-                                  💡 {item.tip}
+                                  💡 {localized(item.tip, locale)}
                                 </p>
                               )}
                             </div>

@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ManifestCertificate } from './ManifestCertificate'
 import { buildManifestCertificateHtml } from '@/lib/kinderwunsch/certificateHtml'
+import { useLocale } from '@/lib/i18n/client'
+import { localized } from '@/lib/i18n/localized'
 
 const STORAGE_KEY = 'mamamap-kw-manifest'
 
@@ -32,6 +34,7 @@ const EMPTY_STATE: ManifestState = {
 }
 
 export function ManifestView() {
+  const { locale } = useLocale()
   const [state, setState] = useState<ManifestState>(EMPTY_STATE)
   const [hydrated, setHydrated] = useState(false)
   const [newCustom, setNewCustom] = useState('')
@@ -70,10 +73,12 @@ export function ManifestView() {
   const isSigned = !!state.signedAt
   const totalSelected = state.agreed.length + state.custom.length
 
-  const allStatements = useMemo(() => {
-    const suggested = MANIFEST_VORSCHLAEGE.filter((s) => state.agreed.includes(s.id))
+  const allStatements = useMemo<{ id: string; text: string }[]>(() => {
+    const suggested = MANIFEST_VORSCHLAEGE.filter((s) =>
+      state.agreed.includes(s.id),
+    ).map((s) => ({ id: s.id, text: localized(s.text, locale) }))
     return [...suggested, ...state.custom]
-  }, [state.agreed, state.custom])
+  }, [state.agreed, state.custom, locale])
 
   function toggleAgreed(id: string) {
     if (isSigned) return
@@ -213,7 +218,7 @@ export function ManifestView() {
                     checked ? 'font-medium text-gray-800' : 'text-gray-700'
                   }`}
                 >
-                  {s.text}
+                  {localized(s.text, locale)}
                 </Label>
               </div>
             </div>

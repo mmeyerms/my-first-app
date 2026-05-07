@@ -9,10 +9,13 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Progress } from '@/components/ui/progress'
+import { useLocale } from '@/lib/i18n/client'
+import { localized } from '@/lib/i18n/localized'
 
 const STORAGE_KEY = 'mamamap-kw-koerper'
 
 export function KoerperChecklist() {
+  const { locale } = useLocale()
   const [checked, setChecked] = useState<Set<string>>(new Set())
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>(
     () => Object.fromEntries(KOERPER_KATEGORIEN.map((c) => [c.id, true])),
@@ -101,7 +104,7 @@ export function KoerperChecklist() {
         return (
           <section
             key={cat.id}
-            aria-label={cat.title}
+            aria-label={localized(cat.title, locale)}
             className="overflow-hidden rounded-2xl bg-white shadow-sm"
           >
             <button
@@ -116,7 +119,7 @@ export function KoerperChecklist() {
                 </span>
                 <div>
                   <h2 className="text-base font-semibold text-gray-800">
-                    {cat.title}
+                    {localized(cat.title, locale)}
                   </h2>
                   <p className="text-xs text-gray-500">
                     {catChecked} / {cat.items.length} erledigt
@@ -151,11 +154,11 @@ export function KoerperChecklist() {
                               : 'text-gray-800'
                           }`}
                         >
-                          {item.label}
+                          {localized(item.label, locale)}
                         </Label>
                         {item.tip && (
                           <p className="mt-1 text-xs text-gray-500">
-                            💡 {item.tip}
+                            💡 {localized(item.tip, locale)}
                           </p>
                         )}
                       </div>

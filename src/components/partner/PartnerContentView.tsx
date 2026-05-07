@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { getPartnerTipForDay, PARTNER_TIP_LABELS, type PartnerTipType } from '@/lib/partnerTips'
-import { getCoupleQuestionForDay, type CoupleQuestion } from '@/lib/coupleQuestions'
+import { getPartnerTipForDay, getPartnerTipText, getPartnerTipLabel, type PartnerTipType } from '@/lib/partnerTips'
+import { getCoupleQuestionForDay, getCoupleQuestionText, type CoupleQuestion } from '@/lib/coupleQuestions'
+import { useLocale } from '@/lib/i18n/client'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
@@ -31,14 +32,18 @@ function tipBadgeVariant(type: PartnerTipType): 'secondary' | 'default' {
 }
 
 export function PartnerContentView({ ssw, babyName }: Props) {
+  const { locale } = useLocale()
   const tip = getPartnerTipForDay(ssw)
   const question = getCoupleQuestionForDay()
+  const tipText = getPartnerTipText(tip, locale)
+  const tipLabel = getPartnerTipLabel(tip.type, locale)
+  const questionText = getCoupleQuestionText(question, locale)
 
   const [questionCopied, setQuestionCopied] = useState(false)
   const [tipCopied, setTipCopied] = useState(false)
 
   async function handleShareQuestion() {
-    const text = `💕 MamaMap Frage des Tages\n\n${question.emoji} ${question.question}\n\n– Stellt euch diese Frage heute gemeinsam 🌸`
+    const text = `💕 MamaMap Frage des Tages\n\n${question.emoji} ${questionText}\n\n– Stellt euch diese Frage heute gemeinsam 🌸`
 
     try {
       if (typeof navigator !== 'undefined' && navigator.share) {
@@ -54,7 +59,7 @@ export function PartnerContentView({ ssw, babyName }: Props) {
   }
 
   async function handleShareTip() {
-    const text = `💛 Tipp für werdende Papas (SSW ${ssw})\n\n${tip.emoji} ${tip.text}\n\n– MamaMap`
+    const text = `💛 Tipp für werdende Papas (SSW ${ssw})\n\n${tip.emoji} ${tipText}\n\n– MamaMap`
 
     try {
       if (typeof navigator !== 'undefined' && navigator.share) {
@@ -84,7 +89,7 @@ export function PartnerContentView({ ssw, babyName }: Props) {
             variant={tipBadgeVariant(tip.type)}
             className={tipBadgeClass(tip.type)}
           >
-            {PARTNER_TIP_LABELS[tip.type]}
+            {tipLabel}
           </Badge>
         </div>
 
@@ -96,7 +101,7 @@ export function PartnerContentView({ ssw, babyName }: Props) {
           <span className="text-3xl" aria-hidden="true">
             {tip.emoji}
           </span>
-          <p className="text-sm leading-relaxed text-gray-700">{tip.text}</p>
+          <p className="text-sm leading-relaxed text-gray-700">{tipText}</p>
         </div>
       </section>
 
@@ -124,7 +129,7 @@ export function PartnerContentView({ ssw, babyName }: Props) {
         </div>
 
         <p className="mb-5 text-lg font-medium leading-relaxed text-rose-950">
-          {question.question}
+          {questionText}
         </p>
 
         <Button

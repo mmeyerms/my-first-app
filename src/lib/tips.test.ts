@@ -6,7 +6,8 @@ describe('getTipForDay', () => {
     for (let ssw = 1; ssw <= 42; ssw++) {
       const tip = getTipForDay(ssw)
       expect(tip).toBeDefined()
-      expect(tip.text.length).toBeGreaterThan(10)
+      expect(tip.text.de.length).toBeGreaterThan(10)
+      expect(tip.text.en.length).toBeGreaterThan(10)
     }
   })
 
@@ -47,7 +48,8 @@ describe('TIPS dataset', () => {
 
   it('all tips have non-empty text and emoji', () => {
     TIPS.forEach((t) => {
-      expect(t.text.trim().length).toBeGreaterThan(0)
+      expect(t.text.de.trim().length).toBeGreaterThan(0)
+      expect(t.text.en.trim().length).toBeGreaterThan(0)
       expect(t.emoji.trim().length).toBeGreaterThan(0)
     })
   })

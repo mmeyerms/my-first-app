@@ -20,12 +20,14 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
+import { useLocale } from '@/lib/i18n/client'
+import { localized, type LocalizedString } from '@/lib/i18n/localized'
 
 const STORAGE_KEY = 'mamamap-kw-arzt'
 
 type CustomFrage = {
   id: string
-  text: string
+  text: LocalizedString
   kategorie: ArztFrage['kategorie']
 }
 
@@ -48,6 +50,7 @@ function makeId(): string {
 }
 
 export function ArztView() {
+  const { locale } = useLocale()
   const [hydrated, setHydrated] = useState(false)
   const [state, setState] = useState<ArztState>(DEFAULT_STATE)
   const [customText, setCustomText] = useState('')
@@ -59,12 +62,47 @@ export function ArztView() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
       if (raw) {
-        const parsed = JSON.parse(raw) as ArztState
+        const parsed = JSON.parse(raw) as {
+          asked?: unknown
+          custom?: unknown
+        }
         if (parsed && typeof parsed === 'object') {
-          setState({
-            asked: Array.isArray(parsed.asked) ? parsed.asked : [],
-            custom: Array.isArray(parsed.custom) ? parsed.custom : [],
-          })
+          const asked = Array.isArray(parsed.asked)
+            ? (parsed.asked.filter((x) => typeof x === 'string') as string[])
+            : []
+          const customRaw = Array.isArray(parsed.custom) ? parsed.custom : []
+          const custom: CustomFrage[] = customRaw
+            .map((c) => {
+              if (!c || typeof c !== 'object') return null
+              const obj = c as {
+                id?: unknown
+                text?: unknown
+                kategorie?: unknown
+              }
+              if (typeof obj.id !== 'string') return null
+              if (typeof obj.kategorie !== 'string') return null
+              let text: LocalizedString
+              if (typeof obj.text === 'string') {
+                // Legacy shape — store as both languages
+                text = { de: obj.text, en: obj.text }
+              } else if (
+                obj.text &&
+                typeof obj.text === 'object' &&
+                typeof (obj.text as LocalizedString).de === 'string' &&
+                typeof (obj.text as LocalizedString).en === 'string'
+              ) {
+                text = obj.text as LocalizedString
+              } else {
+                return null
+              }
+              return {
+                id: obj.id,
+                text,
+                kategorie: obj.kategorie as ArztFrage['kategorie'],
+              }
+            })
+            .filter((x): x is CustomFrage => x !== null)
+          setState({ asked, custom })
         }
       }
     } catch {
@@ -128,7 +166,11 @@ export function ArztView() {
       ...prev,
       custom: [
         ...prev.custom,
-        { id: makeId(), text, kategorie: customKategorie },
+        {
+          id: makeId(),
+          text: { de: text, en: text },
+          kategorie: customKategorie,
+        },
       ],
     }))
     setCustomText('')
@@ -147,9 +189,9 @@ export function ArztView() {
     for (const kat of KATEGORIE_KEYS) {
       const items = fragenByKategorie[kat].filter((f) => !askedSet.has(f.id))
       if (items.length === 0) continue
-      lines.push(ARZT_KATEGORIE_LABELS[kat])
+      lines.push(localized(ARZT_KATEGORIE_LABELS[kat], locale))
       for (const f of items) {
-        lines.push(`- ${f.text}`)
+        lines.push(`- ${localized(f.text, locale)}`)
       }
       lines.push('')
     }
@@ -203,12 +245,12 @@ export function ArztView() {
         return (
           <section
             key={kat}
-            aria-label={ARZT_KATEGORIE_LABELS[kat]}
+            aria-label={localized(ARZT_KATEGORIE_LABELS[kat], locale)}
             className="overflow-hidden rounded-2xl bg-white shadow-sm"
           >
             <div className="border-b border-gray-100 px-5 py-3">
               <h2 className="text-sm font-semibold text-gray-800">
-                {ARZT_KATEGORIE_LABELS[kat]}
+                {localized(ARZT_KATEGORIE_LABELS[kat], locale)}
               </h2>
             </div>
             <ul className="space-y-3 px-5 py-4">
@@ -238,7 +280,7 @@ export function ArztView() {
                         }`}
                       >
                         <span aria-hidden="true">{frage.emoji}</span>
-                        <span className="flex-1">{frage.text}</span>
+                        <span className="flex-1">{localized(frage.text, locale)}</span>
                       </Label>
                       {isCustom && (
                         <Badge
@@ -294,7 +336,7 @@ export function ArztView() {
             <SelectContent>
               {KATEGORIE_KEYS.map((kat) => (
                 <SelectItem key={kat} value={kat}>
-                  {ARZT_KATEGORIE_LABELS[kat]}
+                  {localized(ARZT_KATEGORIE_LABELS[kat], locale)}
                 </SelectItem>
               ))}
             </SelectContent>

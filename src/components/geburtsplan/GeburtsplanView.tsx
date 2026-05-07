@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { Question, STAGE_UNLOCK, getStageQuestions } from '@/lib/questions'
 import { exportGeburtsplanPDF } from '@/lib/pdfExport'
+import { useLocale } from '@/lib/i18n/client'
 import { QuestionCard } from './QuestionCard'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -28,6 +29,7 @@ function isAnsweredValue(value: unknown): boolean {
 }
 
 export function GeburtsplanView({ initialAnswers, ssw, babyName, dueDate }: Props) {
+  const { locale } = useLocale()
   const [answers, setAnswers] = useState<Record<string, unknown>>(initialAnswers)
   const [saving, setSaving] = useState(false)
   const [exporting, setExporting] = useState(false)
@@ -89,7 +91,7 @@ export function GeburtsplanView({ initialAnswers, ssw, babyName, dueDate }: Prop
   async function handleExport() {
     setExporting(true)
     try {
-      await exportGeburtsplanPDF({ babyName, dueDate, answers })
+      await exportGeburtsplanPDF({ babyName, dueDate, answers, locale })
     } finally {
       setExporting(false)
     }

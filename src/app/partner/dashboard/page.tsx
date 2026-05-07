@@ -1,15 +1,17 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { calculateSSW } from '@/lib/utils'
-import { getPartnerTipForDay, PARTNER_TIP_LABELS } from '@/lib/partnerTips'
-import { QUESTIONS } from '@/lib/questions'
-import { Card, CardContent } from '@/components/ui/card'
+import { getPartnerTipForDay, getPartnerTipText, getPartnerTipLabel } from '@/lib/partnerTips'
+import { QUESTIONS, getQuestionLabel } from '@/lib/questions'
+import { getServerLocale } from '@/lib/i18n/server'
 import { Badge } from '@/components/ui/badge'
 
 export default async function PartnerDashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+
+  const locale = await getServerLocale()
 
   const { data: link } = await supabase
     .from('partner_links')
@@ -67,10 +69,10 @@ export default async function PartnerDashboardPage() {
         <div className="mb-4 rounded-2xl bg-white p-5 shadow-sm">
           <div className="mb-3 flex items-center justify-between">
             <p className="text-sm font-semibold text-gray-700">Dein Tipp für heute</p>
-            <Badge variant="secondary">{PARTNER_TIP_LABELS[tip.type]}</Badge>
+            <Badge variant="secondary">{getPartnerTipLabel(tip.type, locale)}</Badge>
           </div>
           <p className="mb-2 text-3xl">{tip.emoji}</p>
-          <p className="text-sm leading-relaxed text-gray-700">{tip.text}</p>
+          <p className="text-sm leading-relaxed text-gray-700">{getPartnerTipText(tip, locale)}</p>
         </div>
 
         {/* Birth plan (read-only) */}
@@ -80,7 +82,7 @@ export default async function PartnerDashboardPage() {
             <div className="space-y-3">
               {answeredQuestions.map((q) => (
                 <div key={q.id} className="text-sm">
-                  <p className="text-xs text-gray-400">{q.label}</p>
+                  <p className="text-xs text-gray-400">{getQuestionLabel(q, locale)}</p>
                   <p className="text-gray-800">
                     {Array.isArray(answers[q.id])
                       ? (answers[q.id] as string[]).join(', ')
