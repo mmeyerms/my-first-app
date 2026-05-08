@@ -8,11 +8,14 @@ import { Progress } from '@/components/ui/progress'
 import { Textarea } from '@/components/ui/textarea'
 import { useLocale } from '@/lib/i18n/client'
 import { localized } from '@/lib/i18n/localized'
+import { useTheme } from '@/lib/theme/client'
 
 const STORAGE_KEY = 'mamamap-kw-team'
 
 export function TeamFragen() {
   const { locale } = useLocale()
+  const { theme } = useTheme()
+  const isClassic = theme === 'classic'
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [hydrated, setHydrated] = useState(false)
   const [savedAt, setSavedAt] = useState<number | null>(null)
@@ -75,7 +78,15 @@ export function TeamFragen() {
         aria-label="10 Fragen für euch als Team"
         className="rounded-2xl bg-white p-5 shadow-sm"
       >
-        <h2 className="text-base font-semibold text-gray-800">💛 Wir als Team</h2>
+        <h2
+          className={
+            isClassic
+              ? 'text-base font-semibold text-gray-800'
+              : 'font-display text-xl font-medium text-foreground'
+          }
+        >
+          {isClassic ? '💛 ' : ''}Wir als Team
+        </h2>
         <p className="mt-2 text-sm text-gray-600">
           10 tiefe Fragen, die ihr gemeinsam beantworten könnt. Es gibt keine
           richtigen Antworten — nur eure.
@@ -103,14 +114,28 @@ export function TeamFragen() {
             className="rounded-2xl bg-white p-5 shadow-sm"
           >
             <div className="flex items-start gap-3">
-              <span className="text-2xl" aria-hidden="true">
-                {frage.emoji}
-              </span>
+              {isClassic && (
+                <span className="text-2xl" aria-hidden="true">
+                  {frage.emoji}
+                </span>
+              )}
               <div className="flex-1">
-                <p className="text-xs font-medium text-rose-500">
+                <p
+                  className={
+                    isClassic
+                      ? 'text-xs font-medium text-rose-500'
+                      : 'text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground'
+                  }
+                >
                   Frage {idx + 1} / {total}
                 </p>
-                <p className="mt-1 text-base font-semibold leading-snug text-gray-800">
+                <p
+                  className={
+                    isClassic
+                      ? 'mt-1 text-base font-semibold leading-snug text-gray-800'
+                      : 'mt-1 font-display text-lg font-medium leading-snug text-foreground'
+                  }
+                >
                   {localized(frage.question, locale)}
                 </p>
                 {frage.hint && (

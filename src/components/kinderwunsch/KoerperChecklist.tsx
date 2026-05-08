@@ -11,11 +11,14 @@ import { Label } from '@/components/ui/label'
 import { Progress } from '@/components/ui/progress'
 import { useLocale } from '@/lib/i18n/client'
 import { localized } from '@/lib/i18n/localized'
+import { useTheme } from '@/lib/theme/client'
 
 const STORAGE_KEY = 'mamamap-kw-koerper'
 
 export function KoerperChecklist() {
   const { locale } = useLocale()
+  const { theme } = useTheme()
+  const isClassic = theme === 'classic'
   const [checked, setChecked] = useState<Set<string>>(new Set())
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>(
     () => Object.fromEntries(KOERPER_KATEGORIEN.map((c) => [c.id, true])),
@@ -91,7 +94,9 @@ export function KoerperChecklist() {
         <Progress value={progress} className="h-2 bg-rose-100 [&>div]:bg-rose-500" />
         <p className="mt-3 text-sm text-gray-600">
           {allDone
-            ? 'Stark — dein Körper ist bestens vorbereitet. 🌷'
+            ? isClassic
+              ? 'Stark — dein Körper ist bestens vorbereitet. 🌷'
+              : 'Stark — dein Körper ist bestens vorbereitet.'
             : checkedCount === 0
               ? 'Kein Druck — dies ist kein Test, sondern ein liebevoller Check für deinen Körper.'
               : `Schon ${checkedCount} Punkte erledigt. Weiter so!`}
@@ -114,11 +119,19 @@ export function KoerperChecklist() {
               className="flex w-full items-center justify-between px-5 py-4 text-left"
             >
               <div className="flex items-center gap-3">
-                <span className="text-2xl" aria-hidden="true">
-                  {cat.emoji}
-                </span>
+                {isClassic && (
+                  <span className="text-2xl" aria-hidden="true">
+                    {cat.emoji}
+                  </span>
+                )}
                 <div>
-                  <h2 className="text-base font-semibold text-gray-800">
+                  <h2
+                    className={
+                      isClassic
+                        ? 'text-base font-semibold text-gray-800'
+                        : 'font-display text-lg font-medium text-foreground'
+                    }
+                  >
                     {localized(cat.title, locale)}
                   </h2>
                   <p className="text-xs text-gray-500">
@@ -158,7 +171,8 @@ export function KoerperChecklist() {
                         </Label>
                         {item.tip && (
                           <p className="mt-1 text-xs text-gray-500">
-                            💡 {localized(item.tip, locale)}
+                            {isClassic ? '💡 ' : ''}
+                            {localized(item.tip, locale)}
                           </p>
                         )}
                       </div>

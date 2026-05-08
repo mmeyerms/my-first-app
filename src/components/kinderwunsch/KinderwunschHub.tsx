@@ -2,10 +2,21 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import {
+  Sprout,
+  Heart,
+  ShieldCheck,
+  Sparkles,
+  ScrollText,
+  Stethoscope,
+  ChevronRight,
+  type LucideIcon,
+} from 'lucide-react'
 
 import { KOERPER_KATEGORIEN } from '@/lib/kinderwunsch/koerper'
 import { TEAM_FRAGEN } from '@/lib/kinderwunsch/teamFragen'
 import { MANIFEST_VORSCHLAEGE } from '@/lib/kinderwunsch/manifest'
+import { useTheme } from '@/lib/theme/client'
 
 type IslandProgress = {
   text: string
@@ -15,6 +26,7 @@ type IslandProgress = {
 type IslandConfig = {
   href: string
   emoji: string
+  Icon: LucideIcon
   title: string
   description: string
   storageKey: string
@@ -25,6 +37,7 @@ const ISLANDS: IslandConfig[] = [
   {
     href: '/kinderwunsch/koerper',
     emoji: '🌱',
+    Icon: Sprout,
     title: 'Körper bereit?',
     description: 'Folsäure, Impfungen, Termine — Checkliste',
     storageKey: 'mamamap-kw-koerper',
@@ -45,6 +58,7 @@ const ISLANDS: IslandConfig[] = [
   {
     href: '/kinderwunsch/team',
     emoji: '💛',
+    Icon: Heart,
     title: 'Wir als Team',
     description: '10 Pärchen-Fragen zu Werten und Erziehung',
     storageKey: 'mamamap-kw-team',
@@ -64,6 +78,7 @@ const ISLANDS: IslandConfig[] = [
   {
     href: '/kinderwunsch/aengste',
     emoji: '🤔',
+    Icon: ShieldCheck,
     title: 'Was macht Angst?',
     description: 'Erlaubniskarten und Sorgen mit Fakten beruhigen',
     storageKey: 'mamamap-kw-aengste-read',
@@ -81,6 +96,7 @@ const ISLANDS: IslandConfig[] = [
   {
     href: '/kinderwunsch/vorfreude',
     emoji: '✨',
+    Icon: Sparkles,
     title: 'Vorfreude-Rituale',
     description: 'Brief, 30-Min-Box, Bucket List vor dem Baby',
     storageKey: 'mamamap-kw-vorfreude',
@@ -102,6 +118,7 @@ const ISLANDS: IslandConfig[] = [
   {
     href: '/kinderwunsch/manifest',
     emoji: '📜',
+    Icon: ScrollText,
     title: 'Werte-Manifest',
     description: 'Eure 5 Grundsätze als Eltern festhalten',
     storageKey: 'mamamap-kw-manifest',
@@ -131,6 +148,7 @@ const ISLANDS: IslandConfig[] = [
   {
     href: '/kinderwunsch/arzt',
     emoji: '🩺',
+    Icon: Stethoscope,
     title: 'Beim Arzt',
     description: 'Fragenliste für die Kinderwunschsprechstunde',
     storageKey: 'mamamap-kw-arzt',
@@ -148,6 +166,8 @@ const ISLANDS: IslandConfig[] = [
 ]
 
 export function KinderwunschHub() {
+  const { theme } = useTheme()
+  const isClassic = theme === 'classic'
   const [progressMap, setProgressMap] = useState<Record<string, IslandProgress | null>>({})
   const [hydrated, setHydrated] = useState(false)
 
@@ -170,7 +190,11 @@ export function KinderwunschHub() {
       <div className="mb-4">
         <Link
           href="/dashboard"
-          className="text-sm text-rose-500 hover:underline"
+          className={
+            isClassic
+              ? 'text-sm text-rose-500 hover:underline'
+              : 'text-sm text-primary hover:underline'
+          }
         >
           ← Dashboard
         </Link>
@@ -178,12 +202,28 @@ export function KinderwunschHub() {
 
       <section
         aria-label="Kinderwunsch & Vorfreude"
-        className="mb-6 rounded-2xl bg-white p-6 shadow-sm"
+        className={
+          isClassic
+            ? 'mb-6 rounded-2xl bg-white p-6 shadow-sm'
+            : 'card-elevated mb-6 rounded-2xl bg-card p-7'
+        }
       >
-        <h1 className="text-2xl font-bold text-gray-800">
-          🌷 Kinderwunsch &amp; Vorfreude
+        <h1
+          className={
+            isClassic
+              ? 'text-2xl font-bold text-gray-800'
+              : 'font-display text-2xl font-medium leading-tight text-foreground'
+          }
+        >
+          {isClassic ? '🌷 ' : ''}Kinderwunsch &amp; Vorfreude
         </h1>
-        <p className="mt-2 text-sm text-gray-600">
+        <p
+          className={
+            isClassic
+              ? 'mt-2 text-sm text-gray-600'
+              : 'mt-2 font-display text-sm italic text-muted-foreground'
+          }
+        >
           Vorbereitung &amp; Reflexion — vor und nach dem ersten positiven Test.
         </p>
       </section>
@@ -191,33 +231,79 @@ export function KinderwunschHub() {
       <div className="space-y-3" aria-label="Inseln">
         {ISLANDS.map((island) => {
           const progress = hydrated ? progressMap[island.storageKey] : null
+          const Icon = island.Icon
           return (
             <Link
               key={island.href}
               href={island.href}
-              className="block rounded-2xl bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+              className={
+                isClassic
+                  ? 'block rounded-2xl bg-white p-5 shadow-sm transition-shadow hover:shadow-md'
+                  : 'card-elevated block rounded-2xl border border-border/60 bg-card p-5 transition-all hover:-translate-y-0.5 hover:shadow-md'
+              }
             >
               <div className="flex items-start gap-4">
-                <span className="text-3xl" aria-hidden="true">
-                  {island.emoji}
+                <span
+                  aria-hidden="true"
+                  className={
+                    isClassic
+                      ? 'text-3xl leading-none'
+                      : 'flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-secondary'
+                  }
+                >
+                  {isClassic ? (
+                    island.emoji
+                  ) : (
+                    <Icon className="h-6 w-6 text-primary" strokeWidth={1.5} />
+                  )}
                 </span>
-                <div className="flex-1">
-                  <p className="font-semibold text-gray-800">{island.title}</p>
-                  <p className="mt-0.5 text-xs text-gray-500">{island.description}</p>
+                <div className="min-w-0 flex-1 pt-0.5">
+                  <p
+                    className={
+                      isClassic
+                        ? 'font-semibold text-gray-800'
+                        : 'font-display text-lg font-semibold leading-tight text-foreground'
+                    }
+                  >
+                    {island.title}
+                  </p>
+                  <p
+                    className={
+                      isClassic
+                        ? 'mt-0.5 text-xs text-gray-500'
+                        : 'mt-1 font-display text-sm italic text-muted-foreground'
+                    }
+                  >
+                    {island.description}
+                  </p>
                   {progress && (
                     <p
-                      className={`mt-2 text-xs font-medium ${
-                        progress.highlight ? 'text-rose-500' : 'text-gray-600'
-                      }`}
+                      className={
+                        isClassic
+                          ? `mt-2 text-xs font-medium ${
+                              progress.highlight ? 'text-rose-500' : 'text-gray-600'
+                            }`
+                          : `mt-2 text-xs font-medium ${
+                              progress.highlight ? 'text-primary' : 'text-muted-foreground'
+                            }`
+                      }
                     >
                       {progress.highlight ? '✓ ' : ''}
                       {progress.text}
                     </p>
                   )}
                 </div>
-                <span className="text-gray-300" aria-hidden="true">
-                  ›
-                </span>
+                {isClassic ? (
+                  <span className="text-gray-300" aria-hidden="true">
+                    ›
+                  </span>
+                ) : (
+                  <ChevronRight
+                    className="mt-3 h-4 w-4 shrink-0 text-muted-foreground"
+                    strokeWidth={1.5}
+                    aria-hidden="true"
+                  />
+                )}
               </div>
             </Link>
           )

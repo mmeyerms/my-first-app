@@ -73,9 +73,12 @@
     --sidebar-ring: 354 26% 30%;
   }
 
-  /* Classic theme — original v1 rose / pink palette. */
+  /* Classic theme — original v1 rose / pink palette.
+     Note: in v1 most pages used `bg-rose-50` directly via Tailwind. After
+     the v2 sweep those usages became `bg-background`, so to restore the
+     warm pink wash we set --background to the rose-50 hue here. */
   [data-theme='classic'] {
-    --background: 0 0% 100%;
+    --background: 356 100% 97%;
     --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;

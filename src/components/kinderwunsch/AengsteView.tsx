@@ -10,12 +10,15 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useLocale } from '@/lib/i18n/client'
 import { localized } from '@/lib/i18n/localized'
+import { useTheme } from '@/lib/theme/client'
 
 const FAV_STORAGE_KEY = 'mamamap-kw-aengste-fav'
 const READ_STORAGE_KEY = 'mamamap-kw-aengste-read'
 
 export function AengsteView() {
   const { locale } = useLocale()
+  const { theme } = useTheme()
+  const isClassic = theme === 'classic'
   const [hydrated, setHydrated] = useState(false)
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
   const [readCards, setReadCards] = useState<Set<string>>(new Set())
@@ -122,10 +125,18 @@ export function AengsteView() {
           {/* Card */}
           <div className="rounded-2xl bg-gradient-to-br from-rose-50 to-rose-100 p-8 shadow-sm ring-1 ring-rose-200">
             <div className="flex flex-col items-center text-center">
-              <span className="mb-4 text-6xl" aria-hidden="true">
-                {currentSlip.emoji}
-              </span>
-              <h2 className="mb-3 text-xl font-bold text-rose-900">
+              {isClassic && (
+                <span className="mb-4 text-6xl" aria-hidden="true">
+                  {currentSlip.emoji}
+                </span>
+              )}
+              <h2
+                className={
+                  isClassic
+                    ? 'mb-3 text-xl font-bold text-rose-900'
+                    : 'mb-3 font-display text-2xl font-medium leading-tight text-rose-900'
+                }
+              >
                 {localized(currentSlip.title, locale)}
               </h2>
               <p className="text-sm leading-relaxed text-gray-700">
@@ -221,11 +232,19 @@ export function AengsteView() {
                   aria-expanded={isOpen}
                   className="flex w-full items-start gap-3 px-4 py-4 text-left"
                 >
-                  <span className="text-2xl" aria-hidden="true">
-                    {karte.emoji}
-                  </span>
+                  {isClassic && (
+                    <span className="text-2xl" aria-hidden="true">
+                      {karte.emoji}
+                    </span>
+                  )}
                   <div className="flex-1">
-                    <p className="text-sm font-medium leading-snug text-gray-800">
+                    <p
+                      className={
+                        isClassic
+                          ? 'text-sm font-medium leading-snug text-gray-800'
+                          : 'font-display text-base leading-snug text-foreground'
+                      }
+                    >
                       {localized(karte.fear, locale)}
                     </p>
                     {isRead && !isOpen && (

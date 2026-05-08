@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { X } from 'lucide-react'
+import { Printer, ScrollText, Signature, X } from 'lucide-react'
 
 import { MANIFEST_VORSCHLAEGE } from '@/lib/kinderwunsch/manifest'
 import { Button } from '@/components/ui/button'
@@ -12,6 +12,7 @@ import { ManifestCertificate } from './ManifestCertificate'
 import { buildManifestCertificateHtml } from '@/lib/kinderwunsch/certificateHtml'
 import { useLocale } from '@/lib/i18n/client'
 import { localized } from '@/lib/i18n/localized'
+import { useTheme } from '@/lib/theme/client'
 
 const STORAGE_KEY = 'mamamap-kw-manifest'
 
@@ -35,6 +36,8 @@ const EMPTY_STATE: ManifestState = {
 
 export function ManifestView() {
   const { locale } = useLocale()
+  const { theme } = useTheme()
+  const isClassic = theme === 'classic'
   const [state, setState] = useState<ManifestState>(EMPTY_STATE)
   const [hydrated, setHydrated] = useState(false)
   const [newCustom, setNewCustom] = useState('')
@@ -161,7 +164,14 @@ export function ManifestView() {
             onClick={handlePrint}
             className="w-full bg-rose-500 text-white hover:bg-rose-600"
           >
-            🖨️ Zertifikat drucken / als PDF speichern
+            {isClassic ? (
+              <>🖨️ Zertifikat drucken / als PDF speichern</>
+            ) : (
+              <>
+                <Printer className="mr-2 h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+                Zertifikat drucken / als PDF speichern
+              </>
+            )}
           </Button>
           <p className="text-center text-xs text-gray-500">
             Tipp: Im Druck-Dialog „Als PDF speichern" wählen, um das Zertifikat digital aufzubewahren.
@@ -185,8 +195,27 @@ export function ManifestView() {
         aria-label="Werte-Manifest Einleitung"
         className="rounded-2xl bg-white p-5 shadow-sm"
       >
-        <h2 className="text-base font-semibold text-gray-800">📜 Werte-Manifest</h2>
-        <p className="mt-2 text-sm text-gray-600">
+        <h2
+          className={
+            isClassic
+              ? 'flex items-center gap-2 text-base font-semibold text-gray-800'
+              : 'flex items-center gap-2 font-display text-xl font-medium text-foreground'
+          }
+        >
+          {isClassic ? (
+            <span aria-hidden="true">📜</span>
+          ) : (
+            <ScrollText className="h-5 w-5 text-primary" strokeWidth={1.5} aria-hidden="true" />
+          )}
+          Werte-Manifest
+        </h2>
+        <p
+          className={
+            isClassic
+              ? 'mt-2 text-sm text-gray-600'
+              : 'mt-2 font-display text-sm italic text-muted-foreground'
+          }
+        >
           Welche Grundsätze wollt ihr als Eltern leben? Wählt 5 oder mehr — oder
           formuliert eigene.
         </p>
@@ -345,7 +374,14 @@ export function ManifestView() {
           disabled={totalSelected === 0}
           className="mt-5 w-full bg-rose-500 text-white hover:bg-rose-600"
         >
-          ✍️ Wir verpflichten uns
+          {isClassic ? (
+            <>✍️ Wir verpflichten uns</>
+          ) : (
+            <>
+              <Signature className="mr-2 h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+              Wir verpflichten uns
+            </>
+          )}
         </Button>
         {totalSelected === 0 && (
           <p className="mt-2 text-center text-xs text-gray-500">

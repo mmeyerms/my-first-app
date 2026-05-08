@@ -91,14 +91,23 @@ export function LocaleProvider({
     setLocaleState(l)
     writeLocaleSideEffects(l)
 
-    // Best-effort: persist to profile if user is logged in (don't block on errors)
-    fetch('/api/profile', {
+    // Persist to profile if user is logged in, then reload so server
+    // components (dashboard, page titles, etc.) pick up the new cookie.
+    void fetch('/api/profile', {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ locale: l }),
-    }).catch(() => {
-      // Anonymous users will get 401; that's fine
     })
+      .catch(() => {
+        // Anonymous users will get 401; that's fine
+      })
+      .finally(() => {
+        try {
+          window.location.reload()
+        } catch {
+          // ignore
+        }
+      })
   }, [])
 
   return (

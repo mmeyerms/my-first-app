@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { X } from 'lucide-react'
+import { Share2, X } from 'lucide-react'
 
 import {
   ARZT_FRAGEN,
@@ -22,6 +22,11 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { useLocale } from '@/lib/i18n/client'
 import { localized, type LocalizedString } from '@/lib/i18n/localized'
+import { useTheme } from '@/lib/theme/client'
+
+function stripLeadingEmoji(text: string): string {
+  return text.replace(/^[\p{Emoji_Presentation}\p{Extended_Pictographic}]\s*/u, '').trim()
+}
 
 const STORAGE_KEY = 'mamamap-kw-arzt'
 
@@ -51,7 +56,15 @@ function makeId(): string {
 
 export function ArztView() {
   const { locale } = useLocale()
+  const { theme } = useTheme()
+  const isClassic = theme === 'classic'
   const [hydrated, setHydrated] = useState(false)
+
+  function categoryLabel(kat: ArztFrage['kategorie']): string {
+    const raw = localized(ARZT_KATEGORIE_LABELS[kat], locale)
+    return isClassic ? raw : stripLeadingEmoji(raw)
+  }
+
   const [state, setState] = useState<ArztState>(DEFAULT_STATE)
   const [customText, setCustomText] = useState('')
   const [customKategorie, setCustomKategorie] =
@@ -185,11 +198,14 @@ export function ArztView() {
   }
 
   async function handleShare() {
-    const lines: string[] = ['💛 Meine Fragen für die Kinderwunschsprechstunde', '']
+    const heading = isClassic
+      ? '💛 Meine Fragen für die Kinderwunschsprechstunde'
+      : 'Meine Fragen für die Kinderwunschsprechstunde'
+    const lines: string[] = [heading, '']
     for (const kat of KATEGORIE_KEYS) {
       const items = fragenByKategorie[kat].filter((f) => !askedSet.has(f.id))
       if (items.length === 0) continue
-      lines.push(localized(ARZT_KATEGORIE_LABELS[kat], locale))
+      lines.push(categoryLabel(kat))
       for (const f of items) {
         lines.push(`- ${localized(f.text, locale)}`)
       }
@@ -227,7 +243,16 @@ export function ArztView() {
         className="w-full bg-rose-500 text-white hover:bg-rose-600"
         aria-label="Liste teilen oder kopieren"
       >
-        {shareCopied ? '✓ Kopiert!' : '📤 Liste teilen'}
+        {shareCopied ? (
+          '✓ Kopiert!'
+        ) : isClassic ? (
+          '📤 Liste teilen'
+        ) : (
+          <>
+            <Share2 className="mr-2 h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+            Liste teilen
+          </>
+        )}
       </Button>
 
       {/* Counter */}
@@ -245,12 +270,18 @@ export function ArztView() {
         return (
           <section
             key={kat}
-            aria-label={localized(ARZT_KATEGORIE_LABELS[kat], locale)}
+            aria-label={categoryLabel(kat)}
             className="overflow-hidden rounded-2xl bg-white shadow-sm"
           >
             <div className="border-b border-gray-100 px-5 py-3">
-              <h2 className="text-sm font-semibold text-gray-800">
-                {localized(ARZT_KATEGORIE_LABELS[kat], locale)}
+              <h2
+                className={
+                  isClassic
+                    ? 'text-sm font-semibold text-gray-800'
+                    : 'font-display text-base font-medium text-foreground'
+                }
+              >
+                {categoryLabel(kat)}
               </h2>
             </div>
             <ul className="space-y-3 px-5 py-4">
@@ -279,7 +310,7 @@ export function ArztView() {
                             : 'text-gray-800'
                         }`}
                       >
-                        <span aria-hidden="true">{frage.emoji}</span>
+                        {isClassic && <span aria-hidden="true">{frage.emoji}</span>}
                         <span className="flex-1">{localized(frage.text, locale)}</span>
                       </Label>
                       {isCustom && (
@@ -336,7 +367,7 @@ export function ArztView() {
             <SelectContent>
               {KATEGORIE_KEYS.map((kat) => (
                 <SelectItem key={kat} value={kat}>
-                  {localized(ARZT_KATEGORIE_LABELS[kat], locale)}
+                  {categoryLabel(kat)}
                 </SelectItem>
               ))}
             </SelectContent>

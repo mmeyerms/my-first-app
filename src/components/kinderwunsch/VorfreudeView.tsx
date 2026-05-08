@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { X } from 'lucide-react'
+import { Gift, Lock, Mail, Sparkle, X } from 'lucide-react'
 
 import {
   ERSTE_30_MIN_VORSCHLAEGE,
@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { useLocale } from '@/lib/i18n/client'
 import { localized } from '@/lib/i18n/localized'
+import { useTheme } from '@/lib/theme/client'
 
 const STORAGE_KEY = 'mamamap-kw-vorfreude'
 
@@ -59,6 +60,8 @@ function formatDate(iso: string): string {
 
 export function VorfreudeView() {
   const { locale } = useLocale()
+  const { theme } = useTheme()
+  const isClassic = theme === 'classic'
   const [hydrated, setHydrated] = useState(false)
   const [state, setState] = useState<VorfreudeState>(DEFAULT_STATE)
 
@@ -246,9 +249,18 @@ export function VorfreudeView() {
           ) : sealed && state.letter ? (
             <div className="space-y-4 rounded-2xl bg-gradient-to-br from-amber-50 to-rose-50 p-6 shadow-sm ring-1 ring-amber-200">
               <div className="flex flex-col items-center text-center">
-                <span className="mb-3 text-5xl" aria-hidden="true">
-                  🔒
-                </span>
+                {isClassic ? (
+                  <span className="mb-3 text-5xl" aria-hidden="true">
+                    🔒
+                  </span>
+                ) : (
+                  <span
+                    aria-hidden="true"
+                    className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-secondary"
+                  >
+                    <Lock className="h-6 w-6 text-primary" strokeWidth={1.5} />
+                  </span>
+                )}
                 <p className="text-sm text-gray-700">
                   Versiegelt am{' '}
                   <span className="font-medium">
@@ -308,7 +320,14 @@ export function VorfreudeView() {
                   disabled={!letterDraft.trim()}
                   className="flex-1 bg-rose-500 text-white hover:bg-rose-600"
                 >
-                  ✉️ Versiegeln
+                  {isClassic ? (
+                    <>✉️ Versiegeln</>
+                  ) : (
+                    <>
+                      <Mail className="mr-2 h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+                      Versiegeln
+                    </>
+                  )}
                 </Button>
               </div>
               {state.letter && !state.letter.sealed && (
@@ -334,8 +353,13 @@ export function VorfreudeView() {
           {/* Eure Box */}
           <div className="rounded-2xl bg-gradient-to-br from-rose-50 to-rose-100 p-5 shadow-sm ring-1 ring-rose-200">
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-rose-900">
-                💝 Eure Box
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-rose-900">
+                {isClassic ? (
+                  <span aria-hidden="true">💝</span>
+                ) : (
+                  <Gift className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+                )}
+                Eure Box
               </h3>
               <Badge
                 variant="secondary"
@@ -453,8 +477,13 @@ export function VorfreudeView() {
           {/* Counter / Eure Liste */}
           <div className="rounded-2xl bg-gradient-to-br from-rose-50 to-rose-100 p-5 shadow-sm ring-1 ring-rose-200">
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-rose-900">
-                🌟 Eure Liste
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-rose-900">
+                {isClassic ? (
+                  <span aria-hidden="true">🌟</span>
+                ) : (
+                  <Sparkle className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+                )}
+                Eure Liste
               </h3>
               <Badge
                 variant="secondary"
