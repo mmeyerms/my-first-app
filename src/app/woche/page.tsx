@@ -67,14 +67,21 @@ export default async function WochePage() {
   return (
     <main className="min-h-screen bg-background">
       <div className="mx-auto max-w-sm px-4 py-8">
-        {/* Back link */}
-        <div className="mb-6 flex items-center gap-3">
+        {/* Back link + overview link */}
+        <div className="mb-6 flex items-center justify-between gap-3">
           <Link
             href="/dashboard"
             className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-primary"
           >
             <ArrowLeft className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
             <span>{t.common.backToDashboard.replace(/^←\s*/, '')}</span>
+          </Link>
+          <Link
+            href="/woche/uebersicht"
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-primary"
+          >
+            <span>{t.woche.overviewLink}</span>
+            <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
           </Link>
         </div>
 

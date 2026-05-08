@@ -631,6 +631,10 @@ export const en = {
     partnerTip: 'For your partner',
     partnerSubtitle: 'Tip for the partnership this week',
     babyAlt: 'Illustration of your baby',
+    overviewTitle: 'Week-by-week overview',
+    overviewLink: 'View all weeks',
+    overviewLabel: 'Week',
+    printPdf: 'Save as PDF / print',
     categoryLabels: {
       frucht: 'Fruit',
       suessigkeit: 'Sweets',

@@ -631,6 +631,10 @@ export const de = {
     partnerTip: 'Für deinen Partner',
     partnerSubtitle: 'Tipp für die Beziehung diese Woche',
     babyAlt: 'Illustration deines Babys',
+    overviewTitle: 'SSW-Übersicht',
+    overviewLink: 'Alle Wochen ansehen',
+    overviewLabel: 'SSW',
+    printPdf: 'Als PDF speichern / drucken',
     categoryLabels: {
       frucht: 'Frucht',
       suessigkeit: 'Süßes',
