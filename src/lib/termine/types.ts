@@ -43,4 +43,8 @@ export type Termin = {
   notes?: string
   done?: boolean
   createdAt: string
+  /** Links recurring siblings together. Same value across a series. */
+  groupId?: string
 }
+
+export type RecurrenceRhythm = 'weekly' | 'biweekly' | 'monthly'

@@ -13,6 +13,8 @@ import {
   ChevronDown,
   ChevronUp,
   Plus,
+  Repeat,
+  X,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -23,8 +25,14 @@ import { useTheme } from '@/lib/theme/client'
 import { localized } from '@/lib/i18n/localized'
 import { TERMIN_TYPES, CATEGORY_LABELS } from '@/lib/termine/data'
 import { buildIcs, downloadIcs } from '@/lib/termine/ics'
+import {
+  generateGroupId,
+  generateOccurrenceDates,
+  parseLocalDate,
+} from '@/lib/termine/recurrence'
 import type { Termin, TerminTypeId, TerminCategory } from '@/lib/termine/types'
-import { TerminForm } from './TerminForm'
+import { TerminForm, type RecurrenceConfig } from './TerminForm'
+import { MonthCalendar } from './MonthCalendar'
 
 const STORAGE_KEY = 'mamamap-termine'
 
@@ -71,12 +79,24 @@ function todayIso(): string {
 
 function formatDate(iso: string, locale: 'de' | 'en'): string {
   try {
-    const d = new Date(iso)
+    const d = parseLocalDate(iso)
     return new Intl.DateTimeFormat(locale === 'de' ? 'de-DE' : 'en-US', {
       weekday: 'short',
       day: 'numeric',
       month: 'short',
       year: 'numeric',
+    }).format(d)
+  } catch {
+    return iso
+  }
+}
+
+function formatDateShort(iso: string, locale: 'de' | 'en'): string {
+  try {
+    const d = parseLocalDate(iso)
+    return new Intl.DateTimeFormat(locale === 'de' ? 'de-DE' : 'en-US', {
+      day: 'numeric',
+      month: 'short',
     }).format(d)
   } catch {
     return iso
@@ -90,6 +110,15 @@ function getBucket(t: Termin, today: string): Bucket {
   return t.date < today ? 'past' : 'upcoming'
 }
 
+/**
+ * Days from `today` to `iso`. Negative if `iso` is in the past.
+ */
+function daysFromToday(iso: string, todayIsoStr: string): number {
+  const a = parseLocalDate(todayIsoStr).getTime()
+  const b = parseLocalDate(iso).getTime()
+  return Math.round((b - a) / (1000 * 60 * 60 * 24))
+}
+
 export function TermineView({ ssw }: TermineViewProps) {
   const t = useT()
   const { locale } = useLocale()
@@ -101,6 +130,7 @@ export function TermineView({ ssw }: TermineViewProps) {
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Partial<Termin> & { id?: string } | undefined>(undefined)
   const [showPast, setShowPast] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
 
   useEffect(() => {
     setTermine(loadTermine())
@@ -114,11 +144,21 @@ export function TermineView({ ssw }: TermineViewProps) {
     [termine]
   )
 
-  const upcoming = useMemo(() => sorted.filter((x) => getBucket(x, today) === 'upcoming'), [sorted, today])
+  const allUpcoming = useMemo(() => sorted.filter((x) => getBucket(x, today) === 'upcoming'), [sorted, today])
   const past = useMemo(
     () => sorted.filter((x) => getBucket(x, today) === 'past').reverse(),
     [sorted, today]
   )
+
+  const upcoming = useMemo(() => {
+    if (!selectedDate) return allUpcoming
+    return sorted.filter((x) => x.date === selectedDate)
+  }, [allUpcoming, sorted, selectedDate])
+
+  // Default-collapse past if there are more than 3.
+  useEffect(() => {
+    if (past.length > 3) setShowPast(false)
+  }, [past.length])
 
   // Recommended: TERMIN_TYPES that are recommended, where there's no upcoming Termin of that type,
   // and the SSW window is current or recently passed (within ~4 weeks).
@@ -140,18 +180,42 @@ export function TermineView({ ssw }: TermineViewProps) {
     saveTermine(next)
   }
 
-  function handleSave(termin: Termin): void {
+  function handleSave(termin: Termin, recurrence?: RecurrenceConfig): void {
     const idx = termine.findIndex((x) => x.id === termin.id)
     if (idx >= 0) {
+      // Edit existing single termin (no recurrence expansion on edit).
       const next = [...termine]
       next[idx] = termin
       persist(next)
+      return
+    }
+
+    if (recurrence && recurrence.enabled && recurrence.count > 1) {
+      const groupId = generateGroupId()
+      const dates = generateOccurrenceDates(termin.date, recurrence.rhythm, recurrence.count)
+      const createdAt = termin.createdAt
+      const siblings: Termin[] = dates.map((date, i) => ({
+        ...termin,
+        id: i === 0 ? termin.id : `t_${Date.now()}_${i}_${Math.random().toString(36).slice(2, 7)}`,
+        date,
+        groupId,
+        createdAt,
+      }))
+      persist([...termine, ...siblings])
     } else {
       persist([...termine, termin])
     }
   }
 
-  function handleDelete(id: string): void {
+  function handleDelete(id: string, scope: 'one' | 'series'): void {
+    if (scope === 'series') {
+      const target = termine.find((x) => x.id === id)
+      const groupId = target?.groupId
+      if (groupId) {
+        persist(termine.filter((x) => x.groupId !== groupId))
+        return
+      }
+    }
     persist(termine.filter((x) => x.id !== id))
   }
 
@@ -177,18 +241,37 @@ export function TermineView({ ssw }: TermineViewProps) {
     downloadIcs('mamamap-termine', ics)
   }
 
+  function handleDayClick(iso: string): void {
+    setSelectedDate((prev) => (prev === iso ? null : iso))
+  }
+
   if (!hydrated) {
     return (
       <div className="space-y-3" aria-busy="true">
-        <div className="h-24 animate-pulse rounded-2xl bg-muted/40" />
+        <div className="h-56 animate-pulse rounded-2xl bg-muted/40" />
         <div className="h-24 animate-pulse rounded-2xl bg-muted/40" />
         <div className="h-24 animate-pulse rounded-2xl bg-muted/40" />
       </div>
     )
   }
 
+  const upcomingHeader = selectedDate
+    ? t.termine.calendar.filteredBy.replace(
+        '{date}',
+        formatDateShort(selectedDate, locale)
+      )
+    : t.termine.upcoming
+
   return (
     <div className="space-y-6">
+      {/* Month calendar */}
+      <MonthCalendar
+        termine={termine}
+        selectedDate={selectedDate}
+        onDayClick={handleDayClick}
+        locale={locale}
+      />
+
       {/* Action bar */}
       <div className="flex flex-wrap gap-2">
         <Button onClick={() => openAdd()} className="flex-1 sm:flex-none">
@@ -212,15 +295,29 @@ export function TermineView({ ssw }: TermineViewProps) {
 
       {/* Upcoming */}
       <section aria-label={t.termine.upcoming}>
-        <h2
-          className={
-            isClassic
-              ? 'mb-3 text-sm font-semibold uppercase tracking-wider text-gray-700'
-              : 'mb-3 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground'
-          }
-        >
-          {t.termine.upcoming}
-        </h2>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h2
+            className={
+              isClassic
+                ? 'text-sm font-semibold uppercase tracking-wider text-gray-700'
+                : 'text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground'
+            }
+          >
+            {upcomingHeader}
+          </h2>
+          {selectedDate && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedDate(null)}
+              className="h-7 gap-1 px-2 text-xs"
+            >
+              <X className="h-3 w-3" strokeWidth={1.5} />
+              {t.termine.calendar.clearFilter}
+            </Button>
+          )}
+        </div>
         {upcoming.length === 0 ? (
           <Card className="card-elevated border-dashed border-border/60 bg-card/50">
             <CardContent className="p-6 text-center">
@@ -231,8 +328,19 @@ export function TermineView({ ssw }: TermineViewProps) {
                     : 'font-display text-sm italic text-muted-foreground'
                 }
               >
-                {t.termine.empty}
+                {selectedDate ? t.termine.empty : t.termine.empty}
               </p>
+              {!selectedDate && allUpcoming.length === 0 && (
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  onClick={() => openAdd()}
+                  className="mt-2 h-auto px-0 text-primary"
+                >
+                  {t.termine.emptyCta} →
+                </Button>
+              )}
             </CardContent>
           </Card>
         ) : (
@@ -245,6 +353,7 @@ export function TermineView({ ssw }: TermineViewProps) {
                   onEdit={() => openEdit(termin)}
                   onShare={() => exportSingle(termin)}
                   locale={locale}
+                  today={today}
                 />
               </li>
             ))}
@@ -253,7 +362,7 @@ export function TermineView({ ssw }: TermineViewProps) {
       </section>
 
       {/* Recommended */}
-      {recommended.length > 0 && (
+      {recommended.length > 0 && !selectedDate && (
         <section aria-label={t.termine.recommended}>
           <h2
             className={
@@ -353,7 +462,7 @@ export function TermineView({ ssw }: TermineViewProps) {
       )}
 
       {/* Past */}
-      {past.length > 0 && (
+      {past.length > 0 && !selectedDate && (
         <section aria-label={t.termine.past}>
           <button
             type="button"
@@ -386,6 +495,7 @@ export function TermineView({ ssw }: TermineViewProps) {
                     onEdit={() => openEdit(termin)}
                     onShare={() => exportSingle(termin)}
                     locale={locale}
+                    today={today}
                     muted
                   />
                 </li>
@@ -419,14 +529,27 @@ interface TerminCardProps {
   onEdit: () => void
   onShare: () => void
   locale: 'de' | 'en'
+  today: string
   muted?: boolean
 }
 
-function TerminCard({ termin, isClassic, onEdit, onShare, locale, muted }: TerminCardProps) {
+function TerminCard({
+  termin,
+  isClassic,
+  onEdit,
+  onShare,
+  locale,
+  today,
+  muted,
+}: TerminCardProps) {
   const t = useT()
   const def = TERMIN_TYPES.find((x) => x.id === termin.type)
   const category: TerminCategory = def?.category ?? 'sonstiges'
   const dateLabel = formatDate(termin.date, locale)
+
+  const diff = daysFromToday(termin.date, today)
+  const isSoon = !muted && !termin.done && diff >= 0 && diff <= 3
+  const isSeries = Boolean(termin.groupId)
 
   return (
     <Card
@@ -507,6 +630,27 @@ function TerminCard({ termin, isClassic, onEdit, onShare, locale, muted }: Termi
               <Badge variant="outline" className="text-[10px] uppercase tracking-wider">
                 {t.termine.categories[category]}
               </Badge>
+              {isSeries && (
+                <Badge
+                  variant="secondary"
+                  className="gap-1 text-[10px] uppercase tracking-wider"
+                >
+                  {isClassic ? (
+                    <span aria-hidden="true">🔁</span>
+                  ) : (
+                    <Repeat className="h-2.5 w-2.5" strokeWidth={1.5} aria-hidden="true" />
+                  )}
+                  {t.termine.seriesBadge}
+                </Badge>
+              )}
+              {isSoon && (
+                <Badge
+                  className="gap-1 border-transparent bg-amber-100 text-[10px] uppercase tracking-wider text-amber-900 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-200"
+                >
+                  {isClassic ? <span aria-hidden="true">📅</span> : null}
+                  {t.termine.soonBadge}
+                </Badge>
+              )}
               <div className="ml-auto flex items-center gap-1">
                 <Button
                   type="button"
@@ -536,3 +680,7 @@ function TerminCard({ termin, isClassic, onEdit, onShare, locale, muted }: Termi
     </Card>
   )
 }
+
+// Suppress unused import warning — CATEGORY_LABELS is exported by data.ts
+// for potential consumers but currently unused here.
+void CATEGORY_LABELS

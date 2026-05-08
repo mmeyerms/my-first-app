@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, ArrowRight } from 'lucide-react'
+import { ArrowLeft, ArrowRight, HeartHandshake, Sparkles, Heart } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { calculateSSW } from '@/lib/utils'
 import { getServerLocale } from '@/lib/i18n/server'
@@ -28,6 +28,8 @@ const CATEGORY_BG: Record<SswComparisonCategory, string> = {
   spielzeug: 'bg-secondary/60',
   tier: 'bg-secondary/60',
   alltag: 'bg-secondary/60',
+  sport: 'bg-secondary/60',
+  beauty: 'bg-secondary/60',
 }
 
 export default async function WochePage() {
@@ -201,6 +203,106 @@ export default async function WochePage() {
                 </li>
               ))}
             </ul>
+          </section>
+        )}
+
+        {/* Mom body — "Was passiert in dir?" */}
+        {info?.momBody && (
+          <section
+            className="card-elevated mb-6 rounded-2xl p-6"
+            style={{ backgroundColor: 'hsl(var(--secondary) / 0.45)' }}
+          >
+            <div className="mb-3 flex items-center gap-2">
+              <Heart
+                className="h-4 w-4 text-primary"
+                strokeWidth={2}
+                aria-hidden="true"
+              />
+              <h2
+                className={
+                  isClassic
+                    ? 'text-base font-semibold text-foreground'
+                    : 'font-display text-lg font-semibold text-foreground'
+                }
+              >
+                {t.woche.momBody}
+              </h2>
+            </div>
+            <p className="text-sm leading-relaxed text-foreground">
+              {localized(info.momBody, locale)}
+            </p>
+          </section>
+        )}
+
+        {/* Fun fact — "Wusstest du?" */}
+        {info?.funFact && (
+          <section
+            className="card-elevated mb-6 rounded-2xl border p-6"
+            style={{
+              backgroundColor: 'hsl(var(--accent) / 0.10)',
+              borderColor: 'hsl(var(--accent) / 0.35)',
+            }}
+          >
+            <div className="mb-3 flex items-center gap-2">
+              <Sparkles
+                className="h-4 w-4"
+                strokeWidth={2}
+                aria-hidden="true"
+                style={{ color: 'hsl(var(--accent))' }}
+              />
+              <h2
+                className={
+                  isClassic
+                    ? 'text-base font-semibold text-foreground'
+                    : 'font-display text-lg font-semibold text-foreground'
+                }
+              >
+                {t.woche.funFact}
+              </h2>
+            </div>
+            <p
+              className={
+                isClassic
+                  ? 'text-sm leading-relaxed text-foreground'
+                  : 'font-display text-sm italic leading-relaxed text-foreground'
+              }
+            >
+              {localized(info.funFact, locale)}
+            </p>
+          </section>
+        )}
+
+        {/* Partner tip — "Für deinen Partner" */}
+        {info?.partnerTip && (
+          <section className="card-elevated mb-6 rounded-2xl border-2 border-primary/20 bg-card p-6">
+            <div className="mb-1 flex items-center gap-2">
+              {isClassic ? (
+                <span aria-hidden="true" className="text-base leading-none">
+                  💑
+                </span>
+              ) : (
+                <HeartHandshake
+                  className="h-4 w-4 text-primary"
+                  strokeWidth={2}
+                  aria-hidden="true"
+                />
+              )}
+              <h2
+                className={
+                  isClassic
+                    ? 'text-base font-semibold text-foreground'
+                    : 'font-display text-lg font-semibold text-foreground'
+                }
+              >
+                {t.woche.partnerTip}
+              </h2>
+            </div>
+            <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+              {t.woche.partnerSubtitle}
+            </p>
+            <p className="text-sm leading-relaxed text-foreground">
+              {localized(info.partnerTip, locale)}
+            </p>
           </section>
         )}
 

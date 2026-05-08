@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Trash2 } from 'lucide-react'
+import { Trash2, Repeat } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,16 +24,27 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useT, useLocale } from '@/lib/i18n/client'
+import { useTheme } from '@/lib/theme/client'
 import { localized } from '@/lib/i18n/localized'
 import { TERMIN_TYPES } from '@/lib/termine/data'
-import type { Termin, TerminTypeId } from '@/lib/termine/types'
+import type { RecurrenceRhythm, Termin, TerminTypeId } from '@/lib/termine/types'
+import {
+  generateGroupId,
+  generateOccurrenceDates,
+} from '@/lib/termine/recurrence'
+
+export type RecurrenceConfig = {
+  enabled: boolean
+  rhythm: RecurrenceRhythm
+  count: number
+}
 
 interface TerminFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   initial?: Partial<Termin> & { id?: string }
-  onSave: (termin: Termin) => void
-  onDelete?: (id: string) => void
+  onSave: (termin: Termin, recurrence?: RecurrenceConfig) => void
+  onDelete?: (id: string, scope: 'one' | 'series') => void
 }
 
 function todayIso(): string {
@@ -57,7 +68,10 @@ export function TerminForm({
 }: TerminFormProps) {
   const t = useT()
   const { locale } = useLocale()
+  const { theme } = useTheme()
+  const isClassic = theme === 'classic'
   const isEdit = Boolean(initial?.id)
+  const isSeries = Boolean(initial?.groupId)
 
   const [type, setType] = useState<TerminTypeId>(initial?.type ?? 'custom')
   const [title, setTitle] = useState<string>(initial?.title ?? '')
@@ -68,6 +82,12 @@ export function TerminForm({
   const [notes, setNotes] = useState<string>(initial?.notes ?? '')
   const [done, setDone] = useState<boolean>(initial?.done ?? false)
   const [errors, setErrors] = useState<{ title?: string; date?: string }>({})
+
+  // Recurrence state — only relevant when adding (not when editing).
+  const [recurrenceEnabled, setRecurrenceEnabled] = useState<boolean>(false)
+  const [recurrenceRhythm, setRecurrenceRhythm] =
+    useState<RecurrenceRhythm>('weekly')
+  const [recurrenceCount, setRecurrenceCount] = useState<number>(6)
 
   // Reset form when opened with new initial values
   useEffect(() => {
@@ -83,6 +103,9 @@ export function TerminForm({
       setNotes(initial?.notes ?? '')
       setDone(initial?.done ?? false)
       setErrors({})
+      setRecurrenceEnabled(false)
+      setRecurrenceRhythm('weekly')
+      setRecurrenceCount(6)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
@@ -124,19 +147,44 @@ export function TerminForm({
       notes: notes.trim() || undefined,
       done,
       createdAt: initial?.createdAt ?? new Date().toISOString(),
+      groupId: initial?.groupId,
     }
-    onSave(termin)
+
+    const useRecurrence = !isEdit && recurrenceEnabled && recurrenceCount > 1
+    onSave(
+      termin,
+      useRecurrence
+        ? { enabled: true, rhythm: recurrenceRhythm, count: recurrenceCount }
+        : undefined
+    )
     onOpenChange(false)
   }
 
-  function handleDelete() {
+  function handleDeleteOne() {
     if (!initial?.id || !onDelete) return
     if (typeof window !== 'undefined' && !window.confirm(t.termine.confirmDelete)) {
       return
     }
-    onDelete(initial.id)
+    onDelete(initial.id, 'one')
     onOpenChange(false)
   }
+
+  function handleDeleteSeries() {
+    if (!initial?.id || !onDelete) return
+    if (
+      typeof window !== 'undefined' &&
+      !window.confirm(t.termine.confirmDeleteSeries)
+    ) {
+      return
+    }
+    onDelete(initial.id, 'series')
+    onOpenChange(false)
+  }
+
+  const occurrencePreview = useMemo(() => {
+    if (!recurrenceEnabled || !date) return []
+    return generateOccurrenceDates(date, recurrenceRhythm, recurrenceCount)
+  }, [recurrenceEnabled, date, recurrenceRhythm, recurrenceCount])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -149,6 +197,24 @@ export function TerminForm({
             {isEdit ? t.termine.form.editTitle : t.termine.form.addTitle}
           </DialogDescription>
         </DialogHeader>
+
+        {isEdit && isSeries && (
+          <p
+            className={
+              isClassic
+                ? 'flex items-center gap-1.5 rounded-md bg-secondary/60 px-3 py-2 text-xs text-gray-700'
+                : 'flex items-center gap-1.5 rounded-md bg-secondary/60 px-3 py-2 font-display text-xs italic text-muted-foreground'
+            }
+            role="note"
+          >
+            {isClassic ? (
+              <span aria-hidden="true">🔁</span>
+            ) : (
+              <Repeat className="h-3 w-3" strokeWidth={1.5} aria-hidden="true" />
+            )}
+            <span>{t.termine.form.seriesNotice}</span>
+          </p>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
@@ -249,18 +315,128 @@ export function TerminForm({
             </Label>
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-2">
-            {isEdit && onDelete && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={handleDelete}
-                className="mr-auto text-destructive hover:bg-destructive/10 hover:text-destructive"
+          {/* Recurrence — only when adding a new termin */}
+          {!isEdit && (
+            <fieldset className="space-y-3 rounded-lg border border-border/60 p-3">
+              <legend
+                className={
+                  isClassic
+                    ? 'flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-gray-700'
+                    : 'flex items-center gap-1.5 px-1 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground'
+                }
               >
-                <Trash2 className="mr-1.5 h-4 w-4" strokeWidth={1.5} />
-                {t.termine.form.delete}
-              </Button>
+                {isClassic ? (
+                  <span aria-hidden="true">🔁</span>
+                ) : (
+                  <Repeat className="h-3 w-3" strokeWidth={1.5} aria-hidden="true" />
+                )}
+                {t.termine.form.recurrence}
+              </legend>
+
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="termin-recur"
+                  checked={recurrenceEnabled}
+                  onCheckedChange={(v) => setRecurrenceEnabled(v === true)}
+                />
+                <Label
+                  htmlFor="termin-recur"
+                  className="cursor-pointer text-sm font-normal"
+                >
+                  {t.termine.form.recurrenceEnabled}
+                </Label>
+              </div>
+
+              {recurrenceEnabled && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="termin-rhythm">
+                        {t.termine.form.recurrenceRhythm}
+                      </Label>
+                      <Select
+                        value={recurrenceRhythm}
+                        onValueChange={(v) =>
+                          setRecurrenceRhythm(v as RecurrenceRhythm)
+                        }
+                      >
+                        <SelectTrigger id="termin-rhythm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="weekly">
+                            {t.termine.form.recurrenceWeekly}
+                          </SelectItem>
+                          <SelectItem value="biweekly">
+                            {t.termine.form.recurrenceBiweekly}
+                          </SelectItem>
+                          <SelectItem value="monthly">
+                            {t.termine.form.recurrenceMonthly}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="termin-count">
+                        {t.termine.form.recurrenceCount}
+                      </Label>
+                      <Input
+                        id="termin-count"
+                        type="number"
+                        min={2}
+                        max={20}
+                        value={recurrenceCount}
+                        onChange={(e) => {
+                          const v = parseInt(e.target.value, 10)
+                          if (Number.isFinite(v))
+                            setRecurrenceCount(Math.max(2, Math.min(20, v)))
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <p
+                    className={
+                      isClassic
+                        ? 'text-xs text-gray-600'
+                        : 'font-display text-xs italic text-muted-foreground'
+                    }
+                  >
+                    {t.termine.form.recurrenceHint.replace(
+                      '{count}',
+                      String(occurrencePreview.length)
+                    )}
+                  </p>
+                </div>
+              )}
+            </fieldset>
+          )}
+
+          <DialogFooter className="flex-col gap-2 sm:flex-row sm:gap-2">
+            {isEdit && onDelete && (
+              <div className="mr-auto flex flex-wrap gap-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDeleteOne}
+                  className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <Trash2 className="mr-1.5 h-4 w-4" strokeWidth={1.5} />
+                  {isSeries ? t.termine.form.deleteOne : t.termine.form.delete}
+                </Button>
+                {isSeries && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleDeleteSeries}
+                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <Trash2 className="mr-1.5 h-4 w-4" strokeWidth={1.5} />
+                    {t.termine.form.deleteSeries}
+                  </Button>
+                )}
+              </div>
             )}
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {t.termine.form.cancel}
