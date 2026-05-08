@@ -4,6 +4,7 @@ import { calculateSSW } from '@/lib/utils'
 import { getPartnerTipForDay, getPartnerTipText, getPartnerTipLabel } from '@/lib/partnerTips'
 import { QUESTIONS, getQuestionLabel } from '@/lib/questions'
 import { getServerLocale } from '@/lib/i18n/server'
+import { getMessages } from '@/lib/i18n/messages'
 import { Badge } from '@/components/ui/badge'
 
 export default async function PartnerDashboardPage() {
@@ -12,6 +13,7 @@ export default async function PartnerDashboardPage() {
   if (!user) redirect('/login')
 
   const locale = await getServerLocale()
+  const t = getMessages(locale)
 
   const { data: link } = await supabase
     .from('partner_links')
@@ -46,44 +48,44 @@ export default async function PartnerDashboardPage() {
   })
 
   return (
-    <main className="min-h-screen bg-blue-50">
+    <main className="min-h-screen bg-background">
       <div className="mx-auto max-w-sm px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-blue-600">💑 Partner-Bereich</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="font-display text-2xl font-medium text-primary">{t.partner.dashboardTitle}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {profile.name} &amp; {profile.baby_name}
           </p>
         </div>
 
         {/* SSW */}
-        <div className="mb-4 rounded-2xl bg-white p-6 shadow-sm">
-          <p className="text-sm text-gray-500">Aktuelle Schwangerschaftswoche</p>
+        <div className="mb-4 rounded-2xl bg-card p-6 shadow-sm">
+          <p className="text-sm text-muted-foreground">{t.partner.sswCaption}</p>
           <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-5xl font-bold text-blue-500">SSW {ssw}</span>
+            <span className="font-display text-5xl font-bold text-primary">{t.partner.sswCard.replace('{ssw}', String(ssw))}</span>
           </div>
-          <p className="mt-1 text-sm text-gray-500">{profile.baby_name} ist auf dem Weg 💛</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t.partner.babyOnWay.replace('{babyName}', profile.baby_name)}</p>
         </div>
 
         {/* Daily partner tip */}
-        <div className="mb-4 rounded-2xl bg-white p-5 shadow-sm">
+        <div className="mb-4 rounded-2xl bg-card p-5 shadow-sm">
           <div className="mb-3 flex items-center justify-between">
-            <p className="text-sm font-semibold text-gray-700">Dein Tipp für heute</p>
+            <p className="text-sm font-semibold text-foreground">{t.partner.tipTodayLabel}</p>
             <Badge variant="secondary">{getPartnerTipLabel(tip.type, locale)}</Badge>
           </div>
           <p className="mb-2 text-3xl">{tip.emoji}</p>
-          <p className="text-sm leading-relaxed text-gray-700">{getPartnerTipText(tip, locale)}</p>
+          <p className="text-sm leading-relaxed text-foreground">{getPartnerTipText(tip, locale)}</p>
         </div>
 
         {/* Birth plan (read-only) */}
-        <div className="rounded-2xl bg-white p-5 shadow-sm">
-          <p className="mb-4 text-sm font-semibold text-gray-700">📋 Geburtsplan</p>
+        <div className="rounded-2xl bg-card p-5 shadow-sm">
+          <p className="mb-4 text-sm font-semibold text-foreground">{t.partner.birthPlanHeading}</p>
           {answeredQuestions.length > 0 ? (
             <div className="space-y-3">
               {answeredQuestions.map((q) => (
                 <div key={q.id} className="text-sm">
-                  <p className="text-xs text-gray-400">{getQuestionLabel(q, locale)}</p>
-                  <p className="text-gray-800">
+                  <p className="text-xs text-muted-foreground">{getQuestionLabel(q, locale)}</p>
+                  <p className="text-foreground">
                     {Array.isArray(answers[q.id])
                       ? (answers[q.id] as string[]).join(', ')
                       : answers[q.id]}
@@ -92,8 +94,8 @@ export default async function PartnerDashboardPage() {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-gray-400">
-              Der Geburtsplan wird hier angezeigt, sobald {profile.name} ihn ausfüllt.
+            <p className="text-sm text-muted-foreground">
+              {t.partner.birthPlanEmpty.replace('{name}', profile.name)}
             </p>
           )}
         </div>

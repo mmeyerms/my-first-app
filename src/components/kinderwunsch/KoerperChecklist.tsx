@@ -83,16 +83,16 @@ export function KoerperChecklist() {
     <div className="space-y-5">
       <section
         aria-label="Fortschritt"
-        className="rounded-2xl bg-white p-5 shadow-sm"
+        className="rounded-2xl bg-card p-5 shadow-sm"
       >
         <div className="mb-2 flex items-baseline justify-between">
-          <span className="text-sm font-medium text-gray-700">Fortschritt</span>
-          <span className="text-sm text-gray-500">
+          <span className="text-sm font-medium text-foreground/80">Fortschritt</span>
+          <span className="text-sm text-muted-foreground">
             {checkedCount} / {totalItems}
           </span>
         </div>
-        <Progress value={progress} className="h-2 bg-rose-100 [&>div]:bg-rose-500" />
-        <p className="mt-3 text-sm text-gray-600">
+        <Progress value={progress} className="h-2 bg-secondary [&>div]:bg-primary" />
+        <p className="mt-3 text-sm text-muted-foreground">
           {allDone
             ? isClassic
               ? 'Stark — dein Körper ist bestens vorbereitet. 🌷'
@@ -110,7 +110,7 @@ export function KoerperChecklist() {
           <section
             key={cat.id}
             aria-label={localized(cat.title, locale)}
-            className="overflow-hidden rounded-2xl bg-white shadow-sm"
+            className="overflow-hidden rounded-2xl bg-card shadow-sm"
           >
             <button
               type="button"
@@ -128,26 +128,26 @@ export function KoerperChecklist() {
                   <h2
                     className={
                       isClassic
-                        ? 'text-base font-semibold text-gray-800'
+                        ? 'text-base font-semibold text-foreground'
                         : 'font-display text-lg font-medium text-foreground'
                     }
                   >
                     {localized(cat.title, locale)}
                   </h2>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     {catChecked} / {cat.items.length} erledigt
                   </p>
                 </div>
               </div>
               {isOpen ? (
-                <ChevronUp className="h-5 w-5 text-gray-400" />
+                <ChevronUp className="h-5 w-5 text-muted-foreground/70" />
               ) : (
-                <ChevronDown className="h-5 w-5 text-gray-400" />
+                <ChevronDown className="h-5 w-5 text-muted-foreground/70" />
               )}
             </button>
 
             {isOpen && (
-              <ul className="space-y-3 border-t border-gray-100 px-5 py-4">
+              <ul className="space-y-3 border-t border-border px-5 py-4">
                 {cat.items.map((item) => {
                   const isChecked = checked.has(item.id)
                   return (
@@ -156,21 +156,21 @@ export function KoerperChecklist() {
                         id={item.id}
                         checked={isChecked}
                         onCheckedChange={() => toggleItem(item.id)}
-                        className="mt-1 data-[state=checked]:border-rose-500 data-[state=checked]:bg-rose-500"
+                        className="mt-1 data-[state=checked]:border-primary data-[state=checked]:bg-primary"
                       />
                       <div className="flex-1">
                         <Label
                           htmlFor={item.id}
                           className={`block cursor-pointer text-sm leading-snug ${
                             isChecked
-                              ? 'text-gray-400 line-through'
-                              : 'text-gray-800'
+                              ? 'text-muted-foreground/70 line-through'
+                              : 'text-foreground'
                           }`}
                         >
                           {localized(item.label, locale)}
                         </Label>
                         {item.tip && (
-                          <p className="mt-1 text-xs text-gray-500">
+                          <p className="mt-1 text-xs text-muted-foreground">
                             {isClassic ? '💡 ' : ''}
                             {localized(item.tip, locale)}
                           </p>
@@ -189,7 +189,7 @@ export function KoerperChecklist() {
         <Button
           variant="outline"
           onClick={resetAll}
-          className="w-full border-rose-200 text-rose-500 hover:bg-rose-50 hover:text-rose-600"
+          className="w-full border-primary/20 text-primary hover:bg-secondary hover:text-primary"
         >
           Alles zurücksetzen
         </Button>

@@ -230,8 +230,8 @@ export function ArztView() {
   return (
     <div className="space-y-5">
       {/* Intro */}
-      <section className="rounded-2xl bg-white p-5 shadow-sm">
-        <p className="text-sm leading-relaxed text-gray-700">
+      <section className="rounded-2xl bg-card p-5 shadow-sm">
+        <p className="text-sm leading-relaxed text-foreground/80">
           Druck dir diese Liste aus oder schick sie dir aufs Handy — bevor du
           zum Frauenarzt gehst.
         </p>
@@ -240,7 +240,7 @@ export function ArztView() {
       {/* Share */}
       <Button
         onClick={handleShare}
-        className="w-full bg-rose-500 text-white hover:bg-rose-600"
+        className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
         aria-label="Liste teilen oder kopieren"
       >
         {shareCopied ? (
@@ -257,7 +257,7 @@ export function ArztView() {
 
       {/* Counter */}
       <p
-        className="text-center text-xs text-gray-500"
+        className="text-center text-xs text-muted-foreground"
         aria-live="polite"
       >
         {hydrated ? `${askedCount} / ${totalCount} gestellt` : '—'}
@@ -271,13 +271,13 @@ export function ArztView() {
           <section
             key={kat}
             aria-label={categoryLabel(kat)}
-            className="overflow-hidden rounded-2xl bg-white shadow-sm"
+            className="overflow-hidden rounded-2xl bg-card shadow-sm"
           >
-            <div className="border-b border-gray-100 px-5 py-3">
+            <div className="border-b border-border px-5 py-3">
               <h2
                 className={
                   isClassic
-                    ? 'text-sm font-semibold text-gray-800'
+                    ? 'text-sm font-semibold text-foreground'
                     : 'font-display text-base font-medium text-foreground'
                 }
               >
@@ -294,7 +294,7 @@ export function ArztView() {
                       id={frage.id}
                       checked={isAsked}
                       onCheckedChange={() => toggleAsked(frage.id)}
-                      className="mt-1 data-[state=checked]:border-rose-500 data-[state=checked]:bg-rose-500"
+                      className="mt-1 data-[state=checked]:border-primary data-[state=checked]:bg-primary"
                       aria-label={
                         isAsked
                           ? 'Als nicht gestellt markieren'
@@ -306,8 +306,8 @@ export function ArztView() {
                         htmlFor={frage.id}
                         className={`flex cursor-pointer items-start gap-2 text-sm leading-snug ${
                           isAsked
-                            ? 'text-gray-400 line-through opacity-60'
-                            : 'text-gray-800'
+                            ? 'text-muted-foreground/70 line-through opacity-60'
+                            : 'text-foreground'
                         }`}
                       >
                         {isClassic && <span aria-hidden="true">{frage.emoji}</span>}
@@ -327,7 +327,7 @@ export function ArztView() {
                         type="button"
                         onClick={() => removeCustom(frage.id)}
                         aria-label="Eigene Frage entfernen"
-                        className="text-gray-400 hover:text-rose-500"
+                        className="text-muted-foreground/70 hover:text-primary"
                       >
                         <X className="h-4 w-4" />
                       </button>
@@ -343,9 +343,9 @@ export function ArztView() {
       {/* Add custom */}
       <section
         aria-label="Eigene Frage hinzufügen"
-        className="rounded-2xl bg-white p-5 shadow-sm"
+        className="rounded-2xl bg-card p-5 shadow-sm"
       >
-        <h2 className="mb-3 text-sm font-semibold text-gray-800">
+        <h2 className="mb-3 text-sm font-semibold text-foreground">
           + Eigene Frage hinzufügen
         </h2>
         <div className="space-y-3">
@@ -375,7 +375,7 @@ export function ArztView() {
           <Button
             onClick={addCustom}
             disabled={!customText.trim()}
-            className="w-full bg-rose-500 text-white hover:bg-rose-600"
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
           >
             Hinzufügen
           </Button>

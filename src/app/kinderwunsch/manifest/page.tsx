@@ -1,14 +1,28 @@
 import Link from 'next/link'
 import { ManifestView } from '@/components/kinderwunsch/ManifestView'
+import { getServerLocale } from '@/lib/i18n/server'
+import { getMessages } from '@/lib/i18n/messages'
+import { getServerTheme } from '@/lib/theme/server'
 
-export default function KinderwunschManifestPage() {
+export default async function KinderwunschManifestPage() {
+  const t = getMessages(await getServerLocale())
+  const theme = await getServerTheme()
+  const isClassic = theme === 'classic'
   return (
-    <main className="min-h-screen bg-rose-50">
+    <main className="min-h-screen bg-background">
       <div className="mx-auto max-w-sm px-4 py-8">
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-800">📜 Werte-Manifest</h1>
-          <Link href="/kinderwunsch" className="text-sm text-rose-500 hover:underline shrink-0">
-            ← Garten
+          <h1
+            className={
+              isClassic
+                ? 'text-xl font-bold text-foreground'
+                : 'font-display text-2xl font-medium text-foreground'
+            }
+          >
+            {isClassic ? '📜 ' : ''}{t.kinderwunsch.islands.manifest.title}
+          </h1>
+          <Link href="/kinderwunsch" className="text-sm text-primary hover:underline shrink-0">
+            {t.kinderwunsch.hub.backToGarden}
           </Link>
         </div>
         <ManifestView />

@@ -13,6 +13,7 @@ import { buildManifestCertificateHtml } from '@/lib/kinderwunsch/certificateHtml
 import { useLocale } from '@/lib/i18n/client'
 import { localized } from '@/lib/i18n/localized'
 import { useTheme } from '@/lib/theme/client'
+import { useT } from '@/lib/i18n/client'
 
 const STORAGE_KEY = 'mamamap-kw-manifest'
 
@@ -37,6 +38,7 @@ const EMPTY_STATE: ManifestState = {
 export function ManifestView() {
   const { locale } = useLocale()
   const { theme } = useTheme()
+  const t = useT()
   const isClassic = theme === 'classic'
   const [state, setState] = useState<ManifestState>(EMPTY_STATE)
   const [hydrated, setHydrated] = useState(false)
@@ -122,7 +124,7 @@ export function ManifestView() {
   }
 
   function breakSeal() {
-    if (window.confirm('Möchtet ihr das Manifest wirklich wieder bearbeiten?')) {
+    if (window.confirm(t.kinderwunsch.manifest.confirmEdit)) {
       setState((prev) => ({ ...prev, signedAt: undefined }))
     }
   }
@@ -137,9 +139,7 @@ export function ManifestView() {
     })
     const win = window.open('', '_blank', 'width=900,height=1200,scrollbars=yes')
     if (!win) {
-      alert(
-        'Pop-ups sind blockiert. Bitte erlaube Pop-ups für diese Seite, um das Zertifikat zu drucken oder als PDF zu speichern.',
-      )
+      alert(t.kinderwunsch.manifest.popupBlocked)
       return
     }
     win.document.open()
@@ -162,26 +162,26 @@ export function ManifestView() {
         <div className="space-y-3 print:hidden">
           <Button
             onClick={handlePrint}
-            className="w-full bg-rose-500 text-white hover:bg-rose-600"
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
           >
             {isClassic ? (
-              <>🖨️ Zertifikat drucken / als PDF speichern</>
+              <>🖨️ {t.kinderwunsch.manifest.printCta}</>
             ) : (
               <>
                 <Printer className="mr-2 h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
-                Zertifikat drucken / als PDF speichern
+                {t.kinderwunsch.manifest.printCta}
               </>
             )}
           </Button>
-          <p className="text-center text-xs text-gray-500">
-            Tipp: Im Druck-Dialog „Als PDF speichern" wählen, um das Zertifikat digital aufzubewahren.
+          <p className="text-center text-xs text-muted-foreground">
+            {t.kinderwunsch.manifest.printTip}
           </p>
           <Button
             variant="outline"
             onClick={breakSeal}
-            className="w-full border-rose-200 text-rose-500 hover:bg-rose-50 hover:text-rose-600"
+            className="w-full border-primary/20 text-primary hover:bg-secondary hover:text-primary"
           >
-            Bearbeiten
+            {t.kinderwunsch.manifest.editCta}
           </Button>
         </div>
       </div>
@@ -193,12 +193,12 @@ export function ManifestView() {
     <div className="space-y-5">
       <section
         aria-label="Werte-Manifest Einleitung"
-        className="rounded-2xl bg-white p-5 shadow-sm"
+        className="rounded-2xl bg-card p-5 shadow-sm"
       >
         <h2
           className={
             isClassic
-              ? 'flex items-center gap-2 text-base font-semibold text-gray-800'
+              ? 'flex items-center gap-2 text-base font-semibold text-foreground'
               : 'flex items-center gap-2 font-display text-xl font-medium text-foreground'
           }
         >
@@ -212,14 +212,14 @@ export function ManifestView() {
         <p
           className={
             isClassic
-              ? 'mt-2 text-sm text-gray-600'
+              ? 'mt-2 text-sm text-muted-foreground'
               : 'mt-2 font-display text-sm italic text-muted-foreground'
           }
         >
           Welche Grundsätze wollt ihr als Eltern leben? Wählt 5 oder mehr — oder
           formuliert eigene.
         </p>
-        <p className="mt-3 text-xs text-rose-500">
+        <p className="mt-3 text-xs text-primary">
           {totalSelected === 0
             ? 'Noch nichts ausgewählt'
             : `${totalSelected} Grundsätze ausgewählt`}
@@ -232,19 +232,19 @@ export function ManifestView() {
           return (
             <div
               key={s.id}
-              className="rounded-2xl bg-white p-4 shadow-sm"
+              className="rounded-2xl bg-card p-4 shadow-sm"
             >
               <div className="flex items-start gap-3">
                 <Checkbox
                   id={s.id}
                   checked={checked}
                   onCheckedChange={() => toggleAgreed(s.id)}
-                  className="mt-0.5 data-[state=checked]:border-rose-500 data-[state=checked]:bg-rose-500"
+                  className="mt-0.5 data-[state=checked]:border-primary data-[state=checked]:bg-primary"
                 />
                 <Label
                   htmlFor={s.id}
                   className={`flex-1 cursor-pointer text-sm leading-snug ${
-                    checked ? 'font-medium text-gray-800' : 'text-gray-700'
+                    checked ? 'font-medium text-foreground' : 'text-foreground/80'
                   }`}
                 >
                   {localized(s.text, locale)}
@@ -257,23 +257,23 @@ export function ManifestView() {
 
       {state.custom.length > 0 && (
         <section aria-label="Eigene Grundsätze" className="space-y-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Eure eigenen Grundsätze
           </p>
           {state.custom.map((c) => (
             <div
               key={c.id}
-              className="flex items-start gap-3 rounded-2xl bg-white p-4 shadow-sm"
+              className="flex items-start gap-3 rounded-2xl bg-card p-4 shadow-sm"
             >
-              <span className="mt-0.5 text-rose-500" aria-hidden="true">
+              <span className="mt-0.5 text-primary" aria-hidden="true">
                 •
               </span>
-              <p className="flex-1 text-sm leading-snug text-gray-800">{c.text}</p>
+              <p className="flex-1 text-sm leading-snug text-foreground">{c.text}</p>
               <button
                 type="button"
                 onClick={() => removeCustom(c.id)}
                 aria-label="Eigenen Grundsatz entfernen"
-                className="text-gray-400 hover:text-rose-500"
+                className="text-muted-foreground/70 hover:text-primary"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -284,8 +284,8 @@ export function ManifestView() {
 
       <section aria-label="Eigene Verpflichtung hinzufügen">
         {showCustomInput ? (
-          <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
-            <Label htmlFor="new-custom" className="text-sm font-medium text-gray-700">
+          <div className="space-y-3 rounded-2xl bg-card p-4 shadow-sm">
+            <Label htmlFor="new-custom" className="text-sm font-medium text-foreground/80">
               Eigene Verpflichtung
             </Label>
             <Input
@@ -293,7 +293,7 @@ export function ManifestView() {
               value={newCustom}
               onChange={(e) => setNewCustom(e.target.value)}
               placeholder="z. B. Wir sind ehrlich, auch wenn es schwerfällt."
-              className="border-rose-100 focus-visible:ring-rose-500"
+              className="border-border focus-visible:ring-ring"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault()
@@ -305,7 +305,7 @@ export function ManifestView() {
               <Button
                 onClick={addCustom}
                 disabled={newCustom.trim().length === 0}
-                className="flex-1 bg-rose-500 text-white hover:bg-rose-600"
+                className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 Speichern
               </Button>
@@ -315,7 +315,7 @@ export function ManifestView() {
                   setNewCustom('')
                   setShowCustomInput(false)
                 }}
-                className="border-rose-200 text-rose-500 hover:bg-rose-50 hover:text-rose-600"
+                className="border-primary/20 text-primary hover:bg-secondary hover:text-primary"
               >
                 Abbrechen
               </Button>
@@ -325,7 +325,7 @@ export function ManifestView() {
           <Button
             variant="outline"
             onClick={() => setShowCustomInput(true)}
-            className="w-full border-rose-200 text-rose-500 hover:bg-rose-50 hover:text-rose-600"
+            className="w-full border-primary/20 text-primary hover:bg-secondary hover:text-primary"
           >
             + Eigene Verpflichtung hinzufügen
           </Button>
@@ -334,18 +334,18 @@ export function ManifestView() {
 
       <section
         aria-label="Manifest besiegeln"
-        className="rounded-2xl bg-white p-5 shadow-sm"
+        className="rounded-2xl bg-card p-5 shadow-sm"
       >
-        <h3 className="text-base font-semibold text-gray-800">
+        <h3 className="text-base font-semibold text-foreground">
           Unser Manifest besiegeln
         </h3>
-        <p className="mt-2 text-sm text-gray-600">
+        <p className="mt-2 text-sm text-muted-foreground">
           Wenn ihr eure Grundsätze festhalten wollt, könnt ihr eure Namen ergänzen
           und das Manifest besiegeln.
         </p>
         <div className="mt-4 space-y-3">
           <div className="space-y-1">
-            <Label htmlFor="mama-name" className="text-sm font-medium text-gray-700">
+            <Label htmlFor="mama-name" className="text-sm font-medium text-foreground/80">
               Mama (Name)
             </Label>
             <Input
@@ -353,11 +353,11 @@ export function ManifestView() {
               value={state.mama ?? ''}
               onChange={(e) => setState((prev) => ({ ...prev, mama: e.target.value }))}
               placeholder="optional"
-              className="border-rose-100 focus-visible:ring-rose-500"
+              className="border-border focus-visible:ring-ring"
             />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="partner-name" className="text-sm font-medium text-gray-700">
+            <Label htmlFor="partner-name" className="text-sm font-medium text-foreground/80">
               Partner/in (Name)
             </Label>
             <Input
@@ -365,14 +365,14 @@ export function ManifestView() {
               value={state.partner ?? ''}
               onChange={(e) => setState((prev) => ({ ...prev, partner: e.target.value }))}
               placeholder="optional"
-              className="border-rose-100 focus-visible:ring-rose-500"
+              className="border-border focus-visible:ring-ring"
             />
           </div>
         </div>
         <Button
           onClick={signManifest}
           disabled={totalSelected === 0}
-          className="mt-5 w-full bg-rose-500 text-white hover:bg-rose-600"
+          className="mt-5 w-full bg-primary text-primary-foreground hover:bg-primary/90"
         >
           {isClassic ? (
             <>✍️ Wir verpflichten uns</>
@@ -384,7 +384,7 @@ export function ManifestView() {
           )}
         </Button>
         {totalSelected === 0 && (
-          <p className="mt-2 text-center text-xs text-gray-500">
+          <p className="mt-2 text-center text-xs text-muted-foreground">
             Wählt mindestens einen Grundsatz aus, um das Manifest zu besiegeln.
           </p>
         )}

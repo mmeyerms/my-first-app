@@ -104,16 +104,16 @@ export function AengsteView() {
 
   return (
     <Tabs defaultValue="permission" className="w-full">
-      <TabsList className="grid w-full grid-cols-2 bg-rose-100">
+      <TabsList className="grid w-full grid-cols-2 bg-secondary">
         <TabsTrigger
           value="permission"
-          className="data-[state=active]:bg-white data-[state=active]:text-rose-700"
+          className="data-[state=active]:bg-card data-[state=active]:text-primary"
         >
           Erlaubniskarten
         </TabsTrigger>
         <TabsTrigger
           value="facts"
-          className="data-[state=active]:bg-white data-[state=active]:text-rose-700"
+          className="data-[state=active]:bg-card data-[state=active]:text-primary"
         >
           Sorgen & Fakten
         </TabsTrigger>
@@ -123,7 +123,7 @@ export function AengsteView() {
       <TabsContent value="permission" className="mt-4">
         <section aria-label="Erlaubniskarten" className="space-y-4">
           {/* Card */}
-          <div className="rounded-2xl bg-gradient-to-br from-rose-50 to-rose-100 p-8 shadow-sm ring-1 ring-rose-200">
+          <div className="rounded-2xl bg-gradient-to-br from-secondary to-secondary/70 p-8 shadow-sm ring-1 ring-primary/20">
             <div className="flex flex-col items-center text-center">
               {isClassic && (
                 <span className="mb-4 text-6xl" aria-hidden="true">
@@ -133,13 +133,13 @@ export function AengsteView() {
               <h2
                 className={
                   isClassic
-                    ? 'mb-3 text-xl font-bold text-rose-900'
-                    : 'mb-3 font-display text-2xl font-medium leading-tight text-rose-900'
+                    ? 'mb-3 text-xl font-bold text-primary'
+                    : 'mb-3 font-display text-2xl font-medium leading-tight text-primary'
                 }
               >
                 {localized(currentSlip.title, locale)}
               </h2>
-              <p className="text-sm leading-relaxed text-gray-700">
+              <p className="text-sm leading-relaxed text-foreground/80">
                 {localized(currentSlip.body, locale)}
               </p>
             </div>
@@ -151,8 +151,8 @@ export function AengsteView() {
                 onClick={toggleFavorite}
                 className={
                   isFav
-                    ? 'text-rose-600 hover:bg-rose-100 hover:text-rose-700'
-                    : 'text-gray-500 hover:bg-rose-100 hover:text-rose-700'
+                    ? 'text-primary hover:bg-secondary hover:text-primary'
+                    : 'text-muted-foreground hover:bg-secondary hover:text-primary'
                 }
                 aria-pressed={isFav}
                 aria-label={isFav ? 'Aus Favoriten entfernen' : 'Diese Karte merken'}
@@ -172,7 +172,7 @@ export function AengsteView() {
                 aria-label={`Karte ${idx + 1} von ${slips.length}`}
                 aria-current={idx === currentIndex}
                 className={`h-2 w-2 rounded-full transition-colors ${
-                  idx === currentIndex ? 'bg-rose-500' : 'bg-rose-200'
+                  idx === currentIndex ? 'bg-primary' : 'bg-primary/30'
                 }`}
               />
             ))}
@@ -184,20 +184,20 @@ export function AengsteView() {
               variant="outline"
               size="sm"
               onClick={prevSlip}
-              className="border-rose-200 text-rose-700 hover:bg-rose-50"
+              className="border-primary/20 text-primary hover:bg-secondary"
               aria-label="Vorherige Karte"
             >
               <ChevronLeft className="h-4 w-4" />
               Zurück
             </Button>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-muted-foreground">
               {currentIndex + 1} / {slips.length}
             </span>
             <Button
               variant="outline"
               size="sm"
               onClick={nextSlip}
-              className="border-rose-200 text-rose-700 hover:bg-rose-50"
+              className="border-primary/20 text-primary hover:bg-secondary"
               aria-label="Nächste Karte"
             >
               Weiter
@@ -206,7 +206,7 @@ export function AengsteView() {
           </div>
 
           {/* Favorited count */}
-          <p className="text-center text-xs text-gray-500" aria-live="polite">
+          <p className="text-center text-xs text-muted-foreground" aria-live="polite">
             {hydrated ? `${favorites.size} gemerkt` : '—'}
           </p>
         </section>
@@ -215,7 +215,7 @@ export function AengsteView() {
       {/* Tab 2 — Worries & Facts */}
       <TabsContent value="facts" className="mt-4">
         <section aria-label="Sorgen und Fakten" className="space-y-3">
-          <p className="text-xs text-gray-600">
+          <p className="text-xs text-muted-foreground">
             Tippe auf eine Sorge — dahinter findest du Fakten, die beruhigen.
           </p>
           {ANTI_ANGST_KARTEN.map((karte) => {
@@ -224,7 +224,7 @@ export function AengsteView() {
             return (
               <div
                 key={karte.id}
-                className="overflow-hidden rounded-2xl bg-white shadow-sm"
+                className="overflow-hidden rounded-2xl bg-card shadow-sm"
               >
                 <button
                   type="button"
@@ -241,7 +241,7 @@ export function AengsteView() {
                     <p
                       className={
                         isClassic
-                          ? 'text-sm font-medium leading-snug text-gray-800'
+                          ? 'text-sm font-medium leading-snug text-foreground'
                           : 'font-display text-base leading-snug text-foreground'
                       }
                     >

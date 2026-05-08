@@ -17,6 +17,8 @@ import { KOERPER_KATEGORIEN } from '@/lib/kinderwunsch/koerper'
 import { TEAM_FRAGEN } from '@/lib/kinderwunsch/teamFragen'
 import { MANIFEST_VORSCHLAEGE } from '@/lib/kinderwunsch/manifest'
 import { useTheme } from '@/lib/theme/client'
+import { useT } from '@/lib/i18n/client'
+import type { Messages } from '@/lib/i18n/messages'
 
 type IslandProgress = {
   text: string
@@ -27,10 +29,9 @@ type IslandConfig = {
   href: string
   emoji: string
   Icon: LucideIcon
-  title: string
-  description: string
+  titleKey: keyof Messages['kinderwunsch']['islands']
   storageKey: string
-  computeProgress: (raw: string | null) => IslandProgress | null
+  computeProgress: (raw: string | null, t: Messages) => IslandProgress | null
 }
 
 const ISLANDS: IslandConfig[] = [
@@ -38,10 +39,9 @@ const ISLANDS: IslandConfig[] = [
     href: '/kinderwunsch/koerper',
     emoji: '🌱',
     Icon: Sprout,
-    title: 'Körper bereit?',
-    description: 'Folsäure, Impfungen, Termine — Checkliste',
+    titleKey: 'koerper',
     storageKey: 'mamamap-kw-koerper',
-    computeProgress: (raw) => {
+    computeProgress: (raw, t) => {
       if (!raw) return null
       try {
         const parsed = JSON.parse(raw) as unknown
@@ -49,7 +49,12 @@ const ISLANDS: IslandConfig[] = [
         const total = KOERPER_KATEGORIEN.reduce((sum, c) => sum + c.items.length, 0)
         const checked = parsed.length
         if (checked === 0) return null
-        return { text: `${checked} / ${total} erledigt`, highlight: checked === total }
+        return {
+          text: t.kinderwunsch.progress.doneOf
+            .replace('{checked}', String(checked))
+            .replace('{total}', String(total)),
+          highlight: checked === total,
+        }
       } catch {
         return null
       }
@@ -59,17 +64,21 @@ const ISLANDS: IslandConfig[] = [
     href: '/kinderwunsch/team',
     emoji: '💛',
     Icon: Heart,
-    title: 'Wir als Team',
-    description: '10 Pärchen-Fragen zu Werten und Erziehung',
+    titleKey: 'team',
     storageKey: 'mamamap-kw-team',
-    computeProgress: (raw) => {
+    computeProgress: (raw, t) => {
       if (!raw) return null
       try {
         const parsed = JSON.parse(raw) as Record<string, string>
         if (!parsed || typeof parsed !== 'object') return null
         const answered = Object.values(parsed).filter((v) => typeof v === 'string' && v.trim().length > 0).length
         if (answered === 0) return null
-        return { text: `${answered} / ${TEAM_FRAGEN.length} beantwortet`, highlight: answered === TEAM_FRAGEN.length }
+        return {
+          text: t.kinderwunsch.progress.answeredOf
+            .replace('{answered}', String(answered))
+            .replace('{total}', String(TEAM_FRAGEN.length)),
+          highlight: answered === TEAM_FRAGEN.length,
+        }
       } catch {
         return null
       }
@@ -79,15 +88,14 @@ const ISLANDS: IslandConfig[] = [
     href: '/kinderwunsch/aengste',
     emoji: '🤔',
     Icon: ShieldCheck,
-    title: 'Was macht Angst?',
-    description: 'Erlaubniskarten und Sorgen mit Fakten beruhigen',
+    titleKey: 'aengste',
     storageKey: 'mamamap-kw-aengste-read',
-    computeProgress: (raw) => {
+    computeProgress: (raw, t) => {
       if (!raw) return null
       try {
         const parsed = JSON.parse(raw) as unknown
         if (!Array.isArray(parsed) || parsed.length === 0) return null
-        return { text: 'Begonnen', highlight: false }
+        return { text: t.kinderwunsch.progress.started, highlight: false }
       } catch {
         return null
       }
@@ -97,10 +105,9 @@ const ISLANDS: IslandConfig[] = [
     href: '/kinderwunsch/vorfreude',
     emoji: '✨',
     Icon: Sparkles,
-    title: 'Vorfreude-Rituale',
-    description: 'Brief, 30-Min-Box, Bucket List vor dem Baby',
+    titleKey: 'vorfreude',
     storageKey: 'mamamap-kw-vorfreude',
-    computeProgress: (raw) => {
+    computeProgress: (raw, t) => {
       if (!raw) return null
       try {
         const parsed = JSON.parse(raw) as { letter?: string; first30?: unknown[]; bucket?: unknown[] }
@@ -109,7 +116,7 @@ const ISLANDS: IslandConfig[] = [
         const first30 = Array.isArray(parsed.first30) ? parsed.first30.length : 0
         const bucket = Array.isArray(parsed.bucket) ? parsed.bucket.length : 0
         if (!hasLetter && first30 === 0 && bucket === 0) return null
-        return { text: 'Begonnen', highlight: false }
+        return { text: t.kinderwunsch.progress.started, highlight: false }
       } catch {
         return null
       }
@@ -119,10 +126,9 @@ const ISLANDS: IslandConfig[] = [
     href: '/kinderwunsch/manifest',
     emoji: '📜',
     Icon: ScrollText,
-    title: 'Werte-Manifest',
-    description: 'Eure 5 Grundsätze als Eltern festhalten',
+    titleKey: 'manifest',
     storageKey: 'mamamap-kw-manifest',
-    computeProgress: (raw) => {
+    computeProgress: (raw, t) => {
       if (!raw) return null
       try {
         const parsed = JSON.parse(raw) as {
@@ -137,9 +143,17 @@ const ISLANDS: IslandConfig[] = [
         if (total === 0) return null
         const totalSuggestions = MANIFEST_VORSCHLAEGE.length
         if (parsed.signedAt) {
-          return { text: `Besiegelt — ${total} Grundsätze`, highlight: true }
+          return {
+            text: t.kinderwunsch.progress.sealedCount.replace('{count}', String(total)),
+            highlight: true,
+          }
         }
-        return { text: `${total} ausgewählt (von ${totalSuggestions}+)`, highlight: false }
+        return {
+          text: t.kinderwunsch.progress.selectedCount
+            .replace('{count}', String(total))
+            .replace('{total}', String(totalSuggestions)),
+          highlight: false,
+        }
       } catch {
         return null
       }
@@ -149,15 +163,17 @@ const ISLANDS: IslandConfig[] = [
     href: '/kinderwunsch/arzt',
     emoji: '🩺',
     Icon: Stethoscope,
-    title: 'Beim Arzt',
-    description: 'Fragenliste für die Kinderwunschsprechstunde',
+    titleKey: 'arzt',
     storageKey: 'mamamap-kw-arzt',
-    computeProgress: (raw) => {
+    computeProgress: (raw, t) => {
       if (!raw) return null
       try {
         const parsed = JSON.parse(raw) as unknown
         if (!Array.isArray(parsed) || parsed.length === 0) return null
-        return { text: `${parsed.length} besprochen`, highlight: false }
+        return {
+          text: t.kinderwunsch.progress.discussedCount.replace('{count}', String(parsed.length)),
+          highlight: false,
+        }
       } catch {
         return null
       }
@@ -167,6 +183,7 @@ const ISLANDS: IslandConfig[] = [
 
 export function KinderwunschHub() {
   const { theme } = useTheme()
+  const t = useT()
   const isClassic = theme === 'classic'
   const [progressMap, setProgressMap] = useState<Record<string, IslandProgress | null>>({})
   const [hydrated, setHydrated] = useState(false)
@@ -176,14 +193,14 @@ export function KinderwunschHub() {
     for (const island of ISLANDS) {
       try {
         const raw = localStorage.getItem(island.storageKey)
-        next[island.storageKey] = island.computeProgress(raw)
+        next[island.storageKey] = island.computeProgress(raw, t)
       } catch {
         next[island.storageKey] = null
       }
     }
     setProgressMap(next)
     setHydrated(true)
-  }, [])
+  }, [t])
 
   return (
     <div className="mx-auto max-w-sm px-4 py-8">
@@ -196,12 +213,12 @@ export function KinderwunschHub() {
               : 'text-sm text-primary hover:underline'
           }
         >
-          ← Dashboard
+          {t.common.backToDashboard}
         </Link>
       </div>
 
       <section
-        aria-label="Kinderwunsch & Vorfreude"
+        aria-label={t.kinderwunsch.hub.sectionAria}
         className={
           isClassic
             ? 'mb-6 rounded-2xl bg-white p-6 shadow-sm'
@@ -215,7 +232,7 @@ export function KinderwunschHub() {
               : 'font-display text-2xl font-medium leading-tight text-foreground'
           }
         >
-          {isClassic ? '🌷 ' : ''}Kinderwunsch &amp; Vorfreude
+          {isClassic ? '🌷 ' : ''}{t.kinderwunsch.hub.titlePlain}
         </h1>
         <p
           className={
@@ -224,11 +241,11 @@ export function KinderwunschHub() {
               : 'mt-2 font-display text-sm italic text-muted-foreground'
           }
         >
-          Vorbereitung &amp; Reflexion — vor und nach dem ersten positiven Test.
+          {t.kinderwunsch.hub.subtitle}
         </p>
       </section>
 
-      <div className="space-y-3" aria-label="Inseln">
+      <div className="space-y-3" aria-label={t.kinderwunsch.hub.islandsAria}>
         {ISLANDS.map((island) => {
           const progress = hydrated ? progressMap[island.storageKey] : null
           const Icon = island.Icon
@@ -265,7 +282,7 @@ export function KinderwunschHub() {
                         : 'font-display text-lg font-semibold leading-tight text-foreground'
                     }
                   >
-                    {island.title}
+                    {t.kinderwunsch.islands[island.titleKey].title}
                   </p>
                   <p
                     className={
@@ -274,7 +291,7 @@ export function KinderwunschHub() {
                         : 'mt-1 font-display text-sm italic text-muted-foreground'
                     }
                   >
-                    {island.description}
+                    {t.kinderwunsch.islands[island.titleKey].description}
                   </p>
                   {progress && (
                     <p

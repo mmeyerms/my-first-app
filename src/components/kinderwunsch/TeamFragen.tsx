@@ -76,31 +76,31 @@ export function TeamFragen() {
     <div className="space-y-5">
       <section
         aria-label="10 Fragen für euch als Team"
-        className="rounded-2xl bg-white p-5 shadow-sm"
+        className="rounded-2xl bg-card p-5 shadow-sm"
       >
         <h2
           className={
             isClassic
-              ? 'text-base font-semibold text-gray-800'
+              ? 'text-base font-semibold text-foreground'
               : 'font-display text-xl font-medium text-foreground'
           }
         >
           {isClassic ? '💛 ' : ''}Wir als Team
         </h2>
-        <p className="mt-2 text-sm text-gray-600">
+        <p className="mt-2 text-sm text-muted-foreground">
           10 tiefe Fragen, die ihr gemeinsam beantworten könnt. Es gibt keine
           richtigen Antworten — nur eure.
         </p>
         <div className="mt-4">
           <div className="mb-2 flex items-baseline justify-between">
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-foreground/80">
               {answeredCount} von {total} beantwortet
             </span>
             {showSaved && (
-              <span className="text-xs text-rose-500">✓ Gespeichert</span>
+              <span className="text-xs text-primary">✓ Gespeichert</span>
             )}
           </div>
-          <Progress value={progress} className="h-2 bg-rose-100 [&>div]:bg-rose-500" />
+          <Progress value={progress} className="h-2 bg-secondary [&>div]:bg-primary" />
         </div>
       </section>
 
@@ -111,7 +111,7 @@ export function TeamFragen() {
           <section
             key={frage.id}
             aria-label={`Frage ${idx + 1}`}
-            className="rounded-2xl bg-white p-5 shadow-sm"
+            className="rounded-2xl bg-card p-5 shadow-sm"
           >
             <div className="flex items-start gap-3">
               {isClassic && (
@@ -123,7 +123,7 @@ export function TeamFragen() {
                 <p
                   className={
                     isClassic
-                      ? 'text-xs font-medium text-rose-500'
+                      ? 'text-xs font-medium text-primary'
                       : 'text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground'
                   }
                 >
@@ -132,18 +132,18 @@ export function TeamFragen() {
                 <p
                   className={
                     isClassic
-                      ? 'mt-1 text-base font-semibold leading-snug text-gray-800'
+                      ? 'mt-1 text-base font-semibold leading-snug text-foreground'
                       : 'mt-1 font-display text-lg font-medium leading-snug text-foreground'
                   }
                 >
                   {localized(frage.question, locale)}
                 </p>
                 {frage.hint && (
-                  <p className="mt-2 text-xs text-gray-500">{localized(frage.hint, locale)}</p>
+                  <p className="mt-2 text-xs text-muted-foreground">{localized(frage.hint, locale)}</p>
                 )}
               </div>
               {isAnswered && (
-                <Badge variant="secondary" className="bg-rose-100 text-rose-600">
+                <Badge variant="secondary" className="bg-secondary text-primary">
                   ✓
                 </Badge>
               )}
@@ -154,7 +154,7 @@ export function TeamFragen() {
                 onChange={(e) => updateAnswer(frage.id, e.target.value)}
                 placeholder="Eure gemeinsame Antwort..."
                 aria-label={`Antwort auf Frage ${idx + 1}: ${localized(frage.question, locale)}`}
-                className="min-h-[80px] resize-y border-rose-100 focus-visible:ring-rose-500"
+                className="min-h-[80px] resize-y border-border focus-visible:ring-ring"
               />
             </div>
           </section>

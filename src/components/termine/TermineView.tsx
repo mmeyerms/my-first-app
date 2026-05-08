@@ -150,10 +150,31 @@ export function TermineView({ ssw }: TermineViewProps) {
     [sorted, today]
   )
 
+  // Quick filter: 'week' (next 7 days), 'month' (next 30 days), 'all'.
+  // Default to 'month' so the initial list is reasonably scoped.
+  const [quickFilter, setQuickFilter] = useState<'week' | 'month' | 'all'>('month')
+
   const upcoming = useMemo(() => {
-    if (!selectedDate) return allUpcoming
-    return sorted.filter((x) => x.date === selectedDate)
-  }, [allUpcoming, sorted, selectedDate])
+    // Calendar day-click takes precedence and ignores quick filter.
+    if (selectedDate) return sorted.filter((x) => x.date === selectedDate)
+    if (quickFilter === 'all') return allUpcoming
+    const horizon = quickFilter === 'week' ? 7 : 30
+    return allUpcoming.filter((x) => daysFromToday(x.date, today) <= horizon)
+  }, [allUpcoming, sorted, selectedDate, quickFilter, today])
+
+  // If the active filter would hide all upcoming termine but a wider filter
+  // would show some, automatically expand to keep the view useful.
+  useEffect(() => {
+    if (selectedDate || allUpcoming.length === 0) return
+    if (quickFilter === 'week' && upcoming.length === 0) {
+      const monthCount = allUpcoming.filter((x) => daysFromToday(x.date, today) <= 30).length
+      if (monthCount > 0) setQuickFilter('month')
+      else setQuickFilter('all')
+    } else if (quickFilter === 'month' && upcoming.length === 0) {
+      setQuickFilter('all')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allUpcoming.length])
 
   // Default-collapse past if there are more than 3.
   useEffect(() => {
@@ -318,6 +339,51 @@ export function TermineView({ ssw }: TermineViewProps) {
             </Button>
           )}
         </div>
+
+        {/* Quick filter chips — only when no specific day is selected */}
+        {!selectedDate && allUpcoming.length > 0 && (
+          <div className="mb-3 flex flex-wrap gap-2" role="group" aria-label={t.termine.quickFilter.ariaLabel}>
+            {(
+              [
+                { id: 'week', label: t.termine.quickFilter.week },
+                { id: 'month', label: t.termine.quickFilter.month },
+                { id: 'all', label: t.termine.quickFilter.all },
+              ] as const
+            ).map((f) => {
+              const isActive = quickFilter === f.id
+              const count =
+                f.id === 'all'
+                  ? allUpcoming.length
+                  : allUpcoming.filter(
+                      (x) => daysFromToday(x.date, today) <= (f.id === 'week' ? 7 : 30)
+                    ).length
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setQuickFilter(f.id)}
+                  aria-pressed={isActive}
+                  className={
+                    isActive
+                      ? 'inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground shadow-sm transition-colors'
+                      : 'inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground'
+                  }
+                >
+                  {f.label}
+                  <span
+                    className={
+                      isActive
+                        ? 'rounded-full bg-primary-foreground/20 px-1.5 text-[10px] tabular-nums'
+                        : 'rounded-full bg-muted px-1.5 text-[10px] tabular-nums text-muted-foreground'
+                    }
+                  >
+                    {count}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        )}
         {upcoming.length === 0 ? (
           <Card className="card-elevated border-dashed border-border/60 bg-card/50">
             <CardContent className="p-6 text-center">
@@ -328,7 +394,11 @@ export function TermineView({ ssw }: TermineViewProps) {
                     : 'font-display text-sm italic text-muted-foreground'
                 }
               >
-                {selectedDate ? t.termine.empty : t.termine.empty}
+                {selectedDate
+                  ? t.termine.empty
+                  : allUpcoming.length === 0
+                  ? t.termine.empty
+                  : t.termine.quickFilter.emptyInRange}
               </p>
               {!selectedDate && allUpcoming.length === 0 && (
                 <Button
@@ -339,6 +409,17 @@ export function TermineView({ ssw }: TermineViewProps) {
                   className="mt-2 h-auto px-0 text-primary"
                 >
                   {t.termine.emptyCta} →
+                </Button>
+              )}
+              {!selectedDate && allUpcoming.length > 0 && quickFilter !== 'all' && (
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  onClick={() => setQuickFilter('all')}
+                  className="mt-2 h-auto px-0 text-primary"
+                >
+                  {t.termine.quickFilter.showAll} →
                 </Button>
               )}
             </CardContent>

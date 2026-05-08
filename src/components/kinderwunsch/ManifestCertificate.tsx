@@ -1,5 +1,7 @@
 'use client'
 
+import { useLocale } from '@/lib/i18n/client'
+
 interface Props {
   statements: { id: string; text: string }[]
   signedAt: string
@@ -49,23 +51,54 @@ const PRINT_STYLES = `
 }
 `
 
-function formatDateLong(iso: string): string {
+function formatDateLong(iso: string, locale: 'de' | 'en'): string {
   try {
     const d = new Date(iso)
     if (Number.isNaN(d.getTime())) return ''
-    const months = [
-      'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
-      'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember',
-    ]
-    return `${d.getDate()}. ${months[d.getMonth()]} ${d.getFullYear()}`
+    return new Intl.DateTimeFormat(locale === 'de' ? 'de-DE' : 'en-US', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }).format(d)
   } catch {
     return ''
   }
 }
 
+const COPY = {
+  de: {
+    label: 'Zertifikat',
+    title: 'Unser Eltern-Manifest',
+    subtitle: 'Eine gegenseitige Verpflichtung',
+    intro1: 'Wir,',
+    intro2: 'verpflichten uns auf dem gemeinsamen Weg in die Elternschaft',
+    intro3: 'zu folgenden Grundsätzen:',
+    sealed: 'Besiegelt an diesem',
+    fallbackNames: 'die werdenden Eltern',
+    mamaPlaceholder: 'Mama',
+    partnerPlaceholder: 'Partner/in',
+    footer: 'MamaMap · ein Versprechen an euch und euer Kind',
+  },
+  en: {
+    label: 'Certificate',
+    title: 'Our Parent Manifesto',
+    subtitle: 'A mutual commitment',
+    intro1: 'We,',
+    intro2: 'commit on our shared journey into parenthood',
+    intro3: 'to the following principles:',
+    sealed: 'Sealed on this',
+    fallbackNames: 'the soon-to-be parents',
+    mamaPlaceholder: 'Mom',
+    partnerPlaceholder: 'Partner',
+    footer: 'MamaMap · a promise to you and your child',
+  },
+} as const
+
 export function ManifestCertificate({ statements, signedAt, mama, partner }: Props) {
-  const dateLong = formatDateLong(signedAt)
-  const namesLine = [mama, partner].filter(Boolean).join('  &  ') || 'die werdenden Eltern'
+  const { locale } = useLocale()
+  const c = COPY[locale]
+  const dateLong = formatDateLong(signedAt, locale)
+  const namesLine = [mama, partner].filter(Boolean).join('  &  ') || c.fallbackNames
 
   return (
     <>
@@ -83,16 +116,16 @@ export function ManifestCertificate({ statements, signedAt, mama, partner }: Pro
           <div className="cert-accent text-3xl tracking-[0.4em] text-rose-400">✦ ✦ ✦</div>
           <div className="mt-4 text-6xl">🌷</div>
           <p className="cert-accent mt-3 text-[10px] font-semibold uppercase tracking-[0.5em] text-rose-500">
-            Zertifikat
+            {c.label}
           </p>
           <h1
             className="mt-2 font-serif text-3xl font-bold text-gray-800 sm:text-4xl"
             style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
           >
-            Unser Eltern-Manifest
+            {c.title}
           </h1>
           <p className="mt-2 text-sm italic text-gray-500">
-            Eine gegenseitige Verpflichtung
+            {c.subtitle}
           </p>
           <div className="cert-accent mx-auto mt-4 h-px w-24 bg-rose-300" />
         </div>
@@ -103,9 +136,9 @@ export function ManifestCertificate({ statements, signedAt, mama, partner }: Pro
             className="font-serif text-base leading-relaxed text-gray-700 sm:text-lg"
             style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
           >
-            Wir, <span className="cert-accent font-semibold text-rose-600">{namesLine}</span>,
-            verpflichten uns auf dem gemeinsamen Weg in die Elternschaft
-            <br className="hidden sm:block" /> zu folgenden Grundsätzen:
+            {c.intro1} <span className="cert-accent font-semibold text-rose-600">{namesLine}</span>,
+            {' '}{c.intro2}
+            <br className="hidden sm:block" /> {c.intro3}
           </p>
         </div>
 
@@ -133,7 +166,7 @@ export function ManifestCertificate({ statements, signedAt, mama, partner }: Pro
         <div className="relative mt-10 text-center">
           <div className="cert-accent mx-auto h-px w-32 bg-rose-300" />
           <p className="mt-4 text-sm italic text-gray-600">
-            Besiegelt an diesem
+            {c.sealed}
           </p>
           <p
             className="cert-accent mt-1 font-serif text-xl font-semibold text-rose-600"
@@ -148,13 +181,13 @@ export function ManifestCertificate({ statements, signedAt, mama, partner }: Pro
           <div className="text-center">
             <div className="border-b-2 border-gray-400 pb-1">&nbsp;</div>
             <p className="mt-2 text-xs uppercase tracking-widest text-gray-500">
-              {mama || 'Mama'}
+              {mama || c.mamaPlaceholder}
             </p>
           </div>
           <div className="text-center">
             <div className="border-b-2 border-gray-400 pb-1">&nbsp;</div>
             <p className="mt-2 text-xs uppercase tracking-widest text-gray-500">
-              {partner || 'Partner/in'}
+              {partner || c.partnerPlaceholder}
             </p>
           </div>
         </div>
@@ -163,7 +196,7 @@ export function ManifestCertificate({ statements, signedAt, mama, partner }: Pro
         <div className="relative mt-10 text-center">
           <div className="cert-accent text-2xl tracking-[0.4em] text-rose-400">✦ ✦ ✦</div>
           <p className="mt-3 text-[10px] uppercase tracking-[0.3em] text-gray-400">
-            MamaMap · ein Versprechen an euch und euer Kind
+            {c.footer}
           </p>
         </div>
       </div>

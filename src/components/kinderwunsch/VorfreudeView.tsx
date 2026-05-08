@@ -218,22 +218,22 @@ export function VorfreudeView() {
 
   return (
     <Tabs defaultValue="letter" className="w-full">
-      <TabsList className="grid w-full grid-cols-3 bg-rose-100">
+      <TabsList className="grid w-full grid-cols-3 bg-secondary">
         <TabsTrigger
           value="letter"
-          className="data-[state=active]:bg-white data-[state=active]:text-rose-700"
+          className="data-[state=active]:bg-card data-[state=active]:text-primary"
         >
           Brief
         </TabsTrigger>
         <TabsTrigger
           value="first30"
-          className="data-[state=active]:bg-white data-[state=active]:text-rose-700"
+          className="data-[state=active]:bg-card data-[state=active]:text-primary"
         >
           30 Minuten
         </TabsTrigger>
         <TabsTrigger
           value="bucket"
-          className="data-[state=active]:bg-white data-[state=active]:text-rose-700"
+          className="data-[state=active]:bg-card data-[state=active]:text-primary"
         >
           Bucket List
         </TabsTrigger>
@@ -243,11 +243,11 @@ export function VorfreudeView() {
       <TabsContent value="letter" className="mt-4">
         <section aria-label="Brief an dein zukünftiges Ich" className="space-y-4">
           {!hydrated ? (
-            <div className="rounded-2xl bg-white p-5 text-sm text-gray-500 shadow-sm">
+            <div className="rounded-2xl bg-card p-5 text-sm text-muted-foreground shadow-sm">
               Lade…
             </div>
           ) : sealed && state.letter ? (
-            <div className="space-y-4 rounded-2xl bg-gradient-to-br from-amber-50 to-rose-50 p-6 shadow-sm ring-1 ring-amber-200">
+            <div className="space-y-4 rounded-2xl bg-gradient-to-br from-secondary/70 to-secondary p-6 shadow-sm ring-1 ring-primary/20">
               <div className="flex flex-col items-center text-center">
                 {isClassic ? (
                   <span className="mb-3 text-5xl" aria-hidden="true">
@@ -261,25 +261,25 @@ export function VorfreudeView() {
                     <Lock className="h-6 w-6 text-primary" strokeWidth={1.5} />
                   </span>
                 )}
-                <p className="text-sm text-gray-700">
+                <p className="text-sm text-foreground/80">
                   Versiegelt am{' '}
                   <span className="font-medium">
                     {formatDate(state.letter.writtenAt)}
                   </span>
                 </p>
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-muted-foreground">
                   Lies ihn am Tag des positiven Tests wieder.
                 </p>
               </div>
 
               {letterRevealed ? (
-                <pre className="whitespace-pre-wrap rounded-xl bg-white/80 p-4 text-sm leading-relaxed text-gray-800">
+                <pre className="whitespace-pre-wrap rounded-xl bg-card/80 p-4 text-sm leading-relaxed text-foreground">
                   {state.letter.content}
                 </pre>
               ) : (
                 <Button
                   onClick={() => setLetterRevealed(true)}
-                  className="w-full bg-rose-500 text-white hover:bg-rose-600"
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                 >
                   Brief öffnen
                 </Button>
@@ -288,14 +288,14 @@ export function VorfreudeView() {
               <Button
                 variant="outline"
                 onClick={unsealLetter}
-                className="w-full border-rose-200 text-rose-700 hover:bg-rose-50"
+                className="w-full border-primary/20 text-primary hover:bg-secondary"
               >
                 Versiegelung lösen
               </Button>
             </div>
           ) : (
-            <div className="space-y-3 rounded-2xl bg-white p-5 shadow-sm">
-              <p className="text-sm text-gray-600">
+            <div className="space-y-3 rounded-2xl bg-card p-5 shadow-sm">
+              <p className="text-sm text-muted-foreground">
                 Schreib einen Brief an dich selbst. Versiegele ihn — und lies
                 ihn am Tag des positiven Tests wieder.
               </p>
@@ -311,14 +311,14 @@ export function VorfreudeView() {
                   variant="outline"
                   onClick={saveLetter}
                   disabled={!letterDraft.trim()}
-                  className="flex-1 border-rose-200 text-rose-700 hover:bg-rose-50"
+                  className="flex-1 border-primary/20 text-primary hover:bg-secondary"
                 >
                   Speichern
                 </Button>
                 <Button
                   onClick={sealLetter}
                   disabled={!letterDraft.trim()}
-                  className="flex-1 bg-rose-500 text-white hover:bg-rose-600"
+                  className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
                 >
                   {isClassic ? (
                     <>✉️ Versiegeln</>
@@ -331,7 +331,7 @@ export function VorfreudeView() {
                 </Button>
               </div>
               {state.letter && !state.letter.sealed && (
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   Entwurf gespeichert am {formatDate(state.letter.writtenAt)}.
                 </p>
               )}
@@ -343,17 +343,17 @@ export function VorfreudeView() {
       {/* Tab 2 — Erste 30 Minuten */}
       <TabsContent value="first30" className="mt-4">
         <section aria-label="Erste 30 Minuten Box" className="space-y-4">
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-gray-600">
+          <div className="rounded-2xl bg-card p-5 shadow-sm">
+            <p className="text-sm text-muted-foreground">
               Was wollt ihr in der ersten halben Stunde nach dem positiven
               Test tun? Wählt aus oder fügt eigenes hinzu.
             </p>
           </div>
 
           {/* Eure Box */}
-          <div className="rounded-2xl bg-gradient-to-br from-rose-50 to-rose-100 p-5 shadow-sm ring-1 ring-rose-200">
+          <div className="rounded-2xl bg-gradient-to-br from-secondary to-secondary/70 p-5 shadow-sm ring-1 ring-primary/20">
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="flex items-center gap-2 text-sm font-semibold text-rose-900">
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-primary">
                 {isClassic ? (
                   <span aria-hidden="true">💝</span>
                 ) : (
@@ -363,13 +363,13 @@ export function VorfreudeView() {
               </h3>
               <Badge
                 variant="secondary"
-                className="bg-rose-200 text-rose-900 hover:bg-rose-200"
+                className="bg-primary/10 text-primary hover:bg-primary/10"
               >
                 {hydrated ? state.first30.length : 0} Sachen
               </Badge>
             </div>
             {hydrated && state.first30.length === 0 ? (
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-muted-foreground">
                 Noch leer — wählt unten Vorschläge oder fügt eigene hinzu.
               </p>
             ) : (
@@ -377,16 +377,16 @@ export function VorfreudeView() {
                 {state.first30.map((item) => (
                   <li
                     key={item.id}
-                    className="flex items-start gap-2 rounded-xl bg-white px-3 py-2"
+                    className="flex items-start gap-2 rounded-xl bg-card px-3 py-2"
                   >
-                    <span className="flex-1 text-sm text-gray-800">
+                    <span className="flex-1 text-sm text-foreground">
                       {item.text}
                     </span>
                     <button
                       type="button"
                       onClick={() => removeFirst30(item.id)}
                       aria-label="Entfernen"
-                      className="text-gray-400 hover:text-rose-500"
+                      className="text-muted-foreground/70 hover:text-primary"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -397,8 +397,8 @@ export function VorfreudeView() {
           </div>
 
           {/* Custom add */}
-          <div className="rounded-2xl bg-white p-4 shadow-sm">
-            <p className="mb-2 text-xs font-medium text-gray-700">
+          <div className="rounded-2xl bg-card p-4 shadow-sm">
+            <p className="mb-2 text-xs font-medium text-foreground/80">
               + Eigenes hinzufügen
             </p>
             <div className="flex gap-2">
@@ -417,7 +417,7 @@ export function VorfreudeView() {
               <Button
                 onClick={addCustomFirst30}
                 disabled={!customFirst30.trim()}
-                className="bg-rose-500 text-white hover:bg-rose-600"
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 +
               </Button>
@@ -426,7 +426,7 @@ export function VorfreudeView() {
 
           {/* Suggestions */}
           <div className="space-y-2">
-            <h3 className="text-xs font-medium uppercase tracking-wide text-gray-500">
+            <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Vorschläge
             </h3>
             <ul className="space-y-2">
@@ -441,15 +441,15 @@ export function VorfreudeView() {
                       disabled={added}
                       className={`flex w-full items-start gap-3 rounded-2xl px-4 py-3 text-left text-sm shadow-sm transition-colors ${
                         added
-                          ? 'cursor-default bg-rose-50 text-rose-700'
-                          : 'bg-white text-gray-800 hover:bg-rose-50'
+                          ? 'cursor-default bg-secondary text-primary'
+                          : 'bg-card text-foreground hover:bg-secondary/50'
                       }`}
                     >
                       <span
                         className={`mt-0.5 inline-flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold ${
                           added
-                            ? 'bg-rose-500 text-white'
-                            : 'border border-rose-300 text-rose-500'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'border border-primary/40 text-primary'
                         }`}
                         aria-hidden="true"
                       >
@@ -468,16 +468,16 @@ export function VorfreudeView() {
       {/* Tab 3 — Bucket List */}
       <TabsContent value="bucket" className="mt-4">
         <section aria-label="Reverse Bucket List" className="space-y-4">
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-gray-600">
+          <div className="rounded-2xl bg-card p-5 shadow-sm">
+            <p className="text-sm text-muted-foreground">
               Was wollt ihr noch erleben — bevor das Baby kommt?
             </p>
           </div>
 
           {/* Counter / Eure Liste */}
-          <div className="rounded-2xl bg-gradient-to-br from-rose-50 to-rose-100 p-5 shadow-sm ring-1 ring-rose-200">
+          <div className="rounded-2xl bg-gradient-to-br from-secondary to-secondary/70 p-5 shadow-sm ring-1 ring-primary/20">
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="flex items-center gap-2 text-sm font-semibold text-rose-900">
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-primary">
                 {isClassic ? (
                   <span aria-hidden="true">🌟</span>
                 ) : (
@@ -487,14 +487,14 @@ export function VorfreudeView() {
               </h3>
               <Badge
                 variant="secondary"
-                className="bg-rose-200 text-rose-900 hover:bg-rose-200"
+                className="bg-primary/10 text-primary hover:bg-primary/10"
               >
                 {hydrated ? bucketDoneCount : 0} von{' '}
                 {hydrated ? state.bucket.length : 0} erlebt
               </Badge>
             </div>
             {hydrated && state.bucket.length === 0 ? (
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-muted-foreground">
                 Noch leer — wählt unten Vorschläge oder fügt eigene hinzu.
               </p>
             ) : (
@@ -502,7 +502,7 @@ export function VorfreudeView() {
                 {state.bucket.map((item) => (
                   <li
                     key={item.id}
-                    className="flex items-start gap-2 rounded-xl bg-white px-3 py-2"
+                    className="flex items-start gap-2 rounded-xl bg-card px-3 py-2"
                   >
                     <button
                       type="button"
@@ -514,7 +514,7 @@ export function VorfreudeView() {
                       className={`mt-0.5 inline-flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold ${
                         item.done
                           ? 'bg-green-500 text-white'
-                          : 'border border-gray-300 text-gray-400 hover:border-green-400'
+                          : 'border border-border text-muted-foreground/70 hover:border-green-400'
                       }`}
                     >
                       {item.done ? '✓' : ''}
@@ -522,8 +522,8 @@ export function VorfreudeView() {
                     <span
                       className={`flex-1 text-sm ${
                         item.done
-                          ? 'text-gray-400 line-through'
-                          : 'text-gray-800'
+                          ? 'text-muted-foreground/70 line-through'
+                          : 'text-foreground'
                       }`}
                     >
                       {item.text}
@@ -532,7 +532,7 @@ export function VorfreudeView() {
                       type="button"
                       onClick={() => removeBucket(item.id)}
                       aria-label="Entfernen"
-                      className="text-gray-400 hover:text-rose-500"
+                      className="text-muted-foreground/70 hover:text-primary"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -543,8 +543,8 @@ export function VorfreudeView() {
           </div>
 
           {/* Custom add */}
-          <div className="rounded-2xl bg-white p-4 shadow-sm">
-            <p className="mb-2 text-xs font-medium text-gray-700">
+          <div className="rounded-2xl bg-card p-4 shadow-sm">
+            <p className="mb-2 text-xs font-medium text-foreground/80">
               + Eigenes hinzufügen
             </p>
             <div className="flex gap-2">
@@ -563,7 +563,7 @@ export function VorfreudeView() {
               <Button
                 onClick={addCustomBucket}
                 disabled={!customBucket.trim()}
-                className="bg-rose-500 text-white hover:bg-rose-600"
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 +
               </Button>
@@ -572,7 +572,7 @@ export function VorfreudeView() {
 
           {/* Suggestions */}
           <div className="space-y-2">
-            <h3 className="text-xs font-medium uppercase tracking-wide text-gray-500">
+            <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Vorschläge
             </h3>
             <ul className="space-y-2">
@@ -587,15 +587,15 @@ export function VorfreudeView() {
                       disabled={added}
                       className={`flex w-full items-start gap-3 rounded-2xl px-4 py-3 text-left text-sm shadow-sm transition-colors ${
                         added
-                          ? 'cursor-default bg-rose-50 text-rose-700'
-                          : 'bg-white text-gray-800 hover:bg-rose-50'
+                          ? 'cursor-default bg-secondary text-primary'
+                          : 'bg-card text-foreground hover:bg-secondary/50'
                       }`}
                     >
                       <span
                         className={`mt-0.5 inline-flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold ${
                           added
-                            ? 'bg-rose-500 text-white'
-                            : 'border border-rose-300 text-rose-500'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'border border-primary/40 text-primary'
                         }`}
                         aria-hidden="true"
                       >
