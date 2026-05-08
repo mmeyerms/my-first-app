@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
+import { getActivePregnancy } from '@/lib/pregnancy/server'
 
 const schema = z.object({
   ssw: z.number().int().min(1).max(45),
@@ -11,14 +12,25 @@ const schema = z.object({
 
 export async function GET() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data, error } = await supabase
+  const active = await getActivePregnancy(supabase, user.id)
+
+  let query = supabase
     .from('diary_entries')
     .select('*')
     .eq('user_id', user.id)
     .order('ssw', { ascending: true })
+    .limit(100)
+
+  if (active) {
+    query = query.eq('pregnancy_id', active.id)
+  }
+
+  const { data, error } = await query
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data ?? [])
@@ -26,17 +38,29 @@ export async function GET() {
 
 export async function PUT(req: Request) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
   const parsed = schema.safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
 
+  const active = await getActivePregnancy(supabase, user.id)
+
   const { ssw, ...rest } = parsed.data
-  await supabase
-    .from('diary_entries')
-    .upsert({ user_id: user.id, ssw, ...rest, updated_at: new Date().toISOString() })
+  const payload: Record<string, unknown> = {
+    user_id: user.id,
+    ssw,
+    ...rest,
+    updated_at: new Date().toISOString(),
+  }
+  if (active) payload.pregnancy_id = active.id
+
+  const { error } = await supabase.from('diary_entries').upsert(payload)
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   return NextResponse.json({ ok: true })
 }

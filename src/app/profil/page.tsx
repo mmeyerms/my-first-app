@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { ProfilForm } from '@/components/profil/ProfilForm'
 import { LocaleSection } from '@/components/profil/LocaleSection'
 import { ThemeSection } from '@/components/profil/ThemeSection'
+import { PregnancyOverview } from '@/components/profil/PregnancyOverview'
 import { getServerLocale } from '@/lib/i18n/server'
 import { getMessages } from '@/lib/i18n/messages'
 
@@ -43,6 +44,9 @@ export default async function ProfilPage() {
         <div className="space-y-6">
           <div className="card-elevated rounded-2xl bg-card p-6">
             <ProfilForm profile={profile} />
+          </div>
+          <div className="card-elevated rounded-2xl bg-card p-6">
+            <PregnancyOverview />
           </div>
           <div className="card-elevated rounded-2xl bg-card p-6">
             <LocaleSection />

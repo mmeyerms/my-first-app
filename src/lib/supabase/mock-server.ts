@@ -6,7 +6,13 @@ const STORE_PATH = path.join(process.cwd(), '.mock-data.json')
 const COOKIE_NAME = 'mamamap-mock-data'
 const MOCK_USER = { id: 'mock-user-00000000', email: 'demo@mamamap.de', aud: 'authenticated' }
 
-type Table = 'profiles' | 'birth_plans' | 'partner_invites' | 'partner_links' | 'diary_entries'
+type Table =
+  | 'profiles'
+  | 'birth_plans'
+  | 'partner_invites'
+  | 'partner_links'
+  | 'diary_entries'
+  | 'pregnancies'
 type Row = Record<string, unknown>
 type Store = Record<Table, Row[]>
 
@@ -16,6 +22,7 @@ const EMPTY_STORE: Store = {
   partner_invites: [],
   partner_links: [],
   diary_entries: [],
+  pregnancies: [],
 }
 
 // Persistence strategy:
@@ -124,14 +131,20 @@ class Q {
     } else if (this._op === 'upsert' && this._data) {
       const d = this._data
       const matchKeys = this._t === 'diary_entries' && d.user_id && d.ssw != null
-        ? ['user_id', 'ssw']
-        : d.user_id
-        ? ['user_id']
-        : d.mother_id && d.partner_user_id
-          ? ['mother_id', 'partner_user_id']
-          : d.mother_id
-            ? ['mother_id']
-            : ['id']
+        ? d.pregnancy_id != null
+          ? ['user_id', 'pregnancy_id', 'ssw']
+          : ['user_id', 'ssw']
+        : this._t === 'birth_plans' && d.user_id
+          ? d.pregnancy_id != null
+            ? ['user_id', 'pregnancy_id']
+            : ['user_id']
+          : d.user_id
+            ? ['user_id']
+            : d.mother_id && d.partner_user_id
+              ? ['mother_id', 'partner_user_id']
+              : d.mother_id
+                ? ['mother_id']
+                : ['id']
       const i = s[this._t].findIndex(r => matchKeys.every(k => r[k] === d[k]))
       const ts = new Date().toISOString()
       if (i >= 0) s[this._t][i] = { ...s[this._t][i], ...d, updated_at: ts }

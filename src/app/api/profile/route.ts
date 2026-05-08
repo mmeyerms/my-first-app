@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
+import { getActivePregnancy } from '@/lib/pregnancy/server'
+
+// Fields that exist on BOTH profiles and pregnancies — when a PUT updates
+// these on the profile, mirror them onto the active pregnancy so the two
+// sources of truth stay in sync during the gradual migration.
+const MIRROR_KEYS = ['baby_name', 'baby_gender', 'positive_test_date', 'due_date'] as const
 
 const localeSchema = z.enum(['de', 'en'])
 const modeSchema = z.enum(['planning', 'pregnant'])
@@ -115,6 +121,20 @@ export async function PUT(request: NextRequest) {
       .update(result.data)
       .eq('user_id', user.id)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    // Mirror baby_gender (the only MIRROR_KEY that appears in partial updates)
+    // onto the active pregnancy so both sources stay in sync.
+    if ('baby_gender' in result.data) {
+      const active = await getActivePregnancy(supabase, user.id)
+      if (active) {
+        await supabase
+          .from('pregnancies')
+          .update({ baby_gender: result.data.baby_gender })
+          .eq('id', active.id)
+          .eq('user_id', user.id)
+      }
+    }
+
     return NextResponse.json({ success: true })
   }
 
@@ -123,12 +143,35 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: result.error.flatten() }, { status: 400 })
   }
 
+  const cleaned = nullifyEmpty(result.data)
+
   const { error } = await supabase.from('profiles').upsert({
     user_id: user.id,
-    ...nullifyEmpty(result.data),
+    ...cleaned,
   })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Mirror baby_name / baby_gender / positive_test_date / due_date onto the
+  // user's active pregnancy. If no active pregnancy exists yet, silently skip;
+  // we don't auto-create one here because POST /api/pregnancies is the
+  // canonical creation path.
+  const mirrorPayload: Record<string, unknown> = {}
+  for (const key of MIRROR_KEYS) {
+    if (key in cleaned) {
+      mirrorPayload[key] = (cleaned as Record<string, unknown>)[key]
+    }
+  }
+  if (Object.keys(mirrorPayload).length > 0) {
+    const active = await getActivePregnancy(supabase, user.id)
+    if (active) {
+      await supabase
+        .from('pregnancies')
+        .update(mirrorPayload)
+        .eq('id', active.id)
+        .eq('user_id', user.id)
+    }
+  }
 
   return NextResponse.json({ success: true })
 }
