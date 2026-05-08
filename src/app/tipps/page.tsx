@@ -15,13 +15,14 @@ export default async function TippsPage() {
   const locale = await getServerLocale()
   const t = getMessages(locale)
 
-  const { data: profile } = await supabase
+  const { data: profile } = (await supabase
     .from('profiles')
     .select('due_date')
     .eq('user_id', user.id)
-    .single()
+    .single()) as { data: { due_date: string | null } | null }
 
   if (!profile) redirect('/onboarding')
+  if (!profile.due_date) redirect('/profil')
 
   const ssw = calculateSSW(profile.due_date)
   const tip = getTipForDay(ssw)

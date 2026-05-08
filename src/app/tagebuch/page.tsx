@@ -16,11 +16,14 @@ export default async function TagebuchPage() {
     .from('profiles')
     .select('baby_name, due_date')
     .eq('user_id', user.id)
-    .single() as { data: { baby_name: string; due_date: string } | null }
+    .single() as { data: { baby_name: string | null; due_date: string | null } | null }
 
   if (!profile) redirect('/onboarding')
+  // Tagebuch is week-by-week, so due_date is required.
+  if (!profile.due_date) redirect('/profil')
 
   const ssw = calculateSSW(profile.due_date)
+  const babyName = profile.baby_name ?? t.partner.fallbackBabyName
 
   return (
     <main className="min-h-screen bg-background">
@@ -29,7 +32,7 @@ export default async function TagebuchPage() {
           <h1 className="font-display text-2xl font-medium text-foreground">{t.tagebuch.title}</h1>
           <Link href="/dashboard" className="shrink-0 text-sm text-muted-foreground transition-colors hover:text-primary">{t.common.backToDashboard}</Link>
         </div>
-        <TagebuchView ssw={ssw} babyName={profile.baby_name} />
+        <TagebuchView ssw={ssw} babyName={babyName} />
       </div>
     </main>
   )

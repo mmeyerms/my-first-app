@@ -10,6 +10,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -22,12 +29,19 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Separator } from '@/components/ui/separator'
 
+type Mode = 'planning' | 'pregnant'
+type BabyGender = 'female' | 'male' | 'diverse' | 'surprise' | 'unknown'
+
 interface Profile {
   name: string
-  baby_name: string
-  positive_test_date: string
-  due_date: string
+  baby_name: string | null
+  positive_test_date: string | null
+  due_date: string | null
+  mode: Mode | null
+  baby_gender: BabyGender | null
 }
+
+const NONE_VALUE = '__none__'
 
 export function ProfilForm({ profile }: { profile: Profile }) {
   const t = useT()
@@ -35,22 +49,46 @@ export function ProfilForm({ profile }: { profile: Profile }) {
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [modeUpdating, setModeUpdating] = useState(false)
+  const [replaying, setReplaying] = useState(false)
+
+  const currentMode: Mode = profile.mode ?? 'pregnant'
 
   const schema = useMemo(
     () =>
-      z.object({
-        name: z.string().min(1, t.profile.sectionPersonal.validation.name).max(50),
-        baby_name: z.string().min(1, t.profile.sectionPersonal.validation.babyName).max(50),
-        positive_test_date: z.string().min(1, t.profile.sectionPersonal.validation.testDate),
-        due_date: z.string().min(1, t.profile.sectionPersonal.validation.dueDate),
-      }),
-    [t]
+      z
+        .object({
+          name: z.string().min(1, t.profile.sectionPersonal.validation.name).max(50),
+          baby_name: z.string().max(50).optional(),
+          positive_test_date: z.string().optional(),
+          due_date: z.string().optional(),
+          baby_gender: z
+            .enum(['female', 'male', 'diverse', 'surprise', 'unknown'])
+            .optional(),
+        })
+        .refine(
+          (d) => {
+            if (!d.positive_test_date || !d.due_date) return true
+            return new Date(d.due_date) > new Date(d.positive_test_date)
+          },
+          {
+            message: t.profile.sectionPersonal.validation.dueDate,
+            path: ['due_date'],
+          },
+        ),
+    [t],
   )
   type FormData = z.infer<typeof schema>
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: profile,
+    defaultValues: {
+      name: profile.name ?? '',
+      baby_name: profile.baby_name ?? '',
+      positive_test_date: profile.positive_test_date ?? '',
+      due_date: profile.due_date ?? '',
+      baby_gender: profile.baby_gender ?? undefined,
+    },
   })
 
   const dueDate = form.watch('due_date')
@@ -61,10 +99,19 @@ export function ProfilForm({ profile }: { profile: Profile }) {
     setSaveSuccess(false)
     setSaveError(null)
     try {
+      // Send only non-empty fields so optional date columns become NULL when cleared.
+      const payload: Record<string, unknown> = {
+        name: data.name,
+        baby_name: data.baby_name?.trim() ?? '',
+        positive_test_date: data.positive_test_date ?? '',
+        due_date: data.due_date ?? '',
+      }
+      if (data.baby_gender) payload.baby_gender = data.baby_gender
+      else payload.baby_gender = ''
       const res = await fetch('/api/profile', {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       })
       if (!res.ok) {
         const body = await res.json()
@@ -85,6 +132,35 @@ export function ProfilForm({ profile }: { profile: Profile }) {
       window.location.href = '/login'
     } finally {
       setDeleting(false)
+    }
+  }
+
+  async function toggleMode() {
+    const next: Mode = currentMode === 'pregnant' ? 'planning' : 'pregnant'
+    setModeUpdating(true)
+    try {
+      await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ mode: next }),
+      })
+      window.location.reload()
+    } finally {
+      setModeUpdating(false)
+    }
+  }
+
+  async function handleReplayTour() {
+    setReplaying(true)
+    try {
+      await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ tour_completed: false }),
+      })
+      window.location.href = '/dashboard'
+    } finally {
+      setReplaying(false)
     }
   }
 
@@ -141,6 +217,34 @@ export function ProfilForm({ profile }: { profile: Profile }) {
               </FormItem>
             )}
           />
+          <FormField
+            control={form.control}
+            name="baby_gender"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t.profile.babyGender}</FormLabel>
+                <Select
+                  value={field.value ?? NONE_VALUE}
+                  onValueChange={(v) => field.onChange(v === NONE_VALUE ? undefined : v)}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t.profile.babyGenderOptions.none} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value={NONE_VALUE}>{t.profile.babyGenderOptions.none}</SelectItem>
+                    <SelectItem value="female">{t.profile.babyGenderOptions.female}</SelectItem>
+                    <SelectItem value="male">{t.profile.babyGenderOptions.male}</SelectItem>
+                    <SelectItem value="diverse">{t.profile.babyGenderOptions.diverse}</SelectItem>
+                    <SelectItem value="surprise">{t.profile.babyGenderOptions.surprise}</SelectItem>
+                    <SelectItem value="unknown">{t.profile.babyGenderOptions.unknown}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           {saveSuccess && (
             <p className="rounded-lg bg-green-50 px-4 py-2 text-sm text-green-600">
               {t.profile.saved}
@@ -154,6 +258,44 @@ export function ProfilForm({ profile }: { profile: Profile }) {
           </Button>
         </form>
       </Form>
+
+      <Separator />
+
+      {/* Mode toggle */}
+      <div className="space-y-3">
+        <div className="flex items-baseline justify-between">
+          <h3 className="text-sm font-semibold text-foreground">{t.profile.modeLabel}</h3>
+          <span className="text-xs text-muted-foreground">
+            {currentMode === 'planning' ? t.profile.modePlanning : t.profile.modePregnant}
+          </span>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full"
+          onClick={toggleMode}
+          disabled={modeUpdating}
+        >
+          {currentMode === 'planning'
+            ? t.profile.modeSwitchToPregnant
+            : t.profile.modeSwitchToPlanning}
+        </Button>
+      </div>
+
+      <Separator />
+
+      {/* Replay tour */}
+      <div className="space-y-3">
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full"
+          onClick={handleReplayTour}
+          disabled={replaying}
+        >
+          {t.profile.replayTour}
+        </Button>
+      </div>
 
       <Separator />
 

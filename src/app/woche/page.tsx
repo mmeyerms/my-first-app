@@ -19,8 +19,8 @@ import { BabyIllustration } from '@/components/ssw/BabyIllustration'
 
 interface Profile {
   name: string
-  baby_name: string
-  due_date: string
+  baby_name: string | null
+  due_date: string | null
 }
 
 const CATEGORY_BG: Record<SswComparisonCategory, string> = {
@@ -47,6 +47,8 @@ export default async function WochePage() {
     .single()) as { data: Profile | null }
 
   if (!profile) redirect('/onboarding')
+  // Woche page is SSW-driven and meaningless without due_date.
+  if (!profile.due_date) redirect('/profil')
 
   const ssw = calculateSSW(profile.due_date)
   const info = getSswInfo(ssw)
@@ -130,7 +132,7 @@ export default async function WochePage() {
           )}
 
           <p className="mt-6 font-display text-base italic text-muted-foreground">
-            {t.woche.forBaby.replace('{babyName}', profile.baby_name)}
+            {t.woche.forBaby.replace('{babyName}', profile.baby_name ?? t.partner.fallbackBabyName)}
           </p>
         </header>
 

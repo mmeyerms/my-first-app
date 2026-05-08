@@ -12,13 +12,17 @@ export default async function GeburtsplanPage() {
   if (!user) redirect('/login')
   const t = getMessages(await getServerLocale())
 
-  const { data: profile } = await supabase
+  const { data: profile } = (await supabase
     .from('profiles')
     .select('name, baby_name, due_date')
     .eq('user_id', user.id)
-    .single()
+    .single()) as {
+    data: { name: string; baby_name: string | null; due_date: string | null } | null
+  }
 
   if (!profile) redirect('/onboarding')
+  // Birth plan is SSW-anchored: due_date is required to unlock stages.
+  if (!profile.due_date) redirect('/profil')
 
   const { data: plan } = await supabase
     .from('birth_plans')
@@ -27,8 +31,9 @@ export default async function GeburtsplanPage() {
     .single()
 
   const ssw = calculateSSW(profile.due_date)
+  const babyName = profile.baby_name ?? t.partner.fallbackBabyName
   const subtitle = t.geburtsplan.subtitleFor
-    .replace('{babyName}', profile.baby_name)
+    .replace('{babyName}', babyName)
     .replace('{ssw}', String(ssw))
 
   return (
@@ -48,7 +53,7 @@ export default async function GeburtsplanPage() {
         <GeburtsplanView
           initialAnswers={(plan?.answers as Record<string, unknown>) ?? {}}
           ssw={ssw}
-          babyName={profile.baby_name}
+          babyName={babyName}
           dueDate={profile.due_date}
         />
       </div>

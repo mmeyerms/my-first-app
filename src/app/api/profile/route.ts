@@ -3,22 +3,55 @@ import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 
 const localeSchema = z.enum(['de', 'en'])
+const modeSchema = z.enum(['planning', 'pregnant'])
+const babyGenderSchema = z.enum(['female', 'male', 'diverse', 'surprise', 'unknown'])
+const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ungültiges Datum')
 
-const profileSchema = z.object({
-  name: z.string().min(1, 'Name ist erforderlich').max(50),
-  baby_name: z.string().min(1, 'Arbeitsname ist erforderlich').max(50),
-  positive_test_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ungültiges Datum'),
-  due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ungültiges Datum'),
-  locale: localeSchema.optional(),
-}).refine(
-  (d) => new Date(d.due_date) > new Date(d.positive_test_date),
-  { message: 'Geburtstermin muss nach dem Test-Datum liegen', path: ['due_date'] }
-)
+// Full profile schema — used by onboarding & full profile edits.
+// Only `name` is strictly required; everything else is optional and filled in over time.
+const profileSchema = z
+  .object({
+    name: z.string().min(1, 'Name ist erforderlich').max(50),
+    baby_name: z.string().min(1).max(50).optional().or(z.literal('')),
+    positive_test_date: dateSchema.optional().or(z.literal('')),
+    due_date: dateSchema.optional().or(z.literal('')),
+    mode: modeSchema.optional(),
+    baby_gender: babyGenderSchema.optional().or(z.literal('')),
+    tour_completed: z.boolean().optional(),
+    locale: localeSchema.optional(),
+  })
+  .refine(
+    (d) => {
+      // Only validate due > test when both are present and non-empty.
+      if (!d.positive_test_date || !d.due_date) return true
+      return new Date(d.due_date) > new Date(d.positive_test_date)
+    },
+    { message: 'Geburtstermin muss nach dem Test-Datum liegen', path: ['due_date'] },
+  )
 
-// Partial update schema — used when ONLY locale changes (e.g. from LocaleSelector).
-const localeOnlySchema = z.object({
-  locale: localeSchema,
-})
+// Partial-update schema for incremental updates (locale, baby_gender,
+// tour_completed, mode toggles). All fields optional; the request must contain
+// at least one of the recognised partial-update keys.
+const partialUpdateSchema = z
+  .object({
+    locale: localeSchema.optional(),
+    mode: modeSchema.optional(),
+    baby_gender: babyGenderSchema.optional(),
+    tour_completed: z.boolean().optional(),
+  })
+  .refine((d) => Object.keys(d).length > 0, { message: 'Keine Felder zum Aktualisieren' })
+
+const PARTIAL_KEYS = new Set(['locale', 'mode', 'baby_gender', 'tour_completed'])
+
+// Sanitise outgoing data: turn empty-string optional fields into `null` so the
+// database stores SQL NULL rather than an empty string.
+function nullifyEmpty<T extends Record<string, unknown>>(data: T): T {
+  const out: Record<string, unknown> = { ...data }
+  for (const key of ['baby_name', 'positive_test_date', 'due_date', 'baby_gender']) {
+    if (out[key] === '') out[key] = null
+  }
+  return out as T
+}
 
 export async function GET() {
   const supabase = await createClient()
@@ -27,7 +60,9 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('profiles')
-    .select('name, baby_name, positive_test_date, due_date, locale, updated_at')
+    .select(
+      'name, baby_name, positive_test_date, due_date, mode, baby_gender, tour_completed, locale, updated_at',
+    )
     .eq('user_id', user.id)
     .single()
 
@@ -62,23 +97,22 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: 'Ungültiges JSON' }, { status: 400 })
   }
 
-  // Detect locale-only updates: body has `locale` and no other profile keys.
-  const isLocaleOnly =
+  // Detect partial updates: body has only recognised partial keys (locale,
+  // mode, baby_gender, tour_completed) and no other profile keys (no name).
+  const isPartial =
     typeof body === 'object' &&
     body !== null &&
-    'locale' in body &&
-    Object.keys(body as Record<string, unknown>).every((k) => k === 'locale')
+    Object.keys(body as Record<string, unknown>).length > 0 &&
+    Object.keys(body as Record<string, unknown>).every((k) => PARTIAL_KEYS.has(k))
 
-  if (isLocaleOnly) {
-    const result = localeOnlySchema.safeParse(body)
+  if (isPartial) {
+    const result = partialUpdateSchema.safeParse(body)
     if (!result.success) {
       return NextResponse.json({ error: result.error.flatten() }, { status: 400 })
     }
-    // Update only the locale; the row must already exist (locale-only is for logged-in users
-    // who have completed onboarding). If no row exists, the update is a no-op — that's fine.
     const { error } = await supabase
       .from('profiles')
-      .update({ locale: result.data.locale })
+      .update(result.data)
       .eq('user_id', user.id)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({ success: true })
@@ -91,7 +125,7 @@ export async function PUT(request: NextRequest) {
 
   const { error } = await supabase.from('profiles').upsert({
     user_id: user.id,
-    ...result.data,
+    ...nullifyEmpty(result.data),
   })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

@@ -25,15 +25,19 @@ function makeSupabaseMock({
   profileData = null as unknown,
   profileError = null as unknown,
   upsertError = null as unknown,
+  updateError = null as unknown,
 } = {}) {
   const singleMock = vi.fn().mockResolvedValue({ data: profileData, error: profileError })
   const eqMock = vi.fn().mockReturnValue({ single: singleMock })
   const selectMock = vi.fn().mockReturnValue({ eq: eqMock })
   const upsertMock = vi.fn().mockResolvedValue({ error: upsertError })
+  const updateEqMock = vi.fn().mockResolvedValue({ error: updateError })
+  const updateMock = vi.fn().mockReturnValue({ eq: updateEqMock })
 
   const fromMock = vi.fn().mockReturnValue({
     select: selectMock,
     upsert: upsertMock,
+    update: updateMock,
   })
 
   return {
@@ -82,7 +86,7 @@ describe('PUT /api/profile', () => {
     expect(res.status).toBe(401)
   })
 
-  it('returns 400 for missing required fields', async () => {
+  it('returns 400 for missing required name', async () => {
     vi.mocked(createClient).mockResolvedValue(makeSupabaseMock() as never)
     const res = await PUT(makeRequest('PUT', { name: '' }))
     expect(res.status).toBe(400)
@@ -106,6 +110,46 @@ describe('PUT /api/profile', () => {
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.success).toBe(true)
+  })
+
+  it('accepts a name-only minimal profile (other fields optional)', async () => {
+    vi.mocked(createClient).mockResolvedValue(makeSupabaseMock() as never)
+    const res = await PUT(makeRequest('PUT', { name: 'Anna', mode: 'planning' }))
+    expect(res.status).toBe(200)
+  })
+
+  it('accepts profile with mode and baby_gender', async () => {
+    vi.mocked(createClient).mockResolvedValue(makeSupabaseMock() as never)
+    const res = await PUT(makeRequest('PUT', {
+      ...VALID_PROFILE,
+      mode: 'pregnant',
+      baby_gender: 'surprise',
+    }))
+    expect(res.status).toBe(200)
+  })
+
+  it('rejects invalid baby_gender value', async () => {
+    vi.mocked(createClient).mockResolvedValue(makeSupabaseMock() as never)
+    const res = await PUT(makeRequest('PUT', { ...VALID_PROFILE, baby_gender: 'foo' }))
+    expect(res.status).toBe(400)
+  })
+
+  it('handles partial update with only locale', async () => {
+    vi.mocked(createClient).mockResolvedValue(makeSupabaseMock() as never)
+    const res = await PUT(makeRequest('PUT', { locale: 'en' }))
+    expect(res.status).toBe(200)
+  })
+
+  it('handles partial update with only tour_completed', async () => {
+    vi.mocked(createClient).mockResolvedValue(makeSupabaseMock() as never)
+    const res = await PUT(makeRequest('PUT', { tour_completed: false }))
+    expect(res.status).toBe(200)
+  })
+
+  it('handles partial update with only mode', async () => {
+    vi.mocked(createClient).mockResolvedValue(makeSupabaseMock() as never)
+    const res = await PUT(makeRequest('PUT', { mode: 'planning' }))
+    expect(res.status).toBe(200)
   })
 
   it('returns 400 for invalid JSON body', async () => {

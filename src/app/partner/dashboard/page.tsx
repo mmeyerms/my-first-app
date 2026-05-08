@@ -24,15 +24,21 @@ export default async function PartnerDashboardPage() {
 
   if (!link) redirect('/dashboard')
 
-  const { data: profile } = await supabase
+  const { data: profile } = (await supabase
     .from('profiles')
     .select('name, baby_name, due_date')
     .eq('user_id', link.mother_id)
-    .single()
+    .single()) as {
+    data: { name: string; baby_name: string | null; due_date: string | null } | null
+  }
 
   if (!profile) redirect('/dashboard')
 
-  const ssw = calculateSSW(profile.due_date)
+  // For the partner dashboard, fall back to a neutral SSW (20) when the mother
+  // hasn't entered a due date yet. The view is informational and degrades
+  // gracefully without exact SSW data.
+  const ssw = profile.due_date ? calculateSSW(profile.due_date) : 20
+  const babyName = profile.baby_name ?? t.partner.fallbackBabyName
   const tip = getPartnerTipForDay(ssw)
 
   const { data: birthPlan } = await supabase
@@ -54,7 +60,7 @@ export default async function PartnerDashboardPage() {
         <div className="mb-8">
           <h1 className="font-display text-2xl font-medium text-primary">{t.partner.dashboardTitle}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {profile.name} &amp; {profile.baby_name}
+            {profile.name} &amp; {babyName}
           </p>
         </div>
 
@@ -64,7 +70,7 @@ export default async function PartnerDashboardPage() {
           <div className="mt-1 flex items-baseline gap-2">
             <span className="font-display text-5xl font-bold text-primary">{t.partner.sswCard.replace('{ssw}', String(ssw))}</span>
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">{t.partner.babyOnWay.replace('{babyName}', profile.baby_name)}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t.partner.babyOnWay.replace('{babyName}', babyName)}</p>
         </div>
 
         {/* Daily partner tip */}

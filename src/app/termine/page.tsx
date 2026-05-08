@@ -7,7 +7,7 @@ import { getMessages } from '@/lib/i18n/messages'
 import { TermineView } from '@/components/termine/TermineView'
 
 interface Profile {
-  due_date: string
+  due_date: string | null
 }
 
 export default async function TerminePage() {
@@ -23,6 +23,9 @@ export default async function TerminePage() {
     .eq('user_id', user.id)
     .single()) as { data: Profile | null }
   if (!profile) redirect('/onboarding')
+  // SSW required for termine view (recommended dates are SSW-anchored).
+  // If no due_date yet, send them to profile to add it.
+  if (!profile.due_date) redirect('/profil')
 
   const ssw = calculateSSW(profile.due_date)
   const locale = await getServerLocale()

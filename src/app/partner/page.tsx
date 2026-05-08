@@ -40,9 +40,9 @@ export default async function PartnerPage() {
     .from('profiles')
     .select('baby_name, due_date')
     .eq('user_id', user.id)
-    .single() as { data: { baby_name: string; due_date: string } | null }
+    .single() as { data: { baby_name: string | null; due_date: string | null } | null }
 
-  const ssw = profile ? calculateSSW(profile.due_date) : 20
+  const ssw = profile?.due_date ? calculateSSW(profile.due_date) : 20
   const babyName = profile?.baby_name ?? t.partner.fallbackBabyName
 
   return (
