@@ -13,6 +13,9 @@ type Table =
   | 'partner_links'
   | 'diary_entries'
   | 'pregnancies'
+  | 'termine'
+  | 'checklists'
+  | 'kinderwunsch_state'
 type Row = Record<string, unknown>
 type Store = Record<Table, Row[]>
 
@@ -23,6 +26,9 @@ const EMPTY_STORE: Store = {
   partner_links: [],
   diary_entries: [],
   pregnancies: [],
+  termine: [],
+  checklists: [],
+  kinderwunsch_state: [],
 }
 
 // Persistence strategy:
@@ -73,9 +79,11 @@ class Q {
   private _t: Table
   private _preds: Array<(r: Row) => boolean> = []
   private _op: 'select' | 'update' | 'delete' | 'insert' | 'upsert' = 'select'
-  private _data: Row | null = null
+  private _data: Row | Row[] | null = null
   private _ord: { field: string; asc: boolean } | null = null
   private _lim: number | null = null
+  // After insert/update/delete, the last-affected rows for `.select()` chains.
+  private _affected: Row[] = []
 
   constructor(t: Table) { this._t = t }
 
@@ -87,8 +95,8 @@ class Q {
   limit(n: number) { this._lim = n; return this }
 
   update(data: Row) { this._op = 'update'; this._data = data; return this }
-  insert(data: Row) { this._op = 'insert'; this._data = data; return this }
-  upsert(data: Row) { this._op = 'upsert'; this._data = data; return this }
+  insert(data: Row | Row[]) { this._op = 'insert'; this._data = data; return this }
+  upsert(data: Row, _opts?: { onConflict?: string }) { this._op = 'upsert'; this._data = data; return this }
   delete() { this._op = 'delete'; return this }
 
   then(
@@ -99,6 +107,12 @@ class Q {
   }
 
   async single(): Promise<{ data: Row | null; error: null }> {
+    if (this._op !== 'select') {
+      // For insert/upsert/update, run the mutation and return the first
+      // affected row (mirrors PostgREST `.insert(...).select().single()`).
+      await this._exec()
+      return { data: this._affected[0] ?? null, error: null }
+    }
     const s = await read()
     let rows = s[this._t].filter(r => this._preds.every(p => p(r)))
     if (this._ord) {
@@ -127,8 +141,22 @@ class Q {
       return { data: rows, error: null }
     }
     if (this._op === 'insert' && this._data) {
-      s[this._t].push({ id: crypto.randomUUID(), created_at: new Date().toISOString(), ...this._data })
-    } else if (this._op === 'upsert' && this._data) {
+      const items = Array.isArray(this._data) ? this._data : [this._data]
+      const inserted: Row[] = []
+      for (const item of items) {
+        const row: Row = {
+          id: crypto.randomUUID(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          ...item,
+        }
+        s[this._t].push(row)
+        inserted.push(row)
+      }
+      this._affected = inserted
+      await write(s)
+      return { data: inserted, error: null }
+    } else if (this._op === 'upsert' && this._data && !Array.isArray(this._data)) {
       const d = this._data
       const matchKeys = this._t === 'diary_entries' && d.user_id && d.ssw != null
         ? d.pregnancy_id != null
@@ -138,20 +166,43 @@ class Q {
           ? d.pregnancy_id != null
             ? ['user_id', 'pregnancy_id']
             : ['user_id']
-          : d.user_id
-            ? ['user_id']
-            : d.mother_id && d.partner_user_id
-              ? ['mother_id', 'partner_user_id']
-              : d.mother_id
-                ? ['mother_id']
-                : ['id']
+          : this._t === 'checklists' && d.user_id && d.kind
+            ? d.pregnancy_id != null
+              ? ['user_id', 'pregnancy_id', 'kind']
+              : ['user_id', 'kind']
+            : this._t === 'kinderwunsch_state' && d.user_id
+              ? d.pregnancy_id != null
+                ? ['user_id', 'pregnancy_id']
+                : ['user_id']
+              : d.user_id
+                ? ['user_id']
+                : d.mother_id && d.partner_user_id
+                  ? ['mother_id', 'partner_user_id']
+                  : d.mother_id
+                    ? ['mother_id']
+                    : ['id']
       const i = s[this._t].findIndex(r => matchKeys.every(k => r[k] === d[k]))
       const ts = new Date().toISOString()
-      if (i >= 0) s[this._t][i] = { ...s[this._t][i], ...d, updated_at: ts }
-      else s[this._t].push({ id: crypto.randomUUID(), created_at: ts, updated_at: ts, ...d })
-    } else if (this._op === 'update' && this._data) {
+      if (i >= 0) {
+        s[this._t][i] = { ...s[this._t][i], ...d, updated_at: ts }
+        this._affected = [s[this._t][i]]
+      } else {
+        const row = { id: crypto.randomUUID(), created_at: ts, updated_at: ts, ...d }
+        s[this._t].push(row)
+        this._affected = [row]
+      }
+    } else if (this._op === 'update' && this._data && !Array.isArray(this._data)) {
       const changes = this._data
-      s[this._t] = s[this._t].map(r => this._preds.every(p => p(r)) ? { ...r, ...changes } : r)
+      const updated: Row[] = []
+      s[this._t] = s[this._t].map(r => {
+        if (this._preds.every(p => p(r))) {
+          const next = { ...r, ...changes, updated_at: new Date().toISOString() }
+          updated.push(next)
+          return next
+        }
+        return r
+      })
+      this._affected = updated
     } else if (this._op === 'delete') {
       s[this._t] = s[this._t].filter(r => !this._preds.every(p => p(r)))
     }

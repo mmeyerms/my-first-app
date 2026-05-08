@@ -17,6 +17,7 @@ import { localized } from '@/lib/i18n/localized'
 import { useTheme } from '@/lib/theme/client'
 
 const STORAGE_KEY = 'mamamap-kw-vorfreude'
+const ISLAND = 'vorfreude'
 
 type Letter = {
   content: string
@@ -75,34 +76,86 @@ export function VorfreudeView() {
   const [customBucket, setCustomBucket] = useState('')
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) {
-        const parsed = JSON.parse(raw) as VorfreudeState
-        if (parsed && typeof parsed === 'object') {
-          setState({
-            letter: parsed.letter,
-            first30: Array.isArray(parsed.first30) ? parsed.first30 : [],
-            bucket: Array.isArray(parsed.bucket) ? parsed.bucket : [],
-          })
-          if (parsed.letter && !parsed.letter.sealed) {
-            setLetterDraft(parsed.letter.content)
+    let cancelled = false
+
+    function normalize(input: unknown): VorfreudeState {
+      const v = input && typeof input === 'object' ? (input as Partial<VorfreudeState>) : {}
+      return {
+        letter: v.letter && typeof v.letter === 'object' ? v.letter : undefined,
+        first30: Array.isArray(v.first30) ? v.first30 : [],
+        bucket: Array.isArray(v.bucket) ? v.bucket : [],
+      }
+    }
+
+    fetch('/api/kinderwunsch')
+      .then((r) => r.json())
+      .then(async (data) => {
+        if (cancelled) return
+        const apiState = normalize(data?.[ISLAND])
+        const isEmpty =
+          !apiState.letter &&
+          apiState.first30.length === 0 &&
+          apiState.bucket.length === 0
+
+        if (isEmpty && typeof window !== 'undefined') {
+          try {
+            const raw = localStorage.getItem(STORAGE_KEY)
+            if (raw) {
+              const parsed = normalize(JSON.parse(raw))
+              const localHasContent =
+                !!parsed.letter ||
+                parsed.first30.length > 0 ||
+                parsed.bucket.length > 0
+              if (localHasContent) {
+                await fetch(`/api/kinderwunsch/${ISLAND}`, {
+                  method: 'PUT',
+                  headers: { 'content-type': 'application/json' },
+                  body: JSON.stringify({ state: parsed }),
+                })
+                localStorage.removeItem(STORAGE_KEY)
+                if (!cancelled) {
+                  setState(parsed)
+                  if (parsed.letter && !parsed.letter.sealed) {
+                    setLetterDraft(parsed.letter.content)
+                  }
+                }
+                return
+              }
+            }
+          } catch {
+            // ignore migration errors
           }
         }
-      }
-    } catch {
-      // ignore
+        if (!cancelled) {
+          setState(apiState)
+          if (apiState.letter && !apiState.letter.sealed) {
+            setLetterDraft(apiState.letter.content)
+          }
+        }
+      })
+      .catch(() => {
+        // ignore fetch errors
+      })
+      .finally(() => {
+        if (!cancelled) setHydrated(true)
+      })
+    return () => {
+      cancelled = true
     }
-    setHydrated(true)
   }, [])
 
   useEffect(() => {
     if (!hydrated) return
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
-    } catch {
-      // ignore
-    }
+    const handle = setTimeout(() => {
+      fetch(`/api/kinderwunsch/${ISLAND}`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ state }),
+      }).catch(() => {
+        // ignore save errors
+      })
+    }, 500)
+    return () => clearTimeout(handle)
   }, [state, hydrated])
 
   // ───── Letter ─────

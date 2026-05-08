@@ -29,6 +29,7 @@ function stripLeadingEmoji(text: string): string {
 }
 
 const STORAGE_KEY = 'mamamap-kw-arzt'
+const ISLAND = 'arzt'
 
 type CustomFrage = {
   id: string
@@ -73,65 +74,102 @@ export function ArztView() {
   const [shareCopied, setShareCopied] = useState(false)
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) {
-        const parsed = JSON.parse(raw) as {
-          asked?: unknown
-          custom?: unknown
-        }
-        if (parsed && typeof parsed === 'object') {
-          const asked = Array.isArray(parsed.asked)
-            ? (parsed.asked.filter((x) => typeof x === 'string') as string[])
-            : []
-          const customRaw = Array.isArray(parsed.custom) ? parsed.custom : []
-          const custom: CustomFrage[] = customRaw
-            .map((c) => {
-              if (!c || typeof c !== 'object') return null
-              const obj = c as {
-                id?: unknown
-                text?: unknown
-                kategorie?: unknown
-              }
-              if (typeof obj.id !== 'string') return null
-              if (typeof obj.kategorie !== 'string') return null
-              let text: LocalizedString
-              if (typeof obj.text === 'string') {
-                // Legacy shape — store as both languages
-                text = { de: obj.text, en: obj.text }
-              } else if (
-                obj.text &&
-                typeof obj.text === 'object' &&
-                typeof (obj.text as LocalizedString).de === 'string' &&
-                typeof (obj.text as LocalizedString).en === 'string'
-              ) {
-                text = obj.text as LocalizedString
-              } else {
-                return null
-              }
-              return {
-                id: obj.id,
-                text,
-                kategorie: obj.kategorie as ArztFrage['kategorie'],
-              }
-            })
-            .filter((x): x is CustomFrage => x !== null)
-          setState({ asked, custom })
-        }
-      }
-    } catch {
-      // ignore
+    let cancelled = false
+
+    function normalize(input: unknown): ArztState {
+      const v = input && typeof input === 'object' ? (input as { asked?: unknown; custom?: unknown }) : {}
+      const asked = Array.isArray(v.asked)
+        ? (v.asked.filter((x) => typeof x === 'string') as string[])
+        : []
+      const customRaw = Array.isArray(v.custom) ? v.custom : []
+      const custom: CustomFrage[] = customRaw
+        .map((c) => {
+          if (!c || typeof c !== 'object') return null
+          const obj = c as {
+            id?: unknown
+            text?: unknown
+            kategorie?: unknown
+          }
+          if (typeof obj.id !== 'string') return null
+          if (typeof obj.kategorie !== 'string') return null
+          let text: LocalizedString
+          if (typeof obj.text === 'string') {
+            text = { de: obj.text, en: obj.text }
+          } else if (
+            obj.text &&
+            typeof obj.text === 'object' &&
+            typeof (obj.text as LocalizedString).de === 'string' &&
+            typeof (obj.text as LocalizedString).en === 'string'
+          ) {
+            text = obj.text as LocalizedString
+          } else {
+            return null
+          }
+          return {
+            id: obj.id,
+            text,
+            kategorie: obj.kategorie as ArztFrage['kategorie'],
+          }
+        })
+        .filter((x): x is CustomFrage => x !== null)
+      return { asked, custom }
     }
-    setHydrated(true)
+
+    function isEmpty(s: ArztState): boolean {
+      return s.asked.length === 0 && s.custom.length === 0
+    }
+
+    fetch('/api/kinderwunsch')
+      .then((r) => r.json())
+      .then(async (data) => {
+        if (cancelled) return
+        const apiState = normalize(data?.[ISLAND])
+
+        if (isEmpty(apiState) && typeof window !== 'undefined') {
+          try {
+            const raw = localStorage.getItem(STORAGE_KEY)
+            if (raw) {
+              const parsed = normalize(JSON.parse(raw))
+              if (!isEmpty(parsed)) {
+                await fetch(`/api/kinderwunsch/${ISLAND}`, {
+                  method: 'PUT',
+                  headers: { 'content-type': 'application/json' },
+                  body: JSON.stringify({ state: parsed }),
+                })
+                localStorage.removeItem(STORAGE_KEY)
+                if (!cancelled) setState(parsed)
+                return
+              }
+            }
+          } catch {
+            // ignore migration errors
+          }
+        }
+        if (!cancelled) setState(apiState)
+      })
+      .catch(() => {
+        // ignore fetch errors
+      })
+      .finally(() => {
+        if (!cancelled) setHydrated(true)
+      })
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   useEffect(() => {
     if (!hydrated) return
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
-    } catch {
-      // ignore
-    }
+    const handle = setTimeout(() => {
+      fetch(`/api/kinderwunsch/${ISLAND}`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ state }),
+      }).catch(() => {
+        // ignore save errors
+      })
+    }, 500)
+    return () => clearTimeout(handle)
   }, [state, hydrated])
 
   const askedSet = useMemo(() => new Set(state.asked), [state.asked])

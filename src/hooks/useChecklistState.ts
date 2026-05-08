@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 export type CustomItem = {
   id: string
@@ -15,72 +15,160 @@ export type ChecklistState = {
   custom: CustomItem[]
 }
 
+export type ChecklistKind = 'packliste' | 'einkaufsliste' | 'wochenbett'
+
 const EMPTY_STATE: ChecklistState = {
   checked: [],
   excluded: [],
   custom: [],
 }
 
-function readInitial(storageKey: string): ChecklistState {
-  if (typeof window === 'undefined') return EMPTY_STATE
-  try {
-    const raw = localStorage.getItem(storageKey)
-    if (!raw) return EMPTY_STATE
-    const parsed: unknown = JSON.parse(raw)
-    // Migration: legacy shape was a plain array of checked IDs
-    if (Array.isArray(parsed)) {
-      return {
-        checked: parsed.filter((x): x is string => typeof x === 'string'),
-        excluded: [],
-        custom: [],
-      }
+function legacyStorageKey(kind: ChecklistKind): string {
+  return `mamamap-${kind}`
+}
+
+function normalizeState(parsed: unknown): ChecklistState {
+  if (Array.isArray(parsed)) {
+    return {
+      checked: parsed.filter((x): x is string => typeof x === 'string'),
+      excluded: [],
+      custom: [],
     }
-    if (parsed && typeof parsed === 'object') {
-      const obj = parsed as Partial<ChecklistState>
-      return {
-        checked: Array.isArray(obj.checked)
-          ? obj.checked.filter((x): x is string => typeof x === 'string')
-          : [],
-        excluded: Array.isArray(obj.excluded)
-          ? obj.excluded.filter((x): x is string => typeof x === 'string')
-          : [],
-        custom: Array.isArray(obj.custom)
-          ? obj.custom.filter(
-              (c): c is CustomItem =>
-                !!c &&
-                typeof c === 'object' &&
-                typeof (c as CustomItem).id === 'string' &&
-                typeof (c as CustomItem).categoryId === 'string' &&
-                typeof (c as CustomItem).label === 'string',
-            )
-          : [],
-      }
+  }
+  if (parsed && typeof parsed === 'object') {
+    const obj = parsed as Partial<ChecklistState>
+    return {
+      checked: Array.isArray(obj.checked)
+        ? obj.checked.filter((x): x is string => typeof x === 'string')
+        : [],
+      excluded: Array.isArray(obj.excluded)
+        ? obj.excluded.filter((x): x is string => typeof x === 'string')
+        : [],
+      custom: Array.isArray(obj.custom)
+        ? obj.custom.filter(
+            (c): c is CustomItem =>
+              !!c &&
+              typeof c === 'object' &&
+              typeof (c as CustomItem).id === 'string' &&
+              typeof (c as CustomItem).categoryId === 'string' &&
+              typeof (c as CustomItem).label === 'string',
+          )
+        : [],
     }
-  } catch {
-    // ignore
   }
   return EMPTY_STATE
 }
 
-export function useChecklistState(storageKey: string) {
+function isLegacyKind(value: string): value is ChecklistKind {
+  return value === 'packliste' || value === 'einkaufsliste' || value === 'wochenbett'
+}
+
+/**
+ * Persists a single checklist's state via the API.
+ *
+ * Accepts either a `ChecklistKind` ('packliste' | 'einkaufsliste' | 'wochenbett')
+ * or a legacy storage key like 'mamamap-packliste' (for backwards compatibility
+ * with existing call-sites that pass STORAGE_KEY).
+ *
+ * On first mount, performs a one-time migration from `localStorage` if the
+ * server returns an empty state and local data is present.
+ */
+export function useChecklistState(kindOrKey: ChecklistKind | string) {
+  // Resolve the canonical kind from either form.
+  const kind: ChecklistKind = isLegacyKind(kindOrKey)
+    ? (kindOrKey as ChecklistKind)
+    : (kindOrKey.replace(/^mamamap-/, '') as ChecklistKind)
+
   const [state, setState] = useState<ChecklistState>(EMPTY_STATE)
   const [hydrated, setHydrated] = useState(false)
+  const skipNextSaveRef = useRef(false)
 
-  // Load on mount (with legacy shape migration)
+  // Load from API on mount + one-time localStorage migration.
   useEffect(() => {
-    setState(readInitial(storageKey))
-    setHydrated(true)
-  }, [storageKey])
+    let cancelled = false
+    const localKey = legacyStorageKey(kind)
 
-  // Persist
+    fetch(`/api/checklists/${kind}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('fetch failed'))))
+      .then(async (raw: unknown) => {
+        if (cancelled) return
+        const apiState = normalizeState(raw)
+        const isEmpty =
+          apiState.checked.length === 0 &&
+          apiState.custom.length === 0 &&
+          apiState.excluded.length === 0
+
+        if (isEmpty && typeof window !== 'undefined') {
+          try {
+            const localRaw = localStorage.getItem(localKey)
+            if (localRaw) {
+              const localState = normalizeState(JSON.parse(localRaw))
+              const hasLocal =
+                localState.checked.length > 0 ||
+                localState.custom.length > 0 ||
+                localState.excluded.length > 0
+              if (hasLocal) {
+                await fetch(`/api/checklists/${kind}`, {
+                  method: 'PUT',
+                  headers: { 'content-type': 'application/json' },
+                  body: JSON.stringify({ state: localState }),
+                }).catch(() => {})
+                try {
+                  localStorage.removeItem(localKey)
+                } catch {
+                  // ignore
+                }
+                if (!cancelled) {
+                  // Avoid double-save (the post-hydration effect will run once).
+                  skipNextSaveRef.current = true
+                  setState(localState)
+                  setHydrated(true)
+                }
+                return
+              }
+            }
+          } catch {
+            // ignore
+          }
+        }
+
+        if (!cancelled) {
+          skipNextSaveRef.current = true
+          setState(apiState)
+          setHydrated(true)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          skipNextSaveRef.current = true
+          setState(EMPTY_STATE)
+          setHydrated(true)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [kind])
+
+  // Debounced save to API on state change after hydration.
   useEffect(() => {
     if (!hydrated) return
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(state))
-    } catch {
-      // ignore quota errors
+    if (skipNextSaveRef.current) {
+      skipNextSaveRef.current = false
+      return
     }
-  }, [state, storageKey, hydrated])
+    const handle = setTimeout(() => {
+      fetch(`/api/checklists/${kind}`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ state }),
+      }).catch(() => {
+        // Silent failure — UI keeps optimistic state.
+      })
+    }, 500)
+    return () => clearTimeout(handle)
+  }, [state, hydrated, kind])
 
   const toggleChecked = useCallback((id: string) => {
     setState((prev) => {

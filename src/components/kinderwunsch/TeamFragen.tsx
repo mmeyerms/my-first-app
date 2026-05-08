@@ -11,6 +11,7 @@ import { localized } from '@/lib/i18n/localized'
 import { useTheme } from '@/lib/theme/client'
 
 const STORAGE_KEY = 'mamamap-kw-team'
+const ISLAND = 'team'
 
 export function TeamFragen() {
   const { locale } = useLocale()
@@ -22,18 +23,57 @@ export function TeamFragen() {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) {
-        const parsed = JSON.parse(raw) as Record<string, string>
-        if (parsed && typeof parsed === 'object') {
-          setAnswers(parsed)
+    let cancelled = false
+    fetch('/api/kinderwunsch')
+      .then((r) => r.json())
+      .then(async (data) => {
+        if (cancelled) return
+        const raw = data?.[ISLAND]
+        const apiState: Record<string, string> =
+          raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {}
+        const isEmpty = Object.keys(apiState).length === 0
+
+        if (isEmpty && typeof window !== 'undefined') {
+          try {
+            const local = localStorage.getItem(STORAGE_KEY)
+            if (local) {
+              const parsed = JSON.parse(local) as unknown
+              if (
+                parsed &&
+                typeof parsed === 'object' &&
+                !Array.isArray(parsed) &&
+                Object.keys(parsed as object).length > 0
+              ) {
+                const obj = parsed as Record<string, unknown>
+                const cleaned: Record<string, string> = {}
+                for (const [k, v] of Object.entries(obj)) {
+                  if (typeof v === 'string') cleaned[k] = v
+                }
+                await fetch(`/api/kinderwunsch/${ISLAND}`, {
+                  method: 'PUT',
+                  headers: { 'content-type': 'application/json' },
+                  body: JSON.stringify({ state: cleaned }),
+                })
+                localStorage.removeItem(STORAGE_KEY)
+                if (!cancelled) setAnswers(cleaned)
+                return
+              }
+            }
+          } catch {
+            // ignore migration errors
+          }
         }
-      }
-    } catch {
-      // ignore parse errors
+        if (!cancelled) setAnswers(apiState)
+      })
+      .catch(() => {
+        // ignore fetch errors
+      })
+      .finally(() => {
+        if (!cancelled) setHydrated(true)
+      })
+    return () => {
+      cancelled = true
     }
-    setHydrated(true)
   }, [])
 
   // Debounced autosave
@@ -41,12 +81,17 @@ export function TeamFragen() {
     if (!hydrated) return
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(answers))
-        setSavedAt(Date.now())
-      } catch {
-        // ignore quota errors
-      }
+      fetch(`/api/kinderwunsch/${ISLAND}`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ state: answers }),
+      })
+        .then(() => {
+          setSavedAt(Date.now())
+        })
+        .catch(() => {
+          // ignore save errors
+        })
     }, 500)
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -71,6 +116,14 @@ export function TeamFragen() {
 
   // Show "saved" indicator briefly after save
   const showSaved = savedAt !== null && Date.now() - savedAt < 2000
+
+  if (!hydrated) {
+    return (
+      <div className="rounded-2xl bg-card p-5 text-sm text-muted-foreground shadow-sm">
+        Lade...
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-5">

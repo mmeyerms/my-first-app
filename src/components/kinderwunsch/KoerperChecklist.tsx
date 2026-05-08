@@ -14,6 +14,7 @@ import { localized } from '@/lib/i18n/localized'
 import { useTheme } from '@/lib/theme/client'
 
 const STORAGE_KEY = 'mamamap-kw-koerper'
+const ISLAND = 'koerper'
 
 export function KoerperChecklist() {
   const { locale } = useLocale()
@@ -26,27 +27,62 @@ export function KoerperChecklist() {
   const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) {
-        const parsed = JSON.parse(raw) as string[]
-        if (Array.isArray(parsed)) {
-          setChecked(new Set(parsed))
+    let cancelled = false
+    fetch('/api/kinderwunsch')
+      .then((r) => r.json())
+      .then(async (data) => {
+        if (cancelled) return
+        const apiState: string[] = Array.isArray(data?.[ISLAND]) ? data[ISLAND] : []
+        const isEmpty = apiState.length === 0
+
+        if (isEmpty && typeof window !== 'undefined') {
+          try {
+            const raw = localStorage.getItem(STORAGE_KEY)
+            if (raw) {
+              const parsed = JSON.parse(raw) as unknown
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                const onlyStrings = parsed.filter(
+                  (x): x is string => typeof x === 'string',
+                )
+                await fetch(`/api/kinderwunsch/${ISLAND}`, {
+                  method: 'PUT',
+                  headers: { 'content-type': 'application/json' },
+                  body: JSON.stringify({ state: onlyStrings }),
+                })
+                localStorage.removeItem(STORAGE_KEY)
+                if (!cancelled) setChecked(new Set(onlyStrings))
+                return
+              }
+            }
+          } catch {
+            // ignore migration errors
+          }
         }
-      }
-    } catch {
-      // ignore parse errors
+        if (!cancelled) setChecked(new Set(apiState))
+      })
+      .catch(() => {
+        // ignore fetch errors — keep empty state
+      })
+      .finally(() => {
+        if (!cancelled) setHydrated(true)
+      })
+    return () => {
+      cancelled = true
     }
-    setHydrated(true)
   }, [])
 
   useEffect(() => {
     if (!hydrated) return
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(checked)))
-    } catch {
-      // ignore quota errors
-    }
+    const handle = setTimeout(() => {
+      fetch(`/api/kinderwunsch/${ISLAND}`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ state: Array.from(checked) }),
+      }).catch(() => {
+        // ignore save errors silently
+      })
+    }, 500)
+    return () => clearTimeout(handle)
   }, [checked, hydrated])
 
   const totalItems = useMemo(
@@ -77,6 +113,14 @@ export function KoerperChecklist() {
     if (window.confirm('Möchtest du wirklich alle Häkchen entfernen?')) {
       setChecked(new Set())
     }
+  }
+
+  if (!hydrated) {
+    return (
+      <div className="rounded-2xl bg-card p-5 text-sm text-muted-foreground shadow-sm">
+        Lade...
+      </div>
+    )
   }
 
   return (

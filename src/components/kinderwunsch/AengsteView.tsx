@@ -14,6 +14,12 @@ import { useTheme } from '@/lib/theme/client'
 
 const FAV_STORAGE_KEY = 'mamamap-kw-aengste-fav'
 const READ_STORAGE_KEY = 'mamamap-kw-aengste-read'
+const ISLAND = 'aengste'
+
+function toStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return value.filter((x): x is string => typeof x === 'string')
+}
 
 export function AengsteView() {
   const { locale } = useLocale()
@@ -26,40 +32,74 @@ export function AengsteView() {
   const [currentIndex, setCurrentIndex] = useState(0)
 
   useEffect(() => {
-    try {
-      const rawFav = localStorage.getItem(FAV_STORAGE_KEY)
-      if (rawFav) {
-        const parsed = JSON.parse(rawFav) as string[]
-        if (Array.isArray(parsed)) setFavorites(new Set(parsed))
-      }
-      const rawRead = localStorage.getItem(READ_STORAGE_KEY)
-      if (rawRead) {
-        const parsed = JSON.parse(rawRead) as string[]
-        if (Array.isArray(parsed)) setReadCards(new Set(parsed))
-      }
-    } catch {
-      // ignore parse errors
+    let cancelled = false
+    fetch('/api/kinderwunsch')
+      .then((r) => r.json())
+      .then(async (data) => {
+        if (cancelled) return
+        const raw = data?.[ISLAND]
+        let api: { fav: string[]; read: string[] } = {
+          fav: toStringArray(raw?.fav),
+          read: toStringArray(raw?.read),
+        }
+        const isEmpty = api.fav.length === 0 && api.read.length === 0
+
+        if (isEmpty && typeof window !== 'undefined') {
+          try {
+            const favRaw = localStorage.getItem(FAV_STORAGE_KEY)
+            const readRaw = localStorage.getItem(READ_STORAGE_KEY)
+            const fav = favRaw ? toStringArray(JSON.parse(favRaw)) : []
+            const read = readRaw ? toStringArray(JSON.parse(readRaw)) : []
+            if (fav.length || read.length) {
+              const combined = { fav, read }
+              await fetch(`/api/kinderwunsch/${ISLAND}`, {
+                method: 'PUT',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ state: combined }),
+              })
+              localStorage.removeItem(FAV_STORAGE_KEY)
+              localStorage.removeItem(READ_STORAGE_KEY)
+              api = combined
+            }
+          } catch {
+            // ignore migration errors
+          }
+        }
+        if (!cancelled) {
+          setFavorites(new Set(api.fav))
+          setReadCards(new Set(api.read))
+        }
+      })
+      .catch(() => {
+        // ignore fetch errors
+      })
+      .finally(() => {
+        if (!cancelled) setHydrated(true)
+      })
+    return () => {
+      cancelled = true
     }
-    setHydrated(true)
   }, [])
 
+  // Debounced save when favorites or readCards change
   useEffect(() => {
     if (!hydrated) return
-    try {
-      localStorage.setItem(FAV_STORAGE_KEY, JSON.stringify(Array.from(favorites)))
-    } catch {
-      // ignore quota errors
-    }
-  }, [favorites, hydrated])
-
-  useEffect(() => {
-    if (!hydrated) return
-    try {
-      localStorage.setItem(READ_STORAGE_KEY, JSON.stringify(Array.from(readCards)))
-    } catch {
-      // ignore quota errors
-    }
-  }, [readCards, hydrated])
+    const handle = setTimeout(() => {
+      fetch(`/api/kinderwunsch/${ISLAND}`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          state: {
+            fav: Array.from(favorites),
+            read: Array.from(readCards),
+          },
+        }),
+      }).catch(() => {
+        // ignore save errors
+      })
+    }, 500)
+    return () => clearTimeout(handle)
+  }, [favorites, readCards, hydrated])
 
   const slips = PERMISSION_SLIPS
   const currentSlip = slips[currentIndex]

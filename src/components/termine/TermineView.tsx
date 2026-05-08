@@ -40,31 +40,26 @@ interface TermineViewProps {
   ssw: number
 }
 
-function loadTermine(): Termin[] {
+function isTermin(x: unknown): x is Termin {
+  return (
+    typeof x === 'object' &&
+    x !== null &&
+    typeof (x as Termin).id === 'string' &&
+    typeof (x as Termin).date === 'string' &&
+    typeof (x as Termin).title === 'string'
+  )
+}
+
+function parseLocalTermine(): Termin[] {
   if (typeof window === 'undefined') return []
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw) as unknown
     if (!Array.isArray(parsed)) return []
-    return parsed.filter(
-      (x): x is Termin =>
-        typeof x === 'object' &&
-        x !== null &&
-        typeof (x as Termin).id === 'string' &&
-        typeof (x as Termin).date === 'string' &&
-        typeof (x as Termin).title === 'string'
-    )
+    return parsed.filter(isTermin)
   } catch {
     return []
-  }
-}
-
-function saveTermine(list: Termin[]): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
-  } catch {
-    // ignore quota errors
   }
 }
 
@@ -133,8 +128,60 @@ export function TermineView({ ssw }: TermineViewProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
 
   useEffect(() => {
-    setTermine(loadTermine())
-    setHydrated(true)
+    let cancelled = false
+
+    async function loadFromApi(): Promise<Termin[]> {
+      const res = await fetch('/api/termine')
+      if (!res.ok) throw new Error('failed')
+      const json = (await res.json()) as unknown
+      if (Array.isArray(json)) return json.filter(isTermin)
+      return []
+    }
+
+    loadFromApi()
+      .then(async (apiTermine) => {
+        if (cancelled) return
+        if (apiTermine.length === 0) {
+          const local = parseLocalTermine()
+          if (local.length > 0) {
+            // One-time migration: POST each local termin to the API.
+            for (const t of local) {
+              try {
+                await fetch('/api/termine', {
+                  method: 'POST',
+                  headers: { 'content-type': 'application/json' },
+                  body: JSON.stringify({ termin: t }),
+                })
+              } catch {
+                // best-effort
+              }
+            }
+            try {
+              localStorage.removeItem(STORAGE_KEY)
+            } catch {
+              // ignore
+            }
+            try {
+              const fresh = await loadFromApi()
+              if (!cancelled) setTermine(fresh)
+            } catch {
+              if (!cancelled) setTermine(local)
+            }
+            return
+          }
+        }
+        setTermine(apiTermine)
+      })
+      .catch(() => {
+        if (!cancelled) setTermine([])
+      })
+      .finally(() => {
+        if (!cancelled) setHydrated(true)
+      })
+
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const today = todayIso()
@@ -196,48 +243,114 @@ export function TermineView({ ssw }: TermineViewProps) {
       .sort((a, b) => a.sswFrom - b.sswFrom)
   }, [termine, ssw])
 
-  function persist(next: Termin[]): void {
-    setTermine(next)
-    saveTermine(next)
-  }
-
-  function handleSave(termin: Termin, recurrence?: RecurrenceConfig): void {
+  async function handleSave(termin: Termin, recurrence?: RecurrenceConfig): Promise<void> {
     const idx = termine.findIndex((x) => x.id === termin.id)
     if (idx >= 0) {
-      // Edit existing single termin (no recurrence expansion on edit).
+      // Edit existing single termin (optimistic update).
+      const previous = termine
       const next = [...termine]
       next[idx] = termin
-      persist(next)
+      setTermine(next)
+      try {
+        const res = await fetch(`/api/termine/${encodeURIComponent(termin.id)}`, {
+          method: 'PATCH',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ termin }),
+        })
+        if (!res.ok) throw new Error('update failed')
+      } catch {
+        setTermine(previous)
+        if (typeof window !== 'undefined') {
+          window.alert(t.termine.form.editTitle + ' — ' + 'Error')
+        }
+      }
       return
     }
 
-    if (recurrence && recurrence.enabled && recurrence.count > 1) {
+    const isRecurring = !!(recurrence && recurrence.enabled && recurrence.count > 1)
+
+    if (isRecurring) {
+      // Build optimistic siblings client-side so the UI updates immediately.
       const groupId = generateGroupId()
       const dates = generateOccurrenceDates(termin.date, recurrence.rhythm, recurrence.count)
       const createdAt = termin.createdAt
-      const siblings: Termin[] = dates.map((date, i) => ({
+      const optimistic: Termin[] = dates.map((date, i) => ({
         ...termin,
         id: i === 0 ? termin.id : `t_${Date.now()}_${i}_${Math.random().toString(36).slice(2, 7)}`,
         date,
         groupId,
         createdAt,
       }))
-      persist([...termine, ...siblings])
-    } else {
-      persist([...termine, termin])
+      const previous = termine
+      setTermine([...previous, ...optimistic])
+      try {
+        const res = await fetch('/api/termine', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ termin, recurrence }),
+        })
+        if (!res.ok) throw new Error('create failed')
+        const json = (await res.json()) as { created?: Termin[] }
+        const created = Array.isArray(json.created) ? json.created.filter(isTermin) : []
+        if (created.length > 0) {
+          // Replace optimistic siblings with server-authoritative records.
+          setTermine([...previous, ...created])
+        }
+      } catch {
+        setTermine(previous)
+        if (typeof window !== 'undefined') {
+          window.alert('Error')
+        }
+      }
+      return
+    }
+
+    // Single create.
+    const previous = termine
+    setTermine([...previous, termin])
+    try {
+      const res = await fetch('/api/termine', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ termin }),
+      })
+      if (!res.ok) throw new Error('create failed')
+      const json = (await res.json()) as { created?: Termin[] }
+      const created = Array.isArray(json.created) ? json.created.filter(isTermin) : []
+      if (created.length > 0) {
+        setTermine([...previous, ...created])
+      }
+    } catch {
+      setTermine(previous)
+      if (typeof window !== 'undefined') {
+        window.alert('Error')
+      }
     }
   }
 
-  function handleDelete(id: string, scope: 'one' | 'series'): void {
+  async function handleDelete(id: string, scope: 'one' | 'series'): Promise<void> {
+    const previous = termine
+    let nextList: Termin[]
     if (scope === 'series') {
       const target = termine.find((x) => x.id === id)
       const groupId = target?.groupId
-      if (groupId) {
-        persist(termine.filter((x) => x.groupId !== groupId))
-        return
+      nextList = groupId
+        ? termine.filter((x) => x.groupId !== groupId)
+        : termine.filter((x) => x.id !== id)
+    } else {
+      nextList = termine.filter((x) => x.id !== id)
+    }
+    setTermine(nextList)
+    try {
+      const url = `/api/termine/${encodeURIComponent(id)}?series=${scope === 'series' ? 'true' : 'false'}`
+      const res = await fetch(url, { method: 'DELETE' })
+      if (!res.ok) throw new Error('delete failed')
+    } catch {
+      setTermine(previous)
+      if (typeof window !== 'undefined') {
+        window.alert('Error')
       }
     }
-    persist(termine.filter((x) => x.id !== id))
   }
 
   function openAdd(initial?: Partial<Termin>): void {

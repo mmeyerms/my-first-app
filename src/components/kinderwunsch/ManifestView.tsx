@@ -16,6 +16,7 @@ import { useTheme } from '@/lib/theme/client'
 import { useT } from '@/lib/i18n/client'
 
 const STORAGE_KEY = 'mamamap-kw-manifest'
+const ISLAND = 'manifest'
 
 type CustomStatement = {
   id: string
@@ -46,33 +47,90 @@ export function ManifestView() {
   const [showCustomInput, setShowCustomInput] = useState(false)
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) {
-        const parsed = JSON.parse(raw) as ManifestState
-        if (parsed && typeof parsed === 'object') {
-          setState({
-            agreed: Array.isArray(parsed.agreed) ? parsed.agreed : [],
-            custom: Array.isArray(parsed.custom) ? parsed.custom : [],
-            signedAt: typeof parsed.signedAt === 'string' ? parsed.signedAt : undefined,
-            mama: typeof parsed.mama === 'string' ? parsed.mama : undefined,
-            partner: typeof parsed.partner === 'string' ? parsed.partner : undefined,
-          })
-        }
+    let cancelled = false
+
+    function normalize(input: unknown): ManifestState {
+      const v = input && typeof input === 'object' ? (input as Partial<ManifestState>) : {}
+      const customRaw = Array.isArray(v.custom) ? v.custom : []
+      const custom: CustomStatement[] = customRaw.filter(
+        (c): c is CustomStatement =>
+          !!c &&
+          typeof c === 'object' &&
+          typeof (c as CustomStatement).id === 'string' &&
+          typeof (c as CustomStatement).text === 'string',
+      )
+      const agreedRaw = Array.isArray(v.agreed) ? v.agreed : []
+      const agreed = agreedRaw.filter((x): x is string => typeof x === 'string')
+      return {
+        agreed,
+        custom,
+        signedAt: typeof v.signedAt === 'string' ? v.signedAt : undefined,
+        mama: typeof v.mama === 'string' ? v.mama : undefined,
+        partner: typeof v.partner === 'string' ? v.partner : undefined,
       }
-    } catch {
-      // ignore parse errors
     }
-    setHydrated(true)
+
+    function isEmpty(s: ManifestState): boolean {
+      return (
+        s.agreed.length === 0 &&
+        s.custom.length === 0 &&
+        !s.signedAt &&
+        !s.mama &&
+        !s.partner
+      )
+    }
+
+    fetch('/api/kinderwunsch')
+      .then((r) => r.json())
+      .then(async (data) => {
+        if (cancelled) return
+        const apiState = normalize(data?.[ISLAND])
+
+        if (isEmpty(apiState) && typeof window !== 'undefined') {
+          try {
+            const raw = localStorage.getItem(STORAGE_KEY)
+            if (raw) {
+              const parsed = normalize(JSON.parse(raw))
+              if (!isEmpty(parsed)) {
+                await fetch(`/api/kinderwunsch/${ISLAND}`, {
+                  method: 'PUT',
+                  headers: { 'content-type': 'application/json' },
+                  body: JSON.stringify({ state: parsed }),
+                })
+                localStorage.removeItem(STORAGE_KEY)
+                if (!cancelled) setState(parsed)
+                return
+              }
+            }
+          } catch {
+            // ignore migration errors
+          }
+        }
+        if (!cancelled) setState(apiState)
+      })
+      .catch(() => {
+        // ignore fetch errors
+      })
+      .finally(() => {
+        if (!cancelled) setHydrated(true)
+      })
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   useEffect(() => {
     if (!hydrated) return
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
-    } catch {
-      // ignore quota errors
-    }
+    const handle = setTimeout(() => {
+      fetch(`/api/kinderwunsch/${ISLAND}`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ state }),
+      }).catch(() => {
+        // ignore save errors
+      })
+    }, 500)
+    return () => clearTimeout(handle)
   }, [state, hydrated])
 
   const isSigned = !!state.signedAt
@@ -145,6 +203,14 @@ export function ManifestView() {
     win.document.open()
     win.document.write(html)
     win.document.close()
+  }
+
+  if (!hydrated) {
+    return (
+      <div className="rounded-2xl bg-card p-5 text-sm text-muted-foreground shadow-sm">
+        Lade...
+      </div>
+    )
   }
 
   // Sealed view — Zertifikat-Design
