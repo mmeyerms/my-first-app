@@ -4,11 +4,15 @@ import { ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { ProfilForm } from '@/components/profil/ProfilForm'
 import { LocaleSection } from '@/components/profil/LocaleSection'
+import { ThemeSection } from '@/components/profil/ThemeSection'
+import { getServerLocale } from '@/lib/i18n/server'
+import { getMessages } from '@/lib/i18n/messages'
 
 export default async function ProfilPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+  const t = getMessages(await getServerLocale())
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -27,14 +31,14 @@ export default async function ProfilPage() {
             className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-primary"
           >
             <ChevronLeft className="h-4 w-4" strokeWidth={1.5} />
-            Dashboard
+            {t.nav.dashboard}
           </Link>
         </div>
         <h1 className="mb-2 font-display text-3xl font-medium text-foreground">
-          Mein Profil
+          {t.profile.title}
         </h1>
         <p className="mb-8 font-display text-sm italic text-muted-foreground">
-          Verwalte deine Daten und Einstellungen.
+          {t.profile.subtitle}
         </p>
         <div className="space-y-6">
           <div className="card-elevated rounded-2xl bg-card p-6">
@@ -42,6 +46,9 @@ export default async function ProfilPage() {
           </div>
           <div className="card-elevated rounded-2xl bg-card p-6">
             <LocaleSection />
+          </div>
+          <div className="card-elevated rounded-2xl bg-card p-6">
+            <ThemeSection />
           </div>
         </div>
       </div>

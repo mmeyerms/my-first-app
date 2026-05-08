@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { Question, STAGE_UNLOCK, getStageQuestions } from '@/lib/questions'
 import { exportGeburtsplanPDF } from '@/lib/pdfExport'
-import { useLocale } from '@/lib/i18n/client'
+import { useLocale, useT } from '@/lib/i18n/client'
 import { QuestionCard } from './QuestionCard'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -16,10 +16,10 @@ interface Props {
   dueDate: string
 }
 
-const STAGE_LABELS: Record<1 | 2 | 3, { title: string; emoji: string }> = {
-  1: { title: 'Kern-Entscheidungen', emoji: '💛' },
-  2: { title: 'Vertiefung', emoji: '🌿' },
-  3: { title: 'Wochenbett', emoji: '🛏️' },
+const STAGE_EMOJI: Record<1 | 2 | 3, string> = {
+  1: '💛',
+  2: '🌿',
+  3: '🛏️',
 }
 
 function isAnsweredValue(value: unknown): boolean {
@@ -30,19 +30,20 @@ function isAnsweredValue(value: unknown): boolean {
 
 export function GeburtsplanView({ initialAnswers, ssw, babyName, dueDate }: Props) {
   const { locale } = useLocale()
+  const t = useT()
   const [answers, setAnswers] = useState<Record<string, unknown>>(initialAnswers)
   const [saving, setSaving] = useState(false)
   const [exporting, setExporting] = useState(false)
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
-  // Build the flat list of all unlocked questions, in stage order, preserving question order within each stage
+  const stageTitle = (stage: 1 | 2 | 3) => t.geburtsplan.stages[stage]
+
   const allQuestions: Question[] = useMemo(() => {
     return ([1, 2, 3] as const).flatMap((stage) =>
       ssw >= STAGE_UNLOCK[stage] ? getStageQuestions(stage) : [],
     )
   }, [ssw])
 
-  // Find first unanswered question to start at
   const initialIndex = useMemo(() => {
     if (allQuestions.length === 0) return 0
     const idx = allQuestions.findIndex((q) => !isAnsweredValue(initialAnswers[q.id]))
@@ -109,17 +110,17 @@ export function GeburtsplanView({ initialAnswers, ssw, babyName, dueDate }: Prop
     setCurrentIndex((i) => Math.min(allQuestions.length - 1, i + 1))
   }
 
-  // Empty state — no unlocked questions at all (shouldn't happen since stage 1 is always unlocked, but guard anyway)
+  // Empty state
   if (allQuestions.length === 0) {
     return (
       <div className="space-y-4">
         <div className="rounded-2xl bg-white p-6 shadow-sm text-center space-y-3">
           <p className="text-3xl">🔒</p>
-          <p className="text-sm text-gray-500">Es sind noch keine Fragen freigeschaltet.</p>
+          <p className="text-sm text-gray-500">{t.geburtsplan.emptyTitle}</p>
         </div>
         <div className="text-center">
           <Link href="/dashboard">
-            <Button variant="ghost">← Zum Dashboard</Button>
+            <Button variant="ghost">{t.geburtsplan.navigation.bottomBack}</Button>
           </Link>
         </div>
       </div>
@@ -132,14 +133,14 @@ export function GeburtsplanView({ initialAnswers, ssw, babyName, dueDate }: Prop
       <div className="space-y-4">
         <div className="rounded-2xl bg-white p-6 shadow-sm text-center space-y-3">
           <p className="text-4xl">🎉</p>
-          <h2 className="text-xl font-bold text-gray-800">Dein Geburtsplan ist vollständig!</h2>
-          <p className="text-sm text-gray-500">{answered} Fragen beantwortet</p>
+          <h2 className="text-xl font-bold text-gray-800">{t.geburtsplan.completed.title}</h2>
+          <p className="text-sm text-gray-500">{t.geburtsplan.completed.subtitle.replace('{answered}', String(answered))}</p>
           <Button
             onClick={handleExport}
             disabled={exporting}
             className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
           >
-            {exporting ? 'Erstelle PDF...' : '📄 Als PDF exportieren'}
+            {exporting ? t.geburtsplan.completed.exportingPdf : t.geburtsplan.completed.exportPdf}
           </Button>
           <Button
             variant="outline"
@@ -149,7 +150,7 @@ export function GeburtsplanView({ initialAnswers, ssw, babyName, dueDate }: Prop
               setCurrentIndex(0)
             }}
           >
-            Fragen nochmal ansehen
+            {t.geburtsplan.completed.viewAgain}
           </Button>
         </div>
 
@@ -158,7 +159,10 @@ export function GeburtsplanView({ initialAnswers, ssw, babyName, dueDate }: Prop
             {lockedStages.map((stage) => (
               <p key={stage} className="text-xs text-gray-500">
                 <span className="mr-1">🔒</span>
-                Stufe {stage} ({STAGE_LABELS[stage].title}) wird ab SSW {STAGE_UNLOCK[stage]} freigeschaltet
+                {t.geburtsplan.lockedStage
+                  .replace('{stage}', String(stage))
+                  .replace('{title}', stageTitle(stage))
+                  .replace('{unlockSsw}', String(STAGE_UNLOCK[stage]))}
               </p>
             ))}
           </div>
@@ -166,7 +170,7 @@ export function GeburtsplanView({ initialAnswers, ssw, babyName, dueDate }: Prop
 
         <div className="text-center">
           <Link href="/dashboard">
-            <Button variant="ghost">← Zum Dashboard</Button>
+            <Button variant="ghost">{t.geburtsplan.navigation.bottomBack}</Button>
           </Link>
         </div>
       </div>
@@ -175,7 +179,6 @@ export function GeburtsplanView({ initialAnswers, ssw, babyName, dueDate }: Prop
 
   const currentQuestion = allQuestions[currentIndex]
   const currentStage = currentQuestion.stage
-  const stageMeta = STAGE_LABELS[currentStage]
   const isLastQuestion = currentIndex === allQuestions.length - 1
 
   return (
@@ -184,21 +187,27 @@ export function GeburtsplanView({ initialAnswers, ssw, babyName, dueDate }: Prop
       <div className="rounded-2xl bg-white p-4 shadow-sm">
         <div className="mb-2 flex items-center justify-between text-xs text-gray-500">
           <span>
-            Frage {currentIndex + 1} von {allQuestions.length}
+            {t.geburtsplan.questionOfTotal
+              .replace('{current}', String(currentIndex + 1))
+              .replace('{total}', String(allQuestions.length))}
           </span>
           <span>
-            {answered} von {allQuestions.length} beantwortet
+            {t.geburtsplan.progress
+              .replace('{answered}', String(answered))
+              .replace('{total}', String(allQuestions.length))}
           </span>
         </div>
         <Progress value={progressPct} className="h-2" />
-        {saving && <p className="mt-2 text-xs text-gray-400">Speichern...</p>}
+        {saving && <p className="mt-2 text-xs text-gray-400">{t.geburtsplan.saving}</p>}
       </div>
 
       {/* Stage badge */}
       <div className="flex items-center gap-2 px-1">
-        <span aria-hidden>{stageMeta.emoji}</span>
+        <span aria-hidden>{STAGE_EMOJI[currentStage]}</span>
         <span className="text-xs font-medium text-gray-500">
-          Stufe {currentStage} · {stageMeta.title}
+          {t.geburtsplan.stageBadge
+            .replace('{stage}', String(currentStage))
+            .replace('{title}', stageTitle(currentStage))}
         </span>
       </div>
 
@@ -216,16 +225,16 @@ export function GeburtsplanView({ initialAnswers, ssw, babyName, dueDate }: Prop
           variant="outline"
           onClick={prev}
           disabled={currentIndex === 0}
-          aria-label="Vorherige Frage"
+          aria-label={t.geburtsplan.navigation.backAria}
         >
-          ← Zurück
+          {t.geburtsplan.navigation.back}
         </Button>
         <Button
           className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
           onClick={next}
-          aria-label={isLastQuestion ? 'Geburtsplan abschließen' : 'Nächste Frage'}
+          aria-label={isLastQuestion ? t.geburtsplan.navigation.finishAria : t.geburtsplan.navigation.nextAria}
         >
-          {isLastQuestion ? 'Fertig ✓' : 'Weiter →'}
+          {isLastQuestion ? t.geburtsplan.navigation.finish : t.geburtsplan.navigation.next}
         </Button>
       </div>
 
@@ -236,13 +245,16 @@ export function GeburtsplanView({ initialAnswers, ssw, babyName, dueDate }: Prop
             <div key={stage} className="flex items-start gap-2">
               <span aria-hidden>🔒</span>
               <p className="text-xs text-gray-500">
-                Stufe {stage} ({STAGE_LABELS[stage].title}) wird ab SSW {STAGE_UNLOCK[stage]} freigeschaltet — du bist
-                in SSW {ssw}.
+                {t.geburtsplan.lockedStageWithSsw
+                  .replace('{stage}', String(stage))
+                  .replace('{title}', stageTitle(stage))
+                  .replace('{unlockSsw}', String(STAGE_UNLOCK[stage]))
+                  .replace('{ssw}', String(ssw))}
               </p>
             </div>
           ))}
           <Link href="/dashboard" className="text-xs text-primary hover:underline">
-            Zum Dashboard →
+            {t.geburtsplan.navigation.dashboardLink}
           </Link>
         </div>
       )}
@@ -250,7 +262,7 @@ export function GeburtsplanView({ initialAnswers, ssw, babyName, dueDate }: Prop
       {/* Bottom dashboard link */}
       <div className="text-center">
         <Link href="/dashboard" className="text-xs text-gray-400 hover:text-gray-600">
-          ← Zurück zum Dashboard
+          {t.geburtsplan.navigation.bottomBack}
         </Link>
       </div>
     </div>

@@ -1,25 +1,32 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { translateAuthError } from '@/lib/utils'
+import { useT } from '@/lib/i18n/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 
-const schema = z.object({
-  email: z.string().email('Bitte eine gültige E-Mail-Adresse eingeben'),
-  password: z.string().min(1, 'Passwort ist erforderlich'),
-})
-type FormData = z.infer<typeof schema>
-
 export function LoginForm() {
+  const t = useT()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const schema = useMemo(
+    () =>
+      z.object({
+        email: z.string().email(t.auth.login.validation.email),
+        password: z.string().min(1, t.auth.login.validation.password),
+      }),
+    [t]
+  )
+  type FormData = z.infer<typeof schema>
+
   const form = useForm<FormData>({ resolver: zodResolver(schema) })
 
   async function onSubmit(data: FormData) {
@@ -54,9 +61,9 @@ export function LoginForm() {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>E-Mail</FormLabel>
+              <FormLabel>{t.auth.login.email}</FormLabel>
               <FormControl>
-                <Input type="email" placeholder="deine@email.de" autoComplete="email" {...field} />
+                <Input type="email" placeholder={t.auth.login.emailPlaceholder} autoComplete="email" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -68,25 +75,25 @@ export function LoginForm() {
           render={({ field }) => (
             <FormItem>
               <div className="flex items-center justify-between">
-                <FormLabel>Passwort</FormLabel>
+                <FormLabel>{t.auth.login.password}</FormLabel>
                 <Link href="/passwort-vergessen" className="text-xs text-primary hover:underline">
-                  Vergessen?
+                  {t.auth.login.forgotShort}
                 </Link>
               </div>
               <FormControl>
-                <Input type="password" placeholder="••••••••" autoComplete="current-password" {...field} />
+                <Input type="password" placeholder={t.auth.login.passwordPlaceholder} autoComplete="current-password" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
         <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? 'Anmelden...' : 'Anmelden'}
+          {loading ? t.auth.login.submitting : t.auth.login.submit}
         </Button>
         <p className="text-center text-sm text-muted-foreground">
-          Noch kein Account?{' '}
+          {t.auth.login.noAccount}{' '}
           <Link href="/register" className="font-medium text-primary hover:underline">
-            Jetzt registrieren
+            {t.auth.login.registerCta}
           </Link>
         </p>
       </form>

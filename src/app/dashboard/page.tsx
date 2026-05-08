@@ -20,6 +20,9 @@ import { Badge } from '@/components/ui/badge'
 import { DailyTipPopup } from '@/components/tipps/DailyTipPopup'
 import { LocaleSelector } from '@/components/i18n/LocaleSelector'
 import { Logo } from '@/components/brand/Logo'
+import { getServerTheme } from '@/lib/theme/server'
+import { getServerLocale } from '@/lib/i18n/server'
+import { getMessages } from '@/lib/i18n/messages'
 
 interface Profile {
   name: string
@@ -30,6 +33,7 @@ interface Profile {
 interface NavItem {
   href: string
   icon: LucideIcon
+  emoji: string
   title: string
   description: string
   available: boolean
@@ -60,55 +64,66 @@ export default async function DashboardPage() {
 
   const ssw = calculateSSW(profile.due_date)
   const tip = getTipForDay(ssw)
+  const theme = await getServerTheme()
+  const isClassic = theme === 'classic'
+  const locale = await getServerLocale()
+  const t = getMessages(locale)
 
   const navItems: NavItem[] = [
     {
       href: '/kinderwunsch',
       icon: Sprout,
-      title: 'Kinderwunsch & Vorfreude',
-      description: 'Vorbereitung & Reflexion vor und um den positiven Test',
+      emoji: '🌷',
+      title: t.dashboard.cards.kinderwunsch.title,
+      description: t.dashboard.cards.kinderwunsch.description,
       available: true,
     },
     {
       href: '/geburtsplan',
       icon: ScrollText,
-      title: 'Geburtsplan',
-      description: 'Plane deine Wunschgeburt Schritt für Schritt',
+      emoji: '📋',
+      title: t.dashboard.cards.geburtsplan.title,
+      description: t.dashboard.cards.geburtsplan.description,
       available: true,
     },
     {
       href: '/tipps',
       icon: Sparkle,
-      title: 'Tägliche Tipps',
-      description: `Impulse für SSW ${ssw}`,
+      emoji: '💡',
+      title: t.dashboard.cards.tipps.title,
+      description: t.dashboard.cards.tipps.description.replace('{ssw}', String(ssw)),
       available: true,
     },
     {
       href: '/tagebuch',
       icon: NotebookPen,
-      title: 'Schwangerschaftstagebuch',
-      description: 'Halte besondere Momente fest',
+      emoji: '📔',
+      title: t.dashboard.cards.tagebuch.title,
+      description: t.dashboard.cards.tagebuch.description,
       available: true,
     },
     {
       href: '/einkaufsliste',
       icon: ShoppingBag,
-      title: 'Baby-Ausstattung',
-      description: 'Was ihr wirklich braucht',
+      emoji: '🛍️',
+      title: t.dashboard.cards.einkaufsliste.title,
+      description: t.dashboard.cards.einkaufsliste.description,
       available: true,
     },
     {
       href: '/packliste',
       icon: Briefcase,
-      title: 'Krankenhaustasche',
-      description: 'Checkliste für die Geburt',
+      emoji: '🏥',
+      title: t.dashboard.cards.packliste.title,
+      description: t.dashboard.cards.packliste.description,
       available: true,
     },
     {
       href: '/partner',
       icon: HeartHandshake,
-      title: 'Partner-Bereich',
-      description: 'Tipps für deinen Partner',
+      emoji: '💑',
+      title: t.dashboard.cards.partner.title,
+      description: t.dashboard.cards.partner.description,
       available: true,
     },
   ]
@@ -124,7 +139,7 @@ export default async function DashboardPage() {
             <LocaleSelector variant="compact" />
             <Link
               href="/profil"
-              aria-label="Profil"
+              aria-label={t.nav.profileAria}
               className="inline-flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-primary"
             >
               <UserCircle2 className="h-5 w-5" strokeWidth={1.5} />
@@ -135,11 +150,20 @@ export default async function DashboardPage() {
         {/* Welcome card */}
         <section className="card-elevated mb-8 rounded-2xl bg-card p-7">
           <h1 className="font-display text-2xl font-medium leading-tight text-foreground">
-            Hallo, <span className="font-semibold">{profile.name}</span>.
+            {(() => {
+              const parts = t.dashboard.greeting.split('{name}')
+              return (
+                <>
+                  {parts[0]}
+                  <span className="font-semibold">{profile.name}</span>
+                  {parts[1] ?? ''}
+                </>
+              )
+            })()}
           </h1>
           <div className="mt-5">
             <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-              Schwangerschaftswoche
+              {t.dashboard.sswCaption}
             </p>
             <p className="mt-1 font-display text-6xl font-medium leading-none text-primary">
               {ssw}
@@ -151,12 +175,12 @@ export default async function DashboardPage() {
             style={{ backgroundColor: 'hsl(var(--accent))' }}
           />
           <p className="font-display text-base italic text-muted-foreground">
-            {profile.baby_name} ist auf dem Weg.
+            {t.dashboard.babyOnWay.replace('{babyName}', profile.baby_name)}
           </p>
         </section>
 
         {/* Navigation cards */}
-        <nav aria-label="Bereiche" className="space-y-3">
+        <nav aria-label={t.nav.sectionsAria} className="space-y-3">
           {navItems.map((item) => {
             const Icon = item.icon
             const cardContent = (
@@ -165,23 +189,39 @@ export default async function DashboardPage() {
                   aria-hidden="true"
                   className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-secondary"
                 >
-                  <Icon
-                    className="h-6 w-6 text-primary"
-                    strokeWidth={1.5}
-                  />
+                  {isClassic ? (
+                    <span className="text-3xl leading-none">{item.emoji}</span>
+                  ) : (
+                    <Icon
+                      className="h-6 w-6 text-primary"
+                      strokeWidth={1.5}
+                    />
+                  )}
                 </span>
                 <div className="flex-1 min-w-0 pt-0.5">
                   <div className="flex items-center gap-2">
-                    <p className="font-display text-lg font-semibold leading-tight text-foreground">
+                    <p
+                      className={
+                        isClassic
+                          ? 'text-base font-semibold leading-tight text-foreground'
+                          : 'font-display text-lg font-semibold leading-tight text-foreground'
+                      }
+                    >
                       {item.title}
                     </p>
                     {!item.available && (
                       <Badge variant="secondary" className="text-[10px] uppercase tracking-wider">
-                        Bald
+                        {t.dashboard.soonBadge}
                       </Badge>
                     )}
                   </div>
-                  <p className="mt-1 font-display text-sm italic text-muted-foreground">
+                  <p
+                    className={
+                      isClassic
+                        ? 'mt-1 text-sm text-muted-foreground'
+                        : 'mt-1 font-display text-sm italic text-muted-foreground'
+                    }
+                  >
                     {item.description}
                   </p>
                 </div>

@@ -1,26 +1,33 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { translateAuthError } from '@/lib/utils'
+import { useT } from '@/lib/i18n/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 
-const schema = z.object({
-  email: z.string().email('Bitte eine gültige E-Mail-Adresse eingeben'),
-  password: z.string().min(8, 'Passwort muss mindestens 8 Zeichen haben'),
-})
-type FormData = z.infer<typeof schema>
-
 export function RegisterForm() {
+  const t = useT()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+
+  const schema = useMemo(
+    () =>
+      z.object({
+        email: z.string().email(t.auth.register.validation.email),
+        password: z.string().min(8, t.auth.register.validation.passwordMin),
+      }),
+    [t]
+  )
+  type FormData = z.infer<typeof schema>
+
   const form = useForm<FormData>({ resolver: zodResolver(schema) })
 
   async function onSubmit(data: FormData) {
@@ -50,13 +57,12 @@ export function RegisterForm() {
     return (
       <div className="space-y-3 text-center">
         <div className="text-4xl">📬</div>
-        <h3 className="font-display text-xl font-medium text-foreground">E-Mail bestätigen</h3>
+        <h3 className="font-display text-xl font-medium text-foreground">{t.auth.register.verifyTitle}</h3>
         <p className="text-sm text-muted-foreground">
-          Wir haben dir eine Bestätigungs-E-Mail geschickt.
-          Bitte klicke auf den Link in der E-Mail, um deinen Account zu aktivieren.
+          {t.auth.register.verifyBody}
         </p>
         <Link href="/login" className="block text-sm font-medium text-primary hover:underline">
-          Zurück zum Login
+          {t.auth.register.backToLogin}
         </Link>
       </div>
     )
@@ -73,9 +79,9 @@ export function RegisterForm() {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>E-Mail</FormLabel>
+              <FormLabel>{t.auth.register.email}</FormLabel>
               <FormControl>
-                <Input type="email" placeholder="deine@email.de" autoComplete="email" {...field} />
+                <Input type="email" placeholder={t.auth.register.emailPlaceholder} autoComplete="email" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -86,21 +92,21 @@ export function RegisterForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Passwort</FormLabel>
+              <FormLabel>{t.auth.register.password}</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="Min. 8 Zeichen" autoComplete="new-password" {...field} />
+                <Input type="password" placeholder={t.auth.register.passwordPlaceholder} autoComplete="new-password" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
         <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? 'Registrieren...' : 'Account erstellen'}
+          {loading ? t.auth.register.submitting : t.auth.register.submit}
         </Button>
         <p className="text-center text-sm text-muted-foreground">
-          Bereits registriert?{' '}
+          {t.auth.register.hasAccount}{' '}
           <Link href="/login" className="font-medium text-primary hover:underline">
-            Anmelden
+            {t.auth.register.loginCta}
           </Link>
         </p>
       </form>

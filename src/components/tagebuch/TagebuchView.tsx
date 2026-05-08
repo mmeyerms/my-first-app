@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { getMilestonesUpToSSW, getNextMilestone, getMilestoneTitle, getMilestoneDescription } from '@/lib/milestones'
-import { useLocale } from '@/lib/i18n/client'
+import { useLocale, useT } from '@/lib/i18n/client'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
@@ -14,13 +14,14 @@ type DiaryEntry = {
   surprise: string | null
 }
 
-const RATINGS = [
-  { value: 1, emoji: '😔', label: 'Schwer' },
-  { value: 2, emoji: '😕', label: 'Ok' },
-  { value: 3, emoji: '🙂', label: 'Gut' },
-  { value: 4, emoji: '😊', label: 'Toll' },
-  { value: 5, emoji: '🤩', label: 'Fantastisch' },
-]
+const RATING_VALUES: Array<1 | 2 | 3 | 4 | 5> = [1, 2, 3, 4, 5]
+const RATING_EMOJI: Record<1 | 2 | 3 | 4 | 5, string> = {
+  1: '😔',
+  2: '😕',
+  3: '🙂',
+  4: '😊',
+  5: '🤩',
+}
 
 interface Props {
   ssw: number
@@ -29,6 +30,7 @@ interface Props {
 
 export function TagebuchView({ ssw, babyName }: Props) {
   const { locale } = useLocale()
+  const t = useT()
   const [entries, setEntries] = useState<DiaryEntry[]>([])
   const [currentEntry, setCurrentEntry] = useState<DiaryEntry>({ ssw, rating: null, word: null, surprise: null })
   const [saving, setSaving] = useState(false)
@@ -86,18 +88,26 @@ export function TagebuchView({ ssw, babyName }: Props) {
   const next = getNextMilestone(ssw)
   const isCurrentSSW = activeSSW === ssw
 
+  const sswHeading = t.tagebuch.sswHeading.replace('{ssw}', String(activeSSW))
+  const surprisePlaceholder = t.tagebuch.surprisePlaceholder.replace('{babyName}', babyName)
+  const backToCurrent = t.tagebuch.backToCurrent.replace('{ssw}', String(ssw))
+
   return (
     <div className="space-y-6">
-      {/* Meilensteine */}
+      {/* Milestones */}
       {reached.length > 0 && (
         <div className="rounded-2xl bg-white p-5 shadow-sm">
-          <h2 className="mb-3 text-sm font-semibold text-gray-700">🏆 Eure Meilensteine</h2>
+          <h2 className="mb-3 text-sm font-semibold text-gray-700">{t.tagebuch.milestones.heading}</h2>
           <div className="space-y-2">
             {reached.map((m) => (
               <div key={m.ssw} className="flex items-start gap-3">
                 <span className="text-xl">{m.emoji}</span>
                 <div>
-                  <p className="text-sm font-medium text-gray-800">SSW {m.ssw} — {getMilestoneTitle(m, locale)}</p>
+                  <p className="text-sm font-medium text-gray-800">
+                    {t.tagebuch.milestones.nextDetail
+                      .replace('{ssw}', String(m.ssw))
+                      .replace('{title}', getMilestoneTitle(m, locale))}
+                  </p>
                   <p className="text-xs text-gray-500">{getMilestoneDescription(m, locale)}</p>
                 </div>
               </div>
@@ -105,7 +115,13 @@ export function TagebuchView({ ssw, babyName }: Props) {
           </div>
           {next && (
             <div className="mt-3 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-600">
-              Nächster Meilenstein: <strong>SSW {next.ssw} — {getMilestoneTitle(next, locale)}</strong> ({next.ssw - ssw} Wochen)
+              {t.tagebuch.milestones.nextLabel}{' '}
+              <strong>
+                {t.tagebuch.milestones.nextDetail
+                  .replace('{ssw}', String(next.ssw))
+                  .replace('{title}', getMilestoneTitle(next, locale))}
+              </strong>{' '}
+              {t.tagebuch.milestones.nextWeeks.replace('{weeks}', String(next.ssw - ssw))}
             </div>
           )}
         </div>
@@ -113,7 +129,7 @@ export function TagebuchView({ ssw, babyName }: Props) {
 
       {/* SSW selector */}
       <div className="rounded-2xl bg-white p-5 shadow-sm">
-        <h2 className="mb-3 text-sm font-semibold text-gray-700">📖 Woche wählen</h2>
+        <h2 className="mb-3 text-sm font-semibold text-gray-700">{t.tagebuch.weekSelector}</h2>
         <div className="flex flex-wrap gap-2">
           {Array.from({ length: ssw }, (_, i) => i + 1).map((s) => {
             const hasEntry = entries.some((e) => e.ssw === s && (e.rating || e.word || e.surprise))
@@ -129,7 +145,7 @@ export function TagebuchView({ ssw, babyName }: Props) {
                     : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                 }`}
               >
-                SSW {s}
+                {t.tagebuch.sswHeading.replace('{ssw}', String(s))}
                 {hasEntry && activeSSW !== s && <span className="ml-1">✓</span>}
               </button>
             )
@@ -141,45 +157,48 @@ export function TagebuchView({ ssw, babyName }: Props) {
       <div className="rounded-2xl bg-white p-5 shadow-sm">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-gray-700">
-            SSW {activeSSW} {isCurrentSSW ? '(aktuelle Woche)' : ''}
+            {sswHeading} {isCurrentSSW ? t.tagebuch.currentWeekTag : ''}
           </h2>
           <div className="flex items-center gap-2">
-            {saving && <span className="text-xs text-gray-400">Speichern...</span>}
-            {saved && !saving && <span className="text-xs text-green-500">✓ Gespeichert</span>}
+            {saving && <span className="text-xs text-gray-400">{t.tagebuch.saving}</span>}
+            {saved && !saving && <span className="text-xs text-green-500">{t.tagebuch.savedShort}</span>}
           </div>
         </div>
 
         {/* Rating */}
         <div className="mb-5">
-          <p className="mb-2 text-xs font-medium text-gray-600">Wie war diese Woche?</p>
+          <p className="mb-2 text-xs font-medium text-gray-600">{t.tagebuch.ratingPrompt}</p>
           <div className="flex gap-2">
-            {RATINGS.map((r) => (
-              <button
-                key={r.value}
-                onClick={() => handleChange('rating', r.value)}
-                title={r.label}
-                className={`flex flex-col items-center rounded-xl p-2 transition-all ${
-                  currentEntry.rating === r.value
-                    ? 'bg-rose-100 ring-2 ring-rose-400'
-                    : 'bg-gray-50 hover:bg-gray-100'
-                }`}
-              >
-                <span className="text-2xl">{r.emoji}</span>
-                <span className="mt-0.5 text-[10px] text-gray-500">{r.label}</span>
-              </button>
-            ))}
+            {RATING_VALUES.map((value) => {
+              const label = t.tagebuch.ratings[value]
+              return (
+                <button
+                  key={value}
+                  onClick={() => handleChange('rating', value)}
+                  title={label}
+                  className={`flex flex-col items-center rounded-xl p-2 transition-all ${
+                    currentEntry.rating === value
+                      ? 'bg-rose-100 ring-2 ring-rose-400'
+                      : 'bg-gray-50 hover:bg-gray-100'
+                  }`}
+                >
+                  <span className="text-2xl">{RATING_EMOJI[value]}</span>
+                  <span className="mt-0.5 text-[10px] text-gray-500">{label}</span>
+                </button>
+              )
+            })}
           </div>
         </div>
 
         {/* Word */}
         <div className="mb-4">
           <label className="mb-1.5 block text-xs font-medium text-gray-600">
-            Ein Wort für diese Woche
+            {t.tagebuch.wordLabel}
           </label>
           <input
             type="text"
             maxLength={100}
-            placeholder={`z.B. „aufgeregt", „müde", „verliebt"...`}
+            placeholder={t.tagebuch.wordPlaceholder}
             value={currentEntry.word ?? ''}
             onChange={(e) => handleChange('word', e.target.value || null)}
             className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-rose-300 focus:ring-1 focus:ring-rose-200"
@@ -189,10 +208,10 @@ export function TagebuchView({ ssw, babyName }: Props) {
         {/* Surprise */}
         <div>
           <label className="mb-1.5 block text-xs font-medium text-gray-600">
-            Was hat dich diese Woche überrascht?
+            {t.tagebuch.surpriseLabel}
           </label>
           <Textarea
-            placeholder={`Ein Gedanke, ein Moment, etwas Schönes mit ${babyName}...`}
+            placeholder={surprisePlaceholder}
             value={currentEntry.surprise ?? ''}
             onChange={(e) => handleChange('surprise', e.target.value || null)}
             className="min-h-[80px] resize-none text-sm"
@@ -202,7 +221,7 @@ export function TagebuchView({ ssw, babyName }: Props) {
         {!isCurrentSSW && (
           <div className="mt-4 flex justify-end">
             <Button variant="outline" size="sm" onClick={() => selectSSW(ssw)}>
-              Zurück zu SSW {ssw}
+              {backToCurrent}
             </Button>
           </div>
         )}
@@ -211,25 +230,25 @@ export function TagebuchView({ ssw, babyName }: Props) {
       {/* Filled entries overview */}
       {entries.filter((e) => e.rating || e.word || e.surprise).length > 0 && (
         <div className="rounded-2xl bg-white p-5 shadow-sm">
-          <h2 className="mb-3 text-sm font-semibold text-gray-700">📚 Deine Einträge</h2>
+          <h2 className="mb-3 text-sm font-semibold text-gray-700">{t.tagebuch.entriesTitle}</h2>
           <div className="space-y-2">
             {entries
               .filter((e) => e.rating || e.word || e.surprise)
               .sort((a, b) => b.ssw - a.ssw)
               .map((e) => {
-                const r = RATINGS.find((rt) => rt.value === e.rating)
+                const emoji = e.rating ? RATING_EMOJI[e.rating as 1 | 2 | 3 | 4 | 5] : '📝'
                 return (
                   <button
                     key={e.ssw}
                     onClick={() => selectSSW(e.ssw)}
                     className="flex w-full items-center gap-3 rounded-xl bg-gray-50 px-4 py-3 text-left hover:bg-rose-50 transition-colors"
                   >
-                    <span className="text-xl">{r?.emoji ?? '📝'}</span>
+                    <span className="text-xl">{emoji}</span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-gray-700">SSW {e.ssw}</p>
+                      <p className="text-xs font-semibold text-gray-700">{t.tagebuch.sswHeading.replace('{ssw}', String(e.ssw))}</p>
                       {e.word && <p className="truncate text-xs text-gray-500">„{e.word}"</p>}
                     </div>
-                    {e.ssw === ssw && <Badge variant="secondary" className="text-xs shrink-0">Aktuell</Badge>}
+                    {e.ssw === ssw && <Badge variant="secondary" className="text-xs shrink-0">{t.tagebuch.current}</Badge>}
                   </button>
                 )
               })}

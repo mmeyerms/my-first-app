@@ -1,23 +1,64 @@
 import path from 'path'
 import fs from 'fs'
+import { cookies } from 'next/headers'
 
-const STORE_PATH = process.env.VERCEL
-  ? '/tmp/mamamap-mock-data.json'
-  : path.join(process.cwd(), '.mock-data.json')
+const STORE_PATH = path.join(process.cwd(), '.mock-data.json')
+const COOKIE_NAME = 'mamamap-mock-data'
 const MOCK_USER = { id: 'mock-user-00000000', email: 'demo@mamamap.de', aud: 'authenticated' }
 
 type Table = 'profiles' | 'birth_plans' | 'partner_invites' | 'partner_links' | 'diary_entries'
 type Row = Record<string, unknown>
+type Store = Record<Table, Row[]>
 
-function read(): Record<Table, Row[]> {
+const EMPTY_STORE: Store = {
+  profiles: [],
+  birth_plans: [],
+  partner_invites: [],
+  partner_links: [],
+  diary_entries: [],
+}
+
+// Persistence strategy:
+// - Local dev (no VERCEL env): use file at project root (.mock-data.json)
+// - Vercel serverless: /tmp is ephemeral across cold starts, so we use a
+//   per-user cookie. This survives navigation and refreshes for that browser.
+const usingCookies = !!process.env.VERCEL
+
+async function read(): Promise<Store> {
+  if (usingCookies) {
+    try {
+      const c = await cookies()
+      const raw = c.get(COOKIE_NAME)?.value
+      if (!raw) return { ...EMPTY_STORE }
+      const parsed = JSON.parse(raw) as Partial<Store>
+      return { ...EMPTY_STORE, ...parsed }
+    } catch {
+      return { ...EMPTY_STORE }
+    }
+  }
   try {
-    return JSON.parse(fs.readFileSync(STORE_PATH, 'utf-8'))
+    return JSON.parse(fs.readFileSync(STORE_PATH, 'utf-8')) as Store
   } catch {
-    return { profiles: [], birth_plans: [], partner_invites: [], partner_links: [], diary_entries: [] }
+    return { ...EMPTY_STORE }
   }
 }
 
-function write(data: Record<Table, Row[]>): void {
+async function write(data: Store): Promise<void> {
+  if (usingCookies) {
+    try {
+      const c = await cookies()
+      c.set(COOKIE_NAME, JSON.stringify(data), {
+        path: '/',
+        maxAge: 60 * 60 * 24 * 365,
+        sameSite: 'lax',
+        secure: true,
+      })
+    } catch {
+      // Read-only context (RSC) — silently skip; only API routes / actions
+      // produce real writes anyway.
+    }
+    return
+  }
   fs.writeFileSync(STORE_PATH, JSON.stringify(data, null, 2))
 }
 
@@ -51,7 +92,7 @@ class Q {
   }
 
   async single(): Promise<{ data: Row | null; error: null }> {
-    const s = read()
+    const s = await read()
     let rows = s[this._t].filter(r => this._preds.every(p => p(r)))
     if (this._ord) {
       const { field, asc } = this._ord
@@ -65,7 +106,7 @@ class Q {
   }
 
   private async _exec(): Promise<{ data: Row[] | Row | null; error: null }> {
-    const s = read()
+    const s = await read()
     if (this._op === 'select') {
       let rows = s[this._t].filter(r => this._preds.every(p => p(r)))
       if (this._ord) {
@@ -101,7 +142,7 @@ class Q {
     } else if (this._op === 'delete') {
       s[this._t] = s[this._t].filter(r => !this._preds.every(p => p(r)))
     }
-    write(s)
+    await write(s)
     return { data: null, error: null }
   }
 }

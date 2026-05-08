@@ -4,11 +4,14 @@ import { createClient } from '@/lib/supabase/server'
 import { PartnerInviteManager } from '@/components/partner/PartnerInviteManager'
 import { PartnerContentView } from '@/components/partner/PartnerContentView'
 import { calculateSSW } from '@/lib/utils'
+import { getServerLocale } from '@/lib/i18n/server'
+import { getMessages } from '@/lib/i18n/messages'
 
 export default async function PartnerPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+  const t = getMessages(await getServerLocale())
 
   const { data: link } = await supabase
     .from('partner_links')
@@ -40,7 +43,7 @@ export default async function PartnerPage() {
     .single() as { data: { baby_name: string; due_date: string } | null }
 
   const ssw = profile ? calculateSSW(profile.due_date) : 20
-  const babyName = profile?.baby_name ?? 'euer Baby'
+  const babyName = profile?.baby_name ?? t.partner.fallbackBabyName
 
   return (
     <main className="min-h-screen bg-background">
@@ -49,14 +52,12 @@ export default async function PartnerPage() {
           <Link href="/dashboard" className="text-muted-foreground transition-colors hover:text-primary">
             ‹
           </Link>
-          <h1 className="font-display text-2xl font-medium text-foreground">Partner-Bereich</h1>
+          <h1 className="font-display text-2xl font-medium text-foreground">{t.partner.title}</h1>
         </div>
 
         <div className="card-elevated mb-6 rounded-2xl bg-card p-5">
           <p className="text-sm leading-relaxed text-foreground">
-            Gib deinem Partner Zugang zu deiner MamaMap. Er sieht die aktuelle
-            Schwangerschaftswoche, phasenspezifische Tipps und deinen Geburtsplan — kann aber
-            nichts bearbeiten.
+            {t.partner.pageIntro}
           </p>
         </div>
 

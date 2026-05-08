@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Badge } from '@/components/ui/badge'
-import { useLocale } from '@/lib/i18n/client'
+import { useLocale, useT } from '@/lib/i18n/client'
 import { localized } from '@/lib/i18n/localized'
 
 interface Props {
@@ -21,6 +21,7 @@ const CUSTOM_SENTINEL = '__custom__'
 
 export function QuestionCard({ question, value, onChange }: Props) {
   const { locale } = useLocale()
+  const t = useT()
   const isAnswered = Array.isArray(value) ? value.length > 0 : typeof value === 'string' && value.trim().length > 0
   const [hintOpen, setHintOpen] = useState(false)
 
@@ -29,7 +30,7 @@ export function QuestionCard({ question, value, onChange }: Props) {
       <div className="mb-3 flex items-start justify-between gap-2">
         <p className="text-sm font-medium leading-snug text-gray-800">{localized(question.label, locale)}</p>
         {question.optional && !isAnswered && (
-          <Badge variant="secondary" className="shrink-0 text-xs">Optional</Badge>
+          <Badge variant="secondary" className="shrink-0 text-xs">{t.geburtsplan.optionalBadge}</Badge>
         )}
         {isAnswered && (
           <span className="shrink-0 text-rose-400">✓</span>
@@ -46,7 +47,7 @@ export function QuestionCard({ question, value, onChange }: Props) {
 
       {question.type === 'text' && (
         <Textarea
-          placeholder="Deine Gedanken..."
+          placeholder={t.geburtsplan.textPlaceholder}
           value={typeof value === 'string' ? value : ''}
           onChange={(e) => onChange(question.id, e.target.value)}
           className="min-h-[80px] text-sm resize-none"
@@ -63,7 +64,7 @@ export function QuestionCard({ question, value, onChange }: Props) {
             className="flex items-center gap-1.5 text-xs text-blue-500 hover:text-blue-700"
           >
             <span>{hintOpen ? '▲' : '▼'}</span>
-            <span>Gedankenanstöße & Infos</span>
+            <span>{t.geburtsplan.hintToggle}</span>
           </button>
           {hintOpen && (
             <p
@@ -81,6 +82,7 @@ export function QuestionCard({ question, value, onChange }: Props) {
 
 function SingleChoice({ question, value, onChange }: Props) {
   const { locale } = useLocale()
+  const t = useT()
   const options = question.options ?? []
   const optionKeys = options.map((opt) => opt.de)
   const stringValue = typeof value === 'string' ? value : ''
@@ -131,13 +133,13 @@ function SingleChoice({ question, value, onChange }: Props) {
       <div className="flex items-center gap-2">
         <RadioGroupItem value={CUSTOM_SENTINEL} id={`${question.id}-custom`} />
         <Label htmlFor={`${question.id}-custom`} className="text-sm font-normal text-gray-700 cursor-pointer">
-          Eigene Antwort...
+          {t.geburtsplan.customOption.single}
         </Label>
       </div>
       {(customSelected || isCustomValue) && (
         <Input
           ref={inputRef}
-          placeholder="Deine Antwort..."
+          placeholder={t.geburtsplan.customOption.placeholder}
           value={inputValue}
           onChange={(e) => onChange(question.id, e.target.value)}
           className="mt-2 text-sm ml-6"
@@ -149,6 +151,7 @@ function SingleChoice({ question, value, onChange }: Props) {
 
 function MultiChoice({ question, value, onChange }: Props) {
   const { locale } = useLocale()
+  const t = useT()
   const options = question.options ?? []
   const optionKeys = options.map((opt) => opt.de)
   const valueArray = Array.isArray(value) ? value : []
@@ -210,12 +213,12 @@ function MultiChoice({ question, value, onChange }: Props) {
           onCheckedChange={(c) => handleCustomCheckedChange(Boolean(c))}
         />
         <Label htmlFor={`${question.id}-custom`} className="text-sm font-normal text-gray-700 cursor-pointer">
-          Sonstiges...
+          {t.geburtsplan.customOption.multi}
         </Label>
       </div>
       {customChecked && (
         <Input
-          placeholder="Deine Antwort..."
+          placeholder={t.geburtsplan.customOption.placeholder}
           value={customText}
           onChange={(e) => handleCustomTextChange(e.target.value)}
           className="mt-2 text-sm ml-6"
