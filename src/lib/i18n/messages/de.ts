@@ -630,6 +630,7 @@ export const de = {
     funFact: 'Wusstest du?',
     partnerTip: 'Für deinen Partner',
     partnerSubtitle: 'Tipp für die Beziehung diese Woche',
+    babyAlt: 'Illustration deines Babys',
     categoryLabels: {
       frucht: 'Frucht',
       suessigkeit: 'Süßes',

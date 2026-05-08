@@ -15,6 +15,7 @@ import {
   type SswComparisonCategory,
 } from '@/lib/sswEntwicklung'
 import { localized } from '@/lib/i18n/localized'
+import { BabyIllustration } from '@/components/ssw/BabyIllustration'
 
 interface Profile {
   name: string
@@ -90,7 +91,38 @@ export default async function WochePage() {
             className="my-5 h-px w-12"
             style={{ backgroundColor: 'hsl(var(--accent))' }}
           />
-          <p className="font-display text-base italic text-muted-foreground">
+
+          {info && (
+            <div className="flex items-center gap-5">
+              <BabyIllustration ssw={ssw} size={140} className="shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  {t.woche.sizeAndWeight}
+                </p>
+                <p className="mt-1 font-display text-2xl font-medium leading-tight text-foreground">
+                  {formatSize(info.sizeMm, locale)}
+                  {info.weightG && (
+                    <>
+                      <span
+                        aria-hidden="true"
+                        className="mx-2 text-muted-foreground"
+                      >
+                        ·
+                      </span>
+                      {formatWeight(info.weightG, locale)}
+                    </>
+                  )}
+                </p>
+                {!info.weightG && (
+                  <p className="mt-1 font-display text-xs italic text-muted-foreground">
+                    {t.woche.weightNotYet}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          <p className="mt-6 font-display text-base italic text-muted-foreground">
             {t.woche.forBaby.replace('{babyName}', profile.baby_name)}
           </p>
         </header>
@@ -110,45 +142,6 @@ export default async function WochePage() {
             <p className="text-sm leading-relaxed text-foreground">
               {localized(info.development, locale)}
             </p>
-          </section>
-        )}
-
-        {/* Size & weight */}
-        {info && (
-          <section className="card-elevated mb-6 rounded-2xl bg-card p-6">
-            <h2
-              className={
-                isClassic
-                  ? 'mb-4 text-base font-semibold text-foreground'
-                  : 'mb-4 font-display text-lg font-semibold text-foreground'
-              }
-            >
-              {t.woche.sizeAndWeight}
-            </h2>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="rounded-xl bg-secondary/40 px-4 py-3">
-                <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                  {t.woche.size}
-                </p>
-                <p className="mt-1 font-display text-2xl font-medium text-foreground">
-                  {formatSize(info.sizeMm, locale)}
-                </p>
-              </div>
-              <div className="rounded-xl bg-secondary/40 px-4 py-3">
-                <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                  {t.woche.weight}
-                </p>
-                {info.weightG ? (
-                  <p className="mt-1 font-display text-2xl font-medium text-foreground">
-                    {formatWeight(info.weightG, locale)}
-                  </p>
-                ) : (
-                  <p className="mt-1 font-display text-sm italic text-muted-foreground">
-                    {t.woche.weightNotYet}
-                  </p>
-                )}
-              </div>
-            </div>
           </section>
         )}
 

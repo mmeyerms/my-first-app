@@ -5,8 +5,9 @@ import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { useT, useLocale } from '@/lib/i18n/client'
 import { useTheme } from '@/lib/theme/client'
-import { getSswInfo } from '@/lib/sswEntwicklung'
+import { getSswInfo, formatSize, formatWeight } from '@/lib/sswEntwicklung'
 import { localized } from '@/lib/i18n/localized'
+import { BabyIllustration } from '@/components/ssw/BabyIllustration'
 import { cn } from '@/lib/utils'
 
 interface WelcomeCardProps {
@@ -49,6 +50,10 @@ export function WelcomeCard({ name, babyName, ssw }: WelcomeCardProps) {
   const greetingParts = t.dashboard.greeting.split('{name}')
   const current = comparisons[index]
 
+  const sizeLabel = sswInfo ? formatSize(sswInfo.sizeMm, locale) : null
+  const weightLabel =
+    sswInfo && sswInfo.weightG ? formatWeight(sswInfo.weightG, locale) : null
+
   return (
     <Link
       href="/woche"
@@ -62,24 +67,41 @@ export function WelcomeCard({ name, babyName, ssw }: WelcomeCardProps) {
           {greetingParts[1] ?? ''}
         </h1>
 
-        <div className="mt-5">
-          <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            {t.dashboard.sswCaption}
-          </p>
-          <p className="mt-1 font-display text-6xl font-medium leading-none text-primary">
-            {ssw}
-          </p>
+        <div className="mt-6 flex items-start gap-5">
+          {/* Illustration */}
+          <BabyIllustration ssw={ssw} size={104} className="shrink-0" />
+
+          {/* SSW + size/weight stack */}
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+              {t.dashboard.sswCaption}
+            </p>
+            <p className="mt-1 font-display text-5xl font-medium leading-none text-primary">
+              {ssw}
+            </p>
+            <div
+              aria-hidden="true"
+              className="my-3 h-px w-10"
+              style={{ backgroundColor: 'hsl(var(--accent))' }}
+            />
+            {sizeLabel && (
+              <p className="font-display text-sm font-medium leading-tight text-foreground">
+                {sizeLabel}
+                {weightLabel && (
+                  <>
+                    <span
+                      aria-hidden="true"
+                      className="mx-2 text-muted-foreground"
+                    >
+                      ·
+                    </span>
+                    {weightLabel}
+                  </>
+                )}
+              </p>
+            )}
+          </div>
         </div>
-
-        <div
-          aria-hidden="true"
-          className="my-5 h-px w-12"
-          style={{ backgroundColor: 'hsl(var(--accent))' }}
-        />
-
-        <p className="font-display text-base italic text-muted-foreground">
-          {t.dashboard.babyOnWay.replace('{babyName}', babyName)}
-        </p>
 
         {current && (
           <div
@@ -93,7 +115,7 @@ export function WelcomeCard({ name, babyName, ssw }: WelcomeCardProps) {
               aria-hidden="true"
               className={cn(
                 'leading-none',
-                isClassic ? 'text-3xl' : 'text-2xl',
+                isClassic ? 'text-2xl' : 'text-xl',
               )}
             >
               {current.emoji}
@@ -109,7 +131,11 @@ export function WelcomeCard({ name, babyName, ssw }: WelcomeCardProps) {
           </div>
         )}
 
-        <div className="mt-5 flex items-center justify-end gap-1 text-xs font-medium text-primary transition-opacity group-hover:opacity-100 sm:opacity-80">
+        <p className="mt-5 font-display text-base italic text-muted-foreground">
+          {t.dashboard.babyOnWay.replace('{babyName}', babyName)}
+        </p>
+
+        <div className="mt-3 flex items-center justify-end gap-1 text-xs font-medium text-primary transition-opacity group-hover:opacity-100 sm:opacity-80">
           <span>{t.woche.exploreMore}</span>
           <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
         </div>
