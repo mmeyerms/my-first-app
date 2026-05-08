@@ -76,8 +76,11 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/profil') ||
     pathname.startsWith('/onboarding') ||
     pathname.startsWith('/tagebuch') ||
+    pathname.startsWith('/termine') ||
     pathname.startsWith('/geburtsplan') ||
     pathname.startsWith('/kinderwunsch') ||
+    pathname.startsWith('/woche') ||
+    pathname.startsWith('/wochenbett') ||
     (pathname.startsWith('/partner') && !pathname.startsWith('/partner/accept'))
   const isAuthPage = ['/login', '/register', '/passwort-vergessen'].includes(pathname)
 

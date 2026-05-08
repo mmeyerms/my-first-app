@@ -161,19 +161,42 @@ export const PACK_CATEGORIES: PackCategory[] = [
       },
       {
         id: 'pk-b-7',
-        label: { de: 'Windeln Gr. 1 (Neugeborene), ca. 10 Stück', en: 'Newborn nappies (size 1), about 10' },
+        label: { de: 'Windeln Gr. 1, 5-10 Stück (nur für die ersten Tage)', en: 'Newborn nappies (size 1), 5-10 (just for the first days)' },
+        tip: {
+          de: 'Klinik stellt meist welche bereit. Den großen Vorrat brauchst du erst zuhause.',
+          en: 'The clinic usually provides some. The big stockpile is for at home.',
+        },
       },
       {
         id: 'pk-b-8',
-        label: { de: 'Feuchttücher (parfümfrei)', en: 'Wet wipes (fragrance-free)' },
+        label: { de: 'Feuchttücher (parfümfrei), 1 kleine Packung', en: 'Wet wipes (fragrance-free), 1 small pack' },
+      },
+    ],
+  },
+  {
+    id: 'praktisch',
+    emoji: '🎒',
+    title: { de: 'Praktisch für die Klinik', en: 'Useful for the clinic' },
+    items: [
+      {
+        id: 'pk-pr-1',
+        label: { de: 'Hausschuhe / rutschfeste Schuhe', en: 'Slippers / non-slip shoes' },
+        tip: {
+          de: 'Die Klinikböden sind oft kalt und glatt — eigene Hausschuhe sind angenehmer.',
+          en: 'Clinic floors are often cold and slippery — your own slippers are nicer.',
+        },
       },
       {
-        id: 'pk-b-9',
-        label: { de: 'Wundschutzcreme (z.B. Bepanthen)', en: 'Nappy cream (e.g. Bepanthen)' },
+        id: 'pk-pr-2',
+        label: { de: 'Powerbank fürs Handy', en: 'Power bank for your phone' },
+        tip: {
+          de: 'Steckdose nicht immer in Reichweite. Du wirst viel fotografieren und schreiben.',
+          en: 'Outlets are not always within reach. You will take lots of photos and texts.',
+        },
       },
       {
-        id: 'pk-b-10',
-        label: { de: 'Schnuller (falls gewünscht)', en: 'Pacifier (if you want one)' },
+        id: 'pk-pr-3',
+        label: { de: 'Kleines Handtuch / Waschlappen', en: 'Small towel / washcloth' },
       },
     ],
   },

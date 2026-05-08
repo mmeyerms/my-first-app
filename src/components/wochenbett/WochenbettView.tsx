@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { ChevronDown, ChevronUp, Plus, RotateCcw, Undo2, X } from 'lucide-react'
 
-import { PACK_CATEGORIES } from '@/lib/packliste'
+import { WOCHENBETT_KATEGORIEN } from '@/lib/wochenbett'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -14,13 +14,14 @@ import { useLocale } from '@/lib/i18n/client'
 import { localized } from '@/lib/i18n/localized'
 import { useChecklistState } from '@/hooks/useChecklistState'
 
-const STORAGE_KEY = 'mamamap-packliste'
+const STORAGE_KEY = 'mamamap-wochenbett'
 
-export function PacklisteView() {
+export function WochenbettView() {
   const { locale, t } = useLocale()
   const {
     state,
     isChecked,
+    isExcluded,
     toggleChecked,
     exclude,
     restore,
@@ -30,15 +31,16 @@ export function PacklisteView() {
   } = useChecklistState(STORAGE_KEY)
 
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>(
-    () => Object.fromEntries(PACK_CATEGORIES.map((c) => [c.id, true])),
+    () => Object.fromEntries(WOCHENBETT_KATEGORIEN.map((c) => [c.id, true])),
   )
   const [customDraftCategory, setCustomDraftCategory] = useState<string | null>(null)
   const [customDraft, setCustomDraft] = useState('')
 
+  // All visible (non-excluded) item IDs across all categories — including custom items
   const { totalVisible, checkedCount } = useMemo(() => {
     let total = 0
     let checkedC = 0
-    for (const cat of PACK_CATEGORIES) {
+    for (const cat of WOCHENBETT_KATEGORIEN) {
       for (const it of cat.items) {
         if (state.excluded.includes(it.id)) continue
         total += 1
@@ -67,8 +69,9 @@ export function PacklisteView() {
     return map
   }, [state.custom, state.excluded])
 
+  // Excluded items (built items + custom items) for the bottom section
   const excludedRendered = useMemo(() => {
-    const builtIn = PACK_CATEGORIES.flatMap((cat) =>
+    const builtIn = WOCHENBETT_KATEGORIEN.flatMap((cat) =>
       cat.items
         .filter((it) => state.excluded.includes(it.id))
         .map((it) => ({
@@ -81,7 +84,7 @@ export function PacklisteView() {
     const custom = state.custom
       .filter((c) => state.excluded.includes(c.id))
       .map((c) => {
-        const cat = PACK_CATEGORIES.find((x) => x.id === c.categoryId)
+        const cat = WOCHENBETT_KATEGORIEN.find((x) => x.id === c.categoryId)
         return {
           id: c.id,
           label: c.label,
@@ -97,7 +100,7 @@ export function PacklisteView() {
   }
 
   function handleResetAll() {
-    if (window.confirm(t.packliste.confirmReset)) {
+    if (window.confirm(t.wochenbett.confirmReset)) {
       resetAll()
     }
   }
@@ -124,12 +127,12 @@ export function PacklisteView() {
     <div className="space-y-5">
       {/* Progress card */}
       <section
-        aria-label={t.packliste.progressAria}
+        aria-label={t.wochenbett.progressLabel}
         className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm"
       >
         <div className="mb-2 flex items-baseline justify-between">
           <span className="text-sm font-medium text-foreground">
-            {t.packliste.progressLabel}
+            {t.wochenbett.progressLabel}
           </span>
           <span className="text-sm text-muted-foreground">
             {checkedCount} / {totalVisible}
@@ -138,15 +141,15 @@ export function PacklisteView() {
         <Progress value={progress} className="h-2" />
         <p className="mt-3 text-sm text-muted-foreground">
           {allDone
-            ? t.packliste.allDone
+            ? t.wochenbett.allDone
             : checkedCount === 0
-              ? t.packliste.encourageEmpty
-              : t.packliste.encourageRemaining.replace('{remaining}', String(remaining))}
+              ? t.wochenbett.encourageEmpty
+              : t.wochenbett.encourageRemaining.replace('{remaining}', String(remaining))}
         </p>
       </section>
 
       {/* Categories */}
-      {PACK_CATEGORIES.map((cat) => {
+      {WOCHENBETT_KATEGORIEN.map((cat) => {
         const isOpen = openCategories[cat.id]
         const customItems = customByCategory[cat.id] ?? []
         const visibleItems = cat.items.filter((it) => !state.excluded.includes(it.id))
@@ -176,7 +179,7 @@ export function PacklisteView() {
                     {localized(cat.title, locale)}
                   </h2>
                   <p className="text-xs text-muted-foreground">
-                    {t.packliste.catProgress
+                    {t.wochenbett.catProgress
                       .replace('{checked}', String(catChecked))
                       .replace('{total}', String(totalVisibleInCat))}
                   </p>
@@ -279,6 +282,7 @@ export function PacklisteView() {
                   })}
                 </ul>
 
+                {/* Add custom */}
                 {customDraftCategory === cat.id ? (
                   <div className="mt-4 flex flex-col gap-2">
                     <Input
@@ -378,19 +382,19 @@ export function PacklisteView() {
 
       {/* Reset */}
       <div className="pt-2">
-        <Button variant="outline" onClick={handleResetAll} className="w-full">
+        <Button
+          variant="outline"
+          onClick={handleResetAll}
+          className="w-full"
+        >
           <RotateCcw className="mr-2 h-4 w-4" strokeWidth={1.5} />
-          {t.packliste.resetAll}
+          {t.wochenbett.resetAll}
         </Button>
       </div>
 
       {/* SR live region */}
       <div className="sr-only" aria-live="polite">
-        <Badge variant="secondary">
-          {t.packliste.packedAria
-            .replace('{checked}', String(checkedCount))
-            .replace('{total}', String(totalVisible))}
-        </Badge>
+        {checkedCount} / {totalVisible}
       </div>
     </div>
   )

@@ -1,9 +1,15 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
 import { getServerLocale } from '@/lib/i18n/server'
 import { getMessages } from '@/lib/i18n/messages'
-import { EinkaufslisteView } from '@/components/einkaufsliste/EinkaufslisteView'
+import { WochenbettView } from '@/components/wochenbett/WochenbettView'
 
-export default async function EinkaufslistePage() {
+export default async function WochenbettPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
   const locale = await getServerLocale()
   const t = getMessages(locale)
 
@@ -12,7 +18,7 @@ export default async function EinkaufslistePage() {
       <div className="mx-auto max-w-sm px-4 py-8">
         <div className="mb-3 flex items-center justify-between">
           <h1 className="font-display text-2xl font-medium text-foreground">
-            {t.einkaufsliste.title}
+            {t.wochenbett.title}
           </h1>
           <Link
             href="/dashboard"
@@ -21,8 +27,8 @@ export default async function EinkaufslistePage() {
             ← {t.nav.dashboard}
           </Link>
         </div>
-        <p className="mb-6 text-sm text-muted-foreground">{t.einkaufsliste.intro}</p>
-        <EinkaufslisteView />
+        <p className="mb-6 text-sm text-muted-foreground">{t.wochenbett.intro}</p>
+        <WochenbettView />
       </div>
     </main>
   )

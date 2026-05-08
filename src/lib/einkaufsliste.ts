@@ -97,7 +97,11 @@ export const EINKAUF_KATEGORIEN: EinkaufKategorie[] = [
       },
       {
         id: 'ek-p-2',
-        label: { de: 'Windeln Gr. 1 (Neugeborene), großer Vorrat', en: 'Newborn nappies (size 1), big supply' },
+        label: { de: 'Windeln Gr. 1 (Neugeborene), großer Vorrat für zuhause', en: 'Newborn nappies (size 1), big supply for home' },
+        tip: {
+          de: 'Du brauchst rund 10-12 Windeln pro Tag in den ersten Wochen.',
+          en: 'You will go through about 10-12 nappies a day in the first weeks.',
+        },
       },
       {
         id: 'ek-p-3',
@@ -106,10 +110,26 @@ export const EINKAUF_KATEGORIEN: EinkaufKategorie[] = [
       {
         id: 'ek-p-4',
         label: { de: 'Wundschutzcreme (Bepanthen o.ä.)', en: 'Nappy cream (Bepanthen or similar)' },
+        tip: {
+          de: 'Den Po-Schutz brauchst du vor allem zuhause — die Klinik hat eigene Vorräte.',
+          en: 'You mainly need this at home — the clinic has its own supplies.',
+        },
       },
       {
         id: 'ek-p-5',
         label: { de: 'Wickelunterlage + Bezüge', en: 'Changing mat plus covers' },
+        tip: {
+          de: 'Für den Wickelplatz zuhause. In der Klinik ist alles vorhanden.',
+          en: 'For your changing station at home. The clinic has everything provided.',
+        },
+      },
+      {
+        id: 'ek-p-9',
+        label: { de: 'Schnuller (2-3x, falls gewünscht)', en: 'Pacifiers (2-3x, if you want one)' },
+        tip: {
+          de: 'Stillt das Saugbedürfnis. Nicht alle Babys nehmen einen — also nicht zu viele auf Vorrat kaufen.',
+          en: 'Soothes the sucking reflex. Not every baby will take one — do not stockpile.',
+        },
       },
       {
         id: 'ek-p-6',
@@ -239,14 +259,6 @@ export const EINKAUF_KATEGORIEN: EinkaufKategorie[] = [
       {
         id: 'ek-pr-5',
         label: { de: 'Babyschaukel oder Wippe', en: 'Baby swing or bouncer' },
-      },
-      {
-        id: 'ek-pr-6',
-        label: { de: 'Schnuller (2-3x)', en: 'Pacifiers (2-3x)' },
-        tip: {
-          de: 'Stillt Saugbedürfnis — nicht alle Babys nehmen einen',
-          en: 'Soothes the sucking reflex — not every baby will take one',
-        },
       },
     ],
   },

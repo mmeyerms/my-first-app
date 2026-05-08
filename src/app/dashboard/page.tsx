@@ -5,8 +5,10 @@ import {
   ScrollText,
   Sparkle,
   NotebookPen,
+  CalendarDays,
   ShoppingBag,
   Briefcase,
+  HandHeart,
   HeartHandshake,
   ChevronRight,
   UserCircle2,
@@ -20,6 +22,7 @@ import { Badge } from '@/components/ui/badge'
 import { DailyTipPopup } from '@/components/tipps/DailyTipPopup'
 import { LocaleSelector } from '@/components/i18n/LocaleSelector'
 import { Logo } from '@/components/brand/Logo'
+import { WelcomeCard } from '@/components/dashboard/WelcomeCard'
 import { getServerTheme } from '@/lib/theme/server'
 import { getServerLocale } from '@/lib/i18n/server'
 import { getMessages } from '@/lib/i18n/messages'
@@ -103,6 +106,14 @@ export default async function DashboardPage() {
       available: true,
     },
     {
+      href: '/termine',
+      icon: CalendarDays,
+      emoji: '📅',
+      title: t.dashboard.cards.termine.title,
+      description: t.dashboard.cards.termine.description,
+      available: true,
+    },
+    {
       href: '/einkaufsliste',
       icon: ShoppingBag,
       emoji: '🛍️',
@@ -116,6 +127,14 @@ export default async function DashboardPage() {
       emoji: '🏥',
       title: t.dashboard.cards.packliste.title,
       description: t.dashboard.cards.packliste.description,
+      available: true,
+    },
+    {
+      href: '/wochenbett',
+      icon: HandHeart,
+      emoji: '💞',
+      title: t.dashboard.cards.wochenbett.title,
+      description: t.dashboard.cards.wochenbett.description,
       available: true,
     },
     {
@@ -148,36 +167,7 @@ export default async function DashboardPage() {
         </header>
 
         {/* Welcome card */}
-        <section className="card-elevated mb-8 rounded-2xl bg-card p-7">
-          <h1 className="font-display text-2xl font-medium leading-tight text-foreground">
-            {(() => {
-              const parts = t.dashboard.greeting.split('{name}')
-              return (
-                <>
-                  {parts[0]}
-                  <span className="font-semibold">{profile.name}</span>
-                  {parts[1] ?? ''}
-                </>
-              )
-            })()}
-          </h1>
-          <div className="mt-5">
-            <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-              {t.dashboard.sswCaption}
-            </p>
-            <p className="mt-1 font-display text-6xl font-medium leading-none text-primary">
-              {ssw}
-            </p>
-          </div>
-          <div
-            aria-hidden="true"
-            className="my-5 h-px w-12"
-            style={{ backgroundColor: 'hsl(var(--accent))' }}
-          />
-          <p className="font-display text-base italic text-muted-foreground">
-            {t.dashboard.babyOnWay.replace('{babyName}', profile.baby_name)}
-          </p>
-        </section>
+        <WelcomeCard name={profile.name} babyName={profile.baby_name} ssw={ssw} />
 
         {/* Navigation cards */}
         <nav aria-label={t.nav.sectionsAria} className="space-y-3">
