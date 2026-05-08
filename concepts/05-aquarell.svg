@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <defs>
+    <radialGradient id="bg5" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#FAF6F2" />
+      <stop offset="100%" stop-color="#F0E6D8" />
+    </radialGradient>
+    <radialGradient id="wash5a" cx="40%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#F4A6C8" stop-opacity="0.7" />
+      <stop offset="60%" stop-color="#E78BAA" stop-opacity="0.5" />
+      <stop offset="100%" stop-color="#A8636E" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="wash5b" cx="65%" cy="55%" r="50%">
+      <stop offset="0%" stop-color="#F4D9A8" stop-opacity="0.65" />
+      <stop offset="60%" stop-color="#D4A574" stop-opacity="0.4" />
+      <stop offset="100%" stop-color="#C29760" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="wash5c" cx="50%" cy="70%" r="45%">
+      <stop offset="0%" stop-color="#C8B4F6" stop-opacity="0.55" />
+      <stop offset="100%" stop-color="#9B7FCA" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="wash5d" cx="55%" cy="35%" r="40%">
+      <stop offset="0%" stop-color="#FFB6C1" stop-opacity="0.7" />
+      <stop offset="100%" stop-color="#FF8FA3" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <circle cx="120" cy="120" r="115" fill="url(#bg5)" />
+
+  <!-- Watercolor blots - organic, layered -->
+  <g style="mix-blend-mode: multiply">
+    <!-- Big blot 1 (rose) -->
+    <path d="M70 90 C 50 75, 45 110, 60 130 C 50 150, 80 165, 110 155 C 130 170, 160 155, 165 130 C 180 115, 170 90, 145 85 C 135 65, 95 70, 70 90 Z"
+          fill="url(#wash5a)" />
+    <!-- Big blot 2 (gold) -->
+    <path d="M100 100 C 90 85, 130 75, 155 90 C 175 95, 180 125, 165 140 C 170 165, 130 175, 115 160 C 95 165, 85 130, 100 100 Z"
+          fill="url(#wash5b)" />
+    <!-- Blot 3 (lavender) -->
+    <path d="M85 140 C 80 130, 105 125, 125 135 C 145 145, 140 165, 120 170 C 100 175, 80 160, 85 140 Z"
+          fill="url(#wash5c)" />
+    <!-- Highlight blot (warm pink) -->
+    <path d="M110 95 C 105 85, 130 80, 140 90 C 150 100, 145 120, 130 122 C 115 125, 105 110, 110 95 Z"
+          fill="url(#wash5d)" />
+  </g>
+
+  <!-- Subtle accent splatters -->
+  <g fill="#A8636E" opacity="0.35">
+    <circle cx="55" cy="65" r="3" />
+    <circle cx="180" cy="75" r="2" />
+    <circle cx="190" cy="170" r="2.5" />
+    <circle cx="50" cy="180" r="2" />
+    <circle cx="60" cy="120" r="1.5" />
+    <circle cx="195" cy="125" r="1.5" />
+  </g>
+  <g fill="#D4A574" opacity="0.5">
+    <circle cx="195" cy="110" r="1.5" />
+    <circle cx="170" cy="195" r="1.8" />
+    <circle cx="65" cy="200" r="1.5" />
+    <circle cx="80" cy="55" r="1.2" />
+  </g>
+</svg>

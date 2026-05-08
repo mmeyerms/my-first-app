@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <defs>
+    <radialGradient id="bg6" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#FAF6F2" />
+      <stop offset="100%" stop-color="#EFE4D2" />
+    </radialGradient>
+    <linearGradient id="goldenSpiral" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5E3D44" />
+      <stop offset="100%" stop-color="#C29760" />
+    </linearGradient>
+  </defs>
+  <circle cx="120" cy="120" r="115" fill="url(#bg6)" />
+
+  <!-- Faint Fibonacci squares (golden ratio armature) -->
+  <g stroke="#D4A574" stroke-width="0.5" fill="none" opacity="0.15">
+    <rect x="60" y="60" width="120" height="120" />
+    <rect x="60" y="60" width="74" height="74" />
+    <rect x="60" y="106" width="46" height="28" />
+    <rect x="78" y="106" width="28" height="18" />
+  </g>
+
+  <!-- Main golden spiral (nautilus / Fibonacci) -->
+  <path d="M 134 134
+           A 74 74 0 0 0 60 60
+           A 46 46 0 0 0 60 152
+           A 28 28 0 0 0 116 124
+           A 18 18 0 0 0 98 106
+           A 10 10 0 0 0 108 96
+           A 6 6 0 0 0 114 102"
+        stroke="url(#goldenSpiral)" stroke-width="2" fill="none" stroke-linecap="round" />
+
+  <!-- Decorative dots along the spiral -->
+  <g fill="#D4A574">
+    <circle cx="60" cy="115" r="3" opacity="0.9" />
+    <circle cx="78" cy="60" r="2.5" opacity="0.85" />
+    <circle cx="135" cy="78" r="3" opacity="0.95" />
+    <circle cx="180" cy="120" r="3.5" />
+    <circle cx="160" cy="170" r="3" opacity="0.95" />
+    <circle cx="105" cy="180" r="2.5" opacity="0.85" />
+  </g>
+
+  <!-- Small leaf flourishes near the spiral start -->
+  <g stroke="#5E3D44" stroke-width="1" fill="#A8636E" opacity="0.7">
+    <path d="M114 102 C 116 96, 122 96, 124 100 C 122 104, 117 105, 114 102 Z" />
+    <path d="M118 108 C 124 110, 126 116, 122 118 C 117 116, 116 111, 118 108 Z" opacity="0.75" />
+  </g>
+
+  <!-- Center pearl -->
+  <circle cx="116" cy="106" r="5" fill="#5E3D44" />
+  <circle cx="115" cy="105" r="2" fill="#FFFFFF" opacity="0.65" />
+
+  <!-- Outer accent stars -->
+  <g fill="#D4A574">
+    <circle cx="40" cy="200" r="1.5" opacity="0.7" />
+    <circle cx="200" cy="200" r="1.2" opacity="0.6" />
+    <circle cx="210" cy="60" r="1.3" opacity="0.65" />
+    <circle cx="40" cy="40" r="1.5" opacity="0.7" />
+  </g>
+</svg>

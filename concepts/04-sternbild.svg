@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <defs>
+    <radialGradient id="bg4" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#1A1432" />
+      <stop offset="100%" stop-color="#0A0820" />
+    </radialGradient>
+    <radialGradient id="starglow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFE9B9" stop-opacity="0.85" />
+      <stop offset="100%" stop-color="#FFE9B9" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <circle cx="120" cy="120" r="115" fill="url(#bg4)" />
+  <!-- Background stars -->
+  <g fill="#FFF6E5">
+    <circle cx="35" cy="45" r="0.7" opacity="0.4" />
+    <circle cx="200" cy="40" r="0.9" opacity="0.5" />
+    <circle cx="220" cy="100" r="0.6" opacity="0.35" />
+    <circle cx="40" cy="180" r="0.7" opacity="0.4" />
+    <circle cx="200" cy="200" r="1" opacity="0.55" />
+    <circle cx="25" cy="120" r="0.5" opacity="0.3" />
+  </g>
+  <!-- Connection lines (dashed) for the "constellation" -->
+  <g stroke="#D4A574" stroke-width="0.7" stroke-dasharray="2 3" opacity="0.7" fill="none">
+    <line x1="120" y1="50" x2="155" y2="85" />
+    <line x1="155" y1="85" x2="170" y2="130" />
+    <line x1="170" y1="130" x2="155" y2="170" />
+    <line x1="155" y1="170" x2="120" y2="180" />
+    <line x1="120" y1="180" x2="85" y2="170" />
+    <line x1="85" y1="170" x2="70" y2="130" />
+    <line x1="70" y1="130" x2="85" y2="85" />
+    <line x1="85" y1="85" x2="120" y2="50" />
+    <line x1="120" y1="50" x2="120" y2="120" />
+    <line x1="70" y1="130" x2="120" y2="120" />
+    <line x1="170" y1="130" x2="120" y2="120" />
+  </g>
+  <!-- Constellation stars - main pattern -->
+  <g>
+    <circle cx="120" cy="50" r="9" fill="url(#starglow)" />
+    <circle cx="120" cy="50" r="3" fill="#FFE9B9" />
+    <path d="M120 44 L122 50 L128 50 L122 52 L120 58 L118 52 L112 50 L118 50 Z" fill="#FFE9B9" opacity="0.95" />
+
+    <circle cx="155" cy="85" r="7" fill="url(#starglow)" />
+    <circle cx="155" cy="85" r="2.5" fill="#FFE9B9" />
+
+    <circle cx="170" cy="130" r="9" fill="url(#starglow)" />
+    <circle cx="170" cy="130" r="3" fill="#FFE9B9" />
+    <path d="M170 124 L172 130 L178 130 L172 132 L170 138 L168 132 L162 130 L168 130 Z" fill="#FFE9B9" opacity="0.95" />
+
+    <circle cx="155" cy="170" r="7" fill="url(#starglow)" />
+    <circle cx="155" cy="170" r="2.5" fill="#FFE9B9" />
+
+    <circle cx="120" cy="180" r="9" fill="url(#starglow)" />
+    <circle cx="120" cy="180" r="3" fill="#FFE9B9" />
+    <path d="M120 174 L122 180 L128 180 L122 182 L120 188 L118 182 L112 180 L118 180 Z" fill="#FFE9B9" opacity="0.95" />
+
+    <circle cx="85" cy="170" r="7" fill="url(#starglow)" />
+    <circle cx="85" cy="170" r="2.5" fill="#FFE9B9" />
+
+    <circle cx="70" cy="130" r="9" fill="url(#starglow)" />
+    <circle cx="70" cy="130" r="3" fill="#FFE9B9" />
+    <path d="M70 124 L72 130 L78 130 L72 132 L70 138 L68 132 L62 130 L68 130 Z" fill="#FFE9B9" opacity="0.95" />
+
+    <circle cx="85" cy="85" r="7" fill="url(#starglow)" />
+    <circle cx="85" cy="85" r="2.5" fill="#FFE9B9" />
+
+    <!-- Heart of the constellation - the central star -->
+    <circle cx="120" cy="120" r="14" fill="url(#starglow)" />
+    <circle cx="120" cy="120" r="5" fill="#FFE9B9" />
+    <path d="M120 110 L123 119 L132 120 L123 121 L120 130 L117 121 L108 120 L117 119 Z" fill="#FFE9B9" />
+  </g>
+</svg>

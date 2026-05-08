@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <defs>
+    <radialGradient id="bg2" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#1F1B3A" />
+      <stop offset="100%" stop-color="#0E0B22" />
+    </radialGradient>
+    <radialGradient id="moon2" cx="40%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#FFF6E5" />
+      <stop offset="55%" stop-color="#F4D9A8" />
+      <stop offset="100%" stop-color="#C29760" />
+    </radialGradient>
+    <radialGradient id="moonglow2" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFE9B9" stop-opacity="0.5" />
+      <stop offset="100%" stop-color="#FFE9B9" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <circle cx="120" cy="120" r="115" fill="url(#bg2)" />
+  <!-- Stars scattered -->
+  <g fill="#FFF6E5">
+    <circle cx="50" cy="60" r="1.4" opacity="0.9" />
+    <circle cx="200" cy="50" r="1.0" opacity="0.7" />
+    <circle cx="180" cy="100" r="0.8" opacity="0.6" />
+    <circle cx="40" cy="160" r="1.2" opacity="0.8" />
+    <circle cx="210" cy="180" r="1.5" opacity="0.95" />
+    <circle cx="80" cy="40" r="0.7" opacity="0.5" />
+    <circle cx="170" cy="200" r="1.1" opacity="0.75" />
+    <circle cx="60" cy="200" r="0.9" opacity="0.6" />
+    <circle cx="195" cy="160" r="0.6" opacity="0.45" />
+    <circle cx="30" cy="100" r="0.8" opacity="0.55" />
+    <circle cx="120" cy="40" r="1.0" opacity="0.7" />
+  </g>
+  <!-- Sparkle stars (4-pointed) -->
+  <g fill="#FFE9B9" opacity="0.9">
+    <path d="M55 55 L57 60 L62 62 L57 64 L55 69 L53 64 L48 62 L53 60 Z" />
+    <path d="M195 175 L197 180 L202 182 L197 184 L195 189 L193 184 L188 182 L193 180 Z" opacity="0.7" />
+  </g>
+  <!-- Moon glow halo -->
+  <circle cx="120" cy="120" r="80" fill="url(#moonglow2)" />
+  <!-- Moon -->
+  <circle cx="120" cy="120" r="56" fill="url(#moon2)" />
+  <!-- Subtle craters -->
+  <g fill="#C29760" opacity="0.35">
+    <ellipse cx="105" cy="105" rx="6" ry="5" />
+    <ellipse cx="135" cy="115" rx="4" ry="3.5" />
+    <ellipse cx="120" cy="140" rx="5" ry="4" />
+    <ellipse cx="98" cy="135" rx="3.5" ry="3" />
+    <ellipse cx="142" cy="142" rx="3" ry="2.5" />
+  </g>
+  <!-- Soft cloud silhouette across bottom -->
+  <path d="M30 200 C 50 188, 80 192, 100 198 C 130 192, 160 196, 180 200 C 200 198, 215 200, 220 205 L 220 240 L 30 240 Z" fill="#1F1B3A" opacity="0.6" />
+</svg>
