@@ -538,6 +538,8 @@ export const de = {
       shareSectionBody: 'Schick deinem Partner diese Nachricht — er braucht dafür keine App.',
       shareTipAria: 'Aktuellen Partner-Tipp teilen oder kopieren',
       shareQuestionAria: 'Frage des Tages teilen oder kopieren',
+      noAppTitle: 'Keine App nötig!',
+      noAppBody: 'Schick deinem Partner diese Nachricht — er braucht dafür keine App.',
     },
     categories: {
       traum: 'Träume',

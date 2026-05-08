@@ -259,8 +259,8 @@ export function AengsteView() {
                 </button>
 
                 {isOpen && (
-                  <div className="border-t border-blue-100 bg-blue-50 px-4 py-4">
-                    <p className="text-sm leading-relaxed text-blue-900">
+                  <div className="border-t border-border bg-secondary/60 px-4 py-4">
+                    <p className="text-sm leading-relaxed text-foreground">
                       {localized(karte.fact, locale)}
                     </p>
                   </div>

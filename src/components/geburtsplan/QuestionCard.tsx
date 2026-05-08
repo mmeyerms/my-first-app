@@ -26,14 +26,14 @@ export function QuestionCard({ question, value, onChange }: Props) {
   const [hintOpen, setHintOpen] = useState(false)
 
   return (
-    <div id={question.id} className={`scroll-mt-4 rounded-xl border bg-white p-4 transition-all ${isAnswered ? 'border-rose-200' : 'border-orange-200 bg-orange-50/30'}`}>
+    <div id={question.id} className={`scroll-mt-4 rounded-xl border bg-card p-4 transition-all ${isAnswered ? 'border-primary/20' : 'border-amber-300/40 bg-amber-50/20'}`}>
       <div className="mb-3 flex items-start justify-between gap-2">
-        <p className="text-sm font-medium leading-snug text-gray-800">{localized(question.label, locale)}</p>
+        <p className="text-sm font-medium leading-snug text-foreground">{localized(question.label, locale)}</p>
         {question.optional && !isAnswered && (
           <Badge variant="secondary" className="shrink-0 text-xs">{t.geburtsplan.optionalBadge}</Badge>
         )}
         {isAnswered && (
-          <span className="shrink-0 text-rose-400">✓</span>
+          <span className="shrink-0 text-primary">✓</span>
         )}
       </div>
 
@@ -55,13 +55,13 @@ export function QuestionCard({ question, value, onChange }: Props) {
       )}
 
       {question.hint && (
-        <div className="mt-3 border-t border-gray-100 pt-3">
+        <div className="mt-3 border-t border-border pt-3">
           <button
             type="button"
             onClick={() => setHintOpen(!hintOpen)}
             aria-expanded={hintOpen}
             aria-controls={`${question.id}-hint`}
-            className="flex items-center gap-1.5 text-xs text-blue-500 hover:text-blue-700"
+            className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80"
           >
             <span>{hintOpen ? '▲' : '▼'}</span>
             <span>{t.geburtsplan.hintToggle}</span>
@@ -69,7 +69,7 @@ export function QuestionCard({ question, value, onChange }: Props) {
           {hintOpen && (
             <p
               id={`${question.id}-hint`}
-              className="mt-2 text-xs leading-relaxed text-gray-600 rounded-lg bg-blue-50 p-3"
+              className="mt-2 text-xs leading-relaxed text-foreground rounded-lg bg-secondary/60 p-3"
             >
               {localized(question.hint, locale)}
             </p>

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { getPartnerTipForDay, getPartnerTipText, getPartnerTipLabel, type PartnerTipType } from '@/lib/partnerTips'
 import { getCoupleQuestionForDay, getCoupleQuestionText, type CoupleQuestion } from '@/lib/coupleQuestions'
-import { useLocale } from '@/lib/i18n/client'
+import { useLocale, useT } from '@/lib/i18n/client'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
@@ -12,17 +12,17 @@ interface Props {
   babyName: string
 }
 
-const CATEGORY_LABELS: Record<CoupleQuestion['category'], string> = {
-  traum: 'Träume',
-  erinnerung: 'Erinnerungen',
-  zukunft: 'Zukunft',
-  spass: 'Spaß',
-  gefuehl: 'Gefühle',
+const CATEGORY_LABELS: Record<CoupleQuestion['category'], { de: string; en: string }> = {
+  traum: { de: 'Träume', en: 'Dreams' },
+  erinnerung: { de: 'Erinnerungen', en: 'Memories' },
+  zukunft: { de: 'Zukunft', en: 'Future' },
+  spass: { de: 'Spaß', en: 'Fun' },
+  gefuehl: { de: 'Gefühle', en: 'Feelings' },
 }
 
 function tipBadgeClass(type: PartnerTipType): string {
   if (type === 'witzig') return 'border-transparent bg-amber-100 text-amber-800 hover:bg-amber-100'
-  if (type === 'positiv') return 'border-transparent bg-rose-100 text-rose-800 hover:bg-rose-100'
+  if (type === 'positiv') return 'border-transparent bg-secondary text-primary hover:bg-secondary'
   return ''
 }
 
@@ -33,6 +33,7 @@ function tipBadgeVariant(type: PartnerTipType): 'secondary' | 'default' {
 
 export function PartnerContentView({ ssw, babyName }: Props) {
   const { locale } = useLocale()
+  const t = useT()
   const tip = getPartnerTipForDay(ssw)
   const question = getCoupleQuestionForDay()
   const tipText = getPartnerTipText(tip, locale)
@@ -79,11 +80,11 @@ export function PartnerContentView({ ssw, babyName }: Props) {
       {/* Section A — Partner Tipp des Tages */}
       <section
         aria-labelledby="partner-tip-heading"
-        className="rounded-2xl bg-white p-5 shadow-sm"
+        className="rounded-2xl bg-card p-5 shadow-sm"
       >
         <div className="mb-3 flex items-center justify-between gap-2">
-          <h2 id="partner-tip-heading" className="text-base font-semibold text-gray-800">
-            Tipp des Tages
+          <h2 id="partner-tip-heading" className="text-base font-semibold text-foreground">
+            {t.partner.content.tipToday}
           </h2>
           <Badge
             variant={tipBadgeVariant(tip.type)}
@@ -93,76 +94,76 @@ export function PartnerContentView({ ssw, babyName }: Props) {
           </Badge>
         </div>
 
-        <p className="mb-3 text-xs text-gray-500">
-          Heute für {babyName} 💛
+        <p className="mb-3 text-xs text-muted-foreground">
+          {t.partner.content.todayFor.replace('{babyName}', babyName)}
         </p>
 
         <div className="flex items-start gap-3">
           <span className="text-3xl" aria-hidden="true">
             {tip.emoji}
           </span>
-          <p className="text-sm leading-relaxed text-gray-700">{tipText}</p>
+          <p className="text-sm leading-relaxed text-foreground">{tipText}</p>
         </div>
       </section>
 
       {/* Section B — Frage des Tages */}
       <section
         aria-labelledby="couple-question-heading"
-        className="rounded-2xl bg-rose-50 p-5 shadow-sm ring-1 ring-rose-100"
+        className="rounded-2xl bg-secondary/60 p-5 shadow-sm ring-1 ring-primary/15"
       >
         <div className="mb-3 flex items-center justify-between gap-2">
           <h2
             id="couple-question-heading"
-            className="text-base font-semibold text-rose-900"
+            className="text-base font-semibold text-primary"
           >
-            Frage des Tages
+            {t.partner.content.questionToday}
           </h2>
           <Badge
             variant="default"
-            className="border-transparent bg-rose-200 text-rose-900 hover:bg-rose-200"
+            className="border-transparent bg-primary/15 text-primary hover:bg-primary/15"
           >
             <span className="mr-1" aria-hidden="true">
               {question.emoji}
             </span>
-            {CATEGORY_LABELS[question.category]}
+            {CATEGORY_LABELS[question.category][locale]}
           </Badge>
         </div>
 
-        <p className="mb-5 text-lg font-medium leading-relaxed text-rose-950">
+        <p className="mb-5 text-lg font-medium leading-relaxed text-foreground">
           {questionText}
         </p>
 
         <Button
           onClick={handleShareQuestion}
-          className="w-full bg-rose-500 text-white hover:bg-rose-600"
-          aria-label="Frage des Tages teilen oder kopieren"
+          className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+          aria-label={t.partner.content.shareQuestionAria}
         >
-          {questionCopied ? '✓ Kopiert!' : '📤 Teilen / Kopieren'}
+          {questionCopied ? `✓ ${t.common.copied}` : `📤 ${t.common.share} / ${t.common.copy}`}
         </Button>
       </section>
 
       {/* Section C — Tipp für deinen Partner teilen */}
       <section
         aria-labelledby="share-tip-heading"
-        className="rounded-2xl bg-white p-5 shadow-sm"
+        className="rounded-2xl bg-card p-5 shadow-sm"
       >
         <h2
           id="share-tip-heading"
-          className="mb-2 text-base font-semibold text-gray-800"
+          className="mb-2 text-base font-semibold text-foreground"
         >
-          Kein App nötig!
+          {t.partner.content.noAppTitle}
         </h2>
-        <p className="mb-4 text-sm leading-relaxed text-gray-600">
-          Schick deinem Partner diese Nachricht — er braucht dafür keine App.
+        <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
+          {t.partner.content.noAppBody}
         </p>
 
         <Button
           variant="outline"
           onClick={handleShareTip}
-          className="w-full border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800"
-          aria-label="Aktuellen Partner-Tipp teilen oder kopieren"
+          className="w-full border-primary/20 text-primary hover:bg-secondary hover:text-primary"
+          aria-label={t.partner.content.shareTipAria}
         >
-          {tipCopied ? '✓ Kopiert!' : 'Tipp teilen'}
+          {tipCopied ? `✓ ${t.common.copied}` : t.partner.content.shareTip}
         </Button>
       </section>
     </div>

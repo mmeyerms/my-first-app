@@ -209,7 +209,7 @@ export function KinderwunschHub() {
           href="/dashboard"
           className={
             isClassic
-              ? 'text-sm text-rose-500 hover:underline'
+              ? 'text-sm text-primary hover:underline'
               : 'text-sm text-primary hover:underline'
           }
         >
@@ -298,7 +298,7 @@ export function KinderwunschHub() {
                       className={
                         isClassic
                           ? `mt-2 text-xs font-medium ${
-                              progress.highlight ? 'text-rose-500' : 'text-gray-600'
+                              progress.highlight ? 'text-primary' : 'text-muted-foreground'
                             }`
                           : `mt-2 text-xs font-medium ${
                               progress.highlight ? 'text-primary' : 'text-muted-foreground'

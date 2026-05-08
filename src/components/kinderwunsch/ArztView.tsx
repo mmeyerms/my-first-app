@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { useLocale } from '@/lib/i18n/client'
+import { useLocale, useT } from '@/lib/i18n/client'
 import { localized, type LocalizedString } from '@/lib/i18n/localized'
 import { useTheme } from '@/lib/theme/client'
 
@@ -57,6 +57,7 @@ function makeId(): string {
 export function ArztView() {
   const { locale } = useLocale()
   const { theme } = useTheme()
+  const t = useT()
   const isClassic = theme === 'classic'
   const [hydrated, setHydrated] = useState(false)
 
@@ -352,8 +353,8 @@ export function ArztView() {
           <Input
             value={customText}
             onChange={(e) => setCustomText(e.target.value)}
-            placeholder="z.B. Wie lange darf ich noch Sport machen?"
-            aria-label="Frage-Text"
+            placeholder={t.kinderwunsch.arzt.questionPlaceholder}
+            aria-label={t.kinderwunsch.arzt.questionAria}
           />
           <Select
             value={customKategorie}
@@ -361,8 +362,8 @@ export function ArztView() {
               setCustomKategorie(v as ArztFrage['kategorie'])
             }
           >
-            <SelectTrigger aria-label="Kategorie">
-              <SelectValue placeholder="Kategorie wählen" />
+            <SelectTrigger aria-label={t.kinderwunsch.arzt.categoryAria}>
+              <SelectValue placeholder={t.kinderwunsch.arzt.categoryPlaceholder} />
             </SelectTrigger>
             <SelectContent>
               {KATEGORIE_KEYS.map((kat) => (

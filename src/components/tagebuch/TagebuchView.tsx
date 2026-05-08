@@ -96,25 +96,25 @@ export function TagebuchView({ ssw, babyName }: Props) {
     <div className="space-y-6">
       {/* Milestones */}
       {reached.length > 0 && (
-        <div className="rounded-2xl bg-white p-5 shadow-sm">
-          <h2 className="mb-3 text-sm font-semibold text-gray-700">{t.tagebuch.milestones.heading}</h2>
+        <div className="rounded-2xl bg-card p-5 shadow-sm">
+          <h2 className="mb-3 text-sm font-semibold text-foreground">{t.tagebuch.milestones.heading}</h2>
           <div className="space-y-2">
             {reached.map((m) => (
               <div key={m.ssw} className="flex items-start gap-3">
                 <span className="text-xl">{m.emoji}</span>
                 <div>
-                  <p className="text-sm font-medium text-gray-800">
+                  <p className="text-sm font-medium text-foreground">
                     {t.tagebuch.milestones.nextDetail
                       .replace('{ssw}', String(m.ssw))
                       .replace('{title}', getMilestoneTitle(m, locale))}
                   </p>
-                  <p className="text-xs text-gray-500">{getMilestoneDescription(m, locale)}</p>
+                  <p className="text-xs text-muted-foreground">{getMilestoneDescription(m, locale)}</p>
                 </div>
               </div>
             ))}
           </div>
           {next && (
-            <div className="mt-3 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-600">
+            <div className="mt-3 rounded-xl bg-secondary px-4 py-3 text-sm text-primary">
               {t.tagebuch.milestones.nextLabel}{' '}
               <strong>
                 {t.tagebuch.milestones.nextDetail
@@ -128,8 +128,8 @@ export function TagebuchView({ ssw, babyName }: Props) {
       )}
 
       {/* SSW selector */}
-      <div className="rounded-2xl bg-white p-5 shadow-sm">
-        <h2 className="mb-3 text-sm font-semibold text-gray-700">{t.tagebuch.weekSelector}</h2>
+      <div className="rounded-2xl bg-card p-5 shadow-sm">
+        <h2 className="mb-3 text-sm font-semibold text-foreground">{t.tagebuch.weekSelector}</h2>
         <div className="flex flex-wrap gap-2">
           {Array.from({ length: ssw }, (_, i) => i + 1).map((s) => {
             const hasEntry = entries.some((e) => e.ssw === s && (e.rating || e.word || e.surprise))
@@ -139,10 +139,10 @@ export function TagebuchView({ ssw, babyName }: Props) {
                 onClick={() => selectSSW(s)}
                 className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                   activeSSW === s
-                    ? 'bg-rose-500 text-white'
+                    ? 'bg-primary text-primary-foreground'
                     : hasEntry
-                    ? 'bg-rose-100 text-rose-600'
-                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                    ? 'bg-secondary text-primary'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/70'
                 }`}
               >
                 {t.tagebuch.sswHeading.replace('{ssw}', String(s))}
@@ -154,20 +154,20 @@ export function TagebuchView({ ssw, babyName }: Props) {
       </div>
 
       {/* Entry form */}
-      <div className="rounded-2xl bg-white p-5 shadow-sm">
+      <div className="rounded-2xl bg-card p-5 shadow-sm">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-gray-700">
+          <h2 className="text-sm font-semibold text-foreground">
             {sswHeading} {isCurrentSSW ? t.tagebuch.currentWeekTag : ''}
           </h2>
           <div className="flex items-center gap-2">
-            {saving && <span className="text-xs text-gray-400">{t.tagebuch.saving}</span>}
+            {saving && <span className="text-xs text-muted-foreground">{t.tagebuch.saving}</span>}
             {saved && !saving && <span className="text-xs text-green-500">{t.tagebuch.savedShort}</span>}
           </div>
         </div>
 
         {/* Rating */}
         <div className="mb-5">
-          <p className="mb-2 text-xs font-medium text-gray-600">{t.tagebuch.ratingPrompt}</p>
+          <p className="mb-2 text-xs font-medium text-muted-foreground">{t.tagebuch.ratingPrompt}</p>
           <div className="flex gap-2">
             {RATING_VALUES.map((value) => {
               const label = t.tagebuch.ratings[value]
@@ -178,12 +178,12 @@ export function TagebuchView({ ssw, babyName }: Props) {
                   title={label}
                   className={`flex flex-col items-center rounded-xl p-2 transition-all ${
                     currentEntry.rating === value
-                      ? 'bg-rose-100 ring-2 ring-rose-400'
-                      : 'bg-gray-50 hover:bg-gray-100'
+                      ? 'bg-secondary ring-2 ring-primary/40'
+                      : 'bg-muted hover:bg-muted/70'
                   }`}
                 >
                   <span className="text-2xl">{RATING_EMOJI[value]}</span>
-                  <span className="mt-0.5 text-[10px] text-gray-500">{label}</span>
+                  <span className="mt-0.5 text-[10px] text-muted-foreground">{label}</span>
                 </button>
               )
             })}
@@ -192,7 +192,7 @@ export function TagebuchView({ ssw, babyName }: Props) {
 
         {/* Word */}
         <div className="mb-4">
-          <label className="mb-1.5 block text-xs font-medium text-gray-600">
+          <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
             {t.tagebuch.wordLabel}
           </label>
           <input
@@ -201,13 +201,13 @@ export function TagebuchView({ ssw, babyName }: Props) {
             placeholder={t.tagebuch.wordPlaceholder}
             value={currentEntry.word ?? ''}
             onChange={(e) => handleChange('word', e.target.value || null)}
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-rose-300 focus:ring-1 focus:ring-rose-200"
+            className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20"
           />
         </div>
 
         {/* Surprise */}
         <div>
-          <label className="mb-1.5 block text-xs font-medium text-gray-600">
+          <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
             {t.tagebuch.surpriseLabel}
           </label>
           <Textarea
@@ -229,8 +229,8 @@ export function TagebuchView({ ssw, babyName }: Props) {
 
       {/* Filled entries overview */}
       {entries.filter((e) => e.rating || e.word || e.surprise).length > 0 && (
-        <div className="rounded-2xl bg-white p-5 shadow-sm">
-          <h2 className="mb-3 text-sm font-semibold text-gray-700">{t.tagebuch.entriesTitle}</h2>
+        <div className="rounded-2xl bg-card p-5 shadow-sm">
+          <h2 className="mb-3 text-sm font-semibold text-foreground">{t.tagebuch.entriesTitle}</h2>
           <div className="space-y-2">
             {entries
               .filter((e) => e.rating || e.word || e.surprise)
@@ -246,7 +246,7 @@ export function TagebuchView({ ssw, babyName }: Props) {
                     <span className="text-xl">{emoji}</span>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold text-gray-700">{t.tagebuch.sswHeading.replace('{ssw}', String(e.ssw))}</p>
-                      {e.word && <p className="truncate text-xs text-gray-500">„{e.word}"</p>}
+                      {e.word && <p className="truncate text-xs text-muted-foreground">„{e.word}"</p>}
                     </div>
                     {e.ssw === ssw && <Badge variant="secondary" className="text-xs shrink-0">{t.tagebuch.current}</Badge>}
                   </button>

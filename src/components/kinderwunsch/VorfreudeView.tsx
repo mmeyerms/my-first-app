@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { useLocale } from '@/lib/i18n/client'
+import { useLocale, useT } from '@/lib/i18n/client'
 import { localized } from '@/lib/i18n/localized'
 import { useTheme } from '@/lib/theme/client'
 
@@ -60,6 +60,7 @@ function formatDate(iso: string): string {
 
 export function VorfreudeView() {
   const { locale } = useLocale()
+  const t = useT()
   const { theme } = useTheme()
   const isClassic = theme === 'classic'
   const [hydrated, setHydrated] = useState(false)
@@ -241,10 +242,10 @@ export function VorfreudeView() {
 
       {/* Tab 1 — Brief */}
       <TabsContent value="letter" className="mt-4">
-        <section aria-label="Brief an dein zukünftiges Ich" className="space-y-4">
+        <section aria-label={t.kinderwunsch.vorfreude.letterSectionAria} className="space-y-4">
           {!hydrated ? (
             <div className="rounded-2xl bg-card p-5 text-sm text-muted-foreground shadow-sm">
-              Lade…
+              {t.kinderwunsch.vorfreude.letterLoading}
             </div>
           ) : sealed && state.letter ? (
             <div className="space-y-4 rounded-2xl bg-gradient-to-br from-secondary/70 to-secondary p-6 shadow-sm ring-1 ring-primary/20">
@@ -262,13 +263,13 @@ export function VorfreudeView() {
                   </span>
                 )}
                 <p className="text-sm text-foreground/80">
-                  Versiegelt am{' '}
+                  {t.kinderwunsch.vorfreude.letterSealedAtPrefix}{' '}
                   <span className="font-medium">
                     {formatDate(state.letter.writtenAt)}
                   </span>
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Lies ihn am Tag des positiven Tests wieder.
+                  {t.kinderwunsch.vorfreude.letterSealedHint}
                 </p>
               </div>
 
@@ -281,7 +282,7 @@ export function VorfreudeView() {
                   onClick={() => setLetterRevealed(true)}
                   className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                 >
-                  Brief öffnen
+                  {t.kinderwunsch.vorfreude.openLetter}
                 </Button>
               )}
 
@@ -290,21 +291,20 @@ export function VorfreudeView() {
                 onClick={unsealLetter}
                 className="w-full border-primary/20 text-primary hover:bg-secondary"
               >
-                Versiegelung lösen
+                {t.kinderwunsch.vorfreude.letterUnseal}
               </Button>
             </div>
           ) : (
             <div className="space-y-3 rounded-2xl bg-card p-5 shadow-sm">
               <p className="text-sm text-muted-foreground">
-                Schreib einen Brief an dich selbst. Versiegele ihn — und lies
-                ihn am Tag des positiven Tests wieder.
+                {t.kinderwunsch.vorfreude.letterDescription}
               </p>
               <Textarea
                 value={letterDraft}
                 onChange={(e) => setLetterDraft(e.target.value)}
-                placeholder="Liebes zukünftiges Ich, wenn du das liest, ist der Test positiv und du..."
+                placeholder={t.kinderwunsch.vorfreude.letterPlaceholderLong}
                 className="min-h-[200px] resize-y"
-                aria-label="Briefinhalt"
+                aria-label={t.kinderwunsch.vorfreude.letterAriaContent}
               />
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Button
