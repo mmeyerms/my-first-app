@@ -95,6 +95,7 @@ class Q {
   eq(k: string, v: unknown) { this._preds.push(r => r[k] === v); return this }
   is(k: string, v: unknown) { this._preds.push(r => v === null ? r[k] == null : r[k] === v); return this }
   gt(k: string, v: unknown) { this._preds.push(r => String(r[k] ?? '') > String(v ?? '')); return this }
+  in(k: string, vs: unknown[]) { const set = new Set(vs); this._preds.push(r => set.has(r[k])); return this }
   order(field: string, opts?: { ascending?: boolean }) { this._ord = { field, asc: opts?.ascending ?? true }; return this }
   limit(n: number) { this._lim = n; return this }
 

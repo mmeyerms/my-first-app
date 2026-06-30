@@ -6,6 +6,7 @@ import { LocaleProvider } from "@/lib/i18n/client";
 import { getServerTheme } from "@/lib/theme/server";
 import { ThemeProvider } from "@/lib/theme/client";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { HebammenChat } from "@/components/chat/HebammenChat";
 
 const fontDisplay = Cormorant_Garamond({
   subsets: ["latin"],
@@ -46,6 +47,7 @@ export default async function RootLayout({
           <LocaleProvider initialLocale={locale}>
             {children}
             <BottomNav />
+            <HebammenChat />
           </LocaleProvider>
         </ThemeProvider>
       </body>
