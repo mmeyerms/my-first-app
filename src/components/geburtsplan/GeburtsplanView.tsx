@@ -5,6 +5,7 @@ import { Question, STAGE_UNLOCK, getStageQuestions } from '@/lib/questions'
 import { exportGeburtsplanPDF } from '@/lib/pdfExport'
 import { useLocale, useT } from '@/lib/i18n/client'
 import { QuestionCard } from './QuestionCard'
+import { AudioBriefing } from './AudioBriefing'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
@@ -26,6 +27,22 @@ function isAnsweredValue(value: unknown): boolean {
   if (Array.isArray(value)) return value.length > 0
   if (typeof value === 'string') return value.trim().length > 0
   return false
+}
+
+/** Narrow the loose `Record<string, unknown>` answers to the shape the briefing expects. */
+function toBriefingAnswers(
+  answers: Record<string, unknown>,
+): Record<string, string | string[]> {
+  const out: Record<string, string | string[]> = {}
+  for (const [key, value] of Object.entries(answers)) {
+    if (Array.isArray(value)) {
+      const strs = value.filter((v): v is string => typeof v === 'string')
+      if (strs.length > 0) out[key] = strs
+    } else if (typeof value === 'string' && value.trim().length > 0) {
+      out[key] = value
+    }
+  }
+  return out
 }
 
 export function GeburtsplanView({ initialAnswers, ssw, babyName, dueDate }: Props) {
@@ -68,6 +85,8 @@ export function GeburtsplanView({ initialAnswers, ssw, babyName, dueDate }: Prop
   )
 
   const progressPct = allQuestions.length > 0 ? (answered / allQuestions.length) * 100 : 0
+
+  const briefingAnswers = useMemo(() => toBriefingAnswers(answers), [answers])
 
   function handleChange(id: string, value: string | string[]) {
     const updated = { ...answers, [id]: value }
@@ -153,6 +172,8 @@ export function GeburtsplanView({ initialAnswers, ssw, babyName, dueDate }: Prop
             {t.geburtsplan.completed.viewAgain}
           </Button>
         </div>
+
+        <AudioBriefing answers={briefingAnswers} locale={locale} babyName={babyName} />
 
         {lockedStages.length > 0 && (
           <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 space-y-2">
@@ -258,6 +279,9 @@ export function GeburtsplanView({ initialAnswers, ssw, babyName, dueDate }: Prop
           </Link>
         </div>
       )}
+
+      {/* Audio briefing preview (shown once enough questions are answered) */}
+      <AudioBriefing answers={briefingAnswers} locale={locale} babyName={babyName} />
 
       {/* Bottom dashboard link */}
       <div className="text-center">

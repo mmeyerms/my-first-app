@@ -16,6 +16,8 @@ type Table =
   | 'termine'
   | 'checklists'
   | 'kinderwunsch_state'
+  | 'help_requests'
+  | 'help_slots'
 type Row = Record<string, unknown>
 type Store = Record<Table, Row[]>
 
@@ -29,6 +31,8 @@ const EMPTY_STORE: Store = {
   termine: [],
   checklists: [],
   kinderwunsch_state: [],
+  help_requests: [],
+  help_slots: [],
 }
 
 // Persistence strategy:
