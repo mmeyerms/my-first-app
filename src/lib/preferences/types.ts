@@ -62,6 +62,11 @@ export interface ChecklistPresets {
   setup: ChecklistSetup | null
 }
 
+export interface NotificationsPreferences {
+  /** When true, this user receives the weekly Sunday summary email dispatched by /api/cron/weekly-summary. */
+  weeklyEmail: boolean
+}
+
 export interface UserPreferences {
   // Design
   accentColor: AccentColor
@@ -99,6 +104,9 @@ export interface UserPreferences {
 
   // Checklist presets (Packliste, Einkaufsliste, Wochenbett)
   listPresets: ChecklistPresets
+
+  // Notifications (Wochen-Mail etc.)
+  notifications: NotificationsPreferences
 }
 
 export const DEFAULT_PREFERENCES: UserPreferences = {
@@ -151,6 +159,10 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
     season: null,
     setup: null,
   },
+
+  notifications: {
+    weeklyEmail: false,
+  },
 }
 
 /**
@@ -178,6 +190,10 @@ export function mergePreferences(
     listPresets: {
       ...DEFAULT_PREFERENCES.listPresets,
       ...(partial.listPresets ?? {}),
+    },
+    notifications: {
+      ...DEFAULT_PREFERENCES.notifications,
+      ...(partial.notifications ?? {}),
     },
   }
 }

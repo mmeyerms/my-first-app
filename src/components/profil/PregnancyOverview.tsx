@@ -1,8 +1,10 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Baby, Sparkles, Star } from 'lucide-react'
+import Image from 'next/image'
+import { Baby, Sparkles, Star, Trash2, Upload } from 'lucide-react'
+import { toast } from 'sonner'
 import { useT, useLocale } from '@/lib/i18n/client'
 import { Button } from '@/components/ui/button'
 import {
@@ -25,7 +27,7 @@ import { BornModal } from '@/components/pregnancy/BornModal'
 import { SternenkindModal } from '@/components/pregnancy/SternenkindModal'
 import { NewPregnancyModal } from '@/components/pregnancy/NewPregnancyModal'
 import { TransferFromPregnancyModal } from '@/components/pregnancy/TransferFromPregnancyModal'
-import type { Pregnancy, PregnancyStatus } from '@/lib/pregnancy/server'
+import type { Pregnancy, PregnancyStatus, UltrasoundEntry } from '@/lib/pregnancy/server'
 
 function formatDate(iso: string | null, locale: string): string {
   if (!iso) return '—'
@@ -61,6 +63,142 @@ function StatusBadge({ status }: { status: PregnancyStatus }) {
       <span aria-hidden="true">{meta.emoji}</span>
       {meta.label}
     </span>
+  )
+}
+
+function UltrasoundGallery({
+  pregnancyId,
+  initialEntries,
+}: {
+  pregnancyId: string
+  initialEntries: UltrasoundEntry[]
+}) {
+  const [entries, setEntries] = useState<UltrasoundEntry[]>(initialEntries)
+  const [busy, setBusy] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+
+  async function handleFile(file: File) {
+    if (!file.type.startsWith('image/')) {
+      toast.error('Bitte wähle ein Bild (JPG, PNG oder WebP).')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Datei zu groß — max. 5 MB erlaubt.')
+      return
+    }
+    setBusy(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('pregnancyId', pregnancyId)
+      const res = await fetch('/api/uploads/ultrasound', { method: 'POST', body: fd })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(typeof body.error === 'string' ? body.error : 'Upload fehlgeschlagen')
+      }
+      const data = (await res.json()) as UltrasoundEntry
+      setEntries((prev) => [...prev, data])
+      toast.success('Ultraschall-Bild hinzugefügt')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Upload fehlgeschlagen'
+      toast.error(msg)
+    } finally {
+      setBusy(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  async function handleDelete(path: string) {
+    setBusy(true)
+    try {
+      const url = `/api/uploads/ultrasound?pregnancyId=${encodeURIComponent(
+        pregnancyId,
+      )}&path=${encodeURIComponent(path)}`
+      const res = await fetch(url, { method: 'DELETE' })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(typeof body.error === 'string' ? body.error : 'Löschen fehlgeschlagen')
+      }
+      setEntries((prev) => prev.filter((e) => e.path !== path))
+      toast.success('Bild entfernt')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Löschen fehlgeschlagen'
+      toast.error(msg)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="mt-4 space-y-3 border-t border-border/60 pt-3">
+      <div className="flex items-center justify-between">
+        <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          Ultraschall-Bilder
+        </h4>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={busy}
+          className="h-7 text-xs"
+          aria-label="Ultraschall-Bild hochladen"
+        >
+          <Upload className="mr-1 h-3.5 w-3.5" strokeWidth={1.5} aria-hidden="true" />
+          Hochladen
+        </Button>
+      </div>
+
+      {entries.length === 0 ? (
+        <p className="text-xs italic text-muted-foreground">
+          Noch keine Bilder — lade dein erstes Ultraschall-Foto hoch.
+        </p>
+      ) : (
+        <ul className="grid grid-cols-3 gap-2">
+          {entries.map((entry) => (
+            <li key={entry.path} className="group relative aspect-square overflow-hidden rounded-lg bg-muted">
+              <Image
+                src={entry.url}
+                alt={
+                  entry.ssw !== null
+                    ? `Ultraschall SSW ${entry.ssw}`
+                    : 'Ultraschall-Bild'
+                }
+                fill
+                sizes="120px"
+                className="object-cover"
+                unoptimized
+              />
+              {entry.ssw !== null && (
+                <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                  SSW {entry.ssw}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => handleDelete(entry.path)}
+                disabled={busy}
+                aria-label="Bild entfernen"
+                className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white opacity-0 transition-opacity hover:bg-destructive group-hover:opacity-100 focus:opacity-100"
+              >
+                <Trash2 className="h-3 w-3" strokeWidth={1.5} aria-hidden="true" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          if (file) void handleFile(file)
+        }}
+      />
+    </div>
   )
 }
 
@@ -270,6 +408,15 @@ function PregnancyCard({
         >
           {t.pregnancy.overview.grief}
         </Link>
+      )}
+
+      {!isSternenkind && (
+        <UltrasoundGallery
+          pregnancyId={pregnancy.id}
+          initialEntries={
+            Array.isArray(pregnancy.ultrasound_urls) ? pregnancy.ultrasound_urls : []
+          }
+        />
       )}
 
       {/* Footer: activate + delete */}

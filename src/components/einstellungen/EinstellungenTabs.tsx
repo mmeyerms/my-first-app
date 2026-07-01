@@ -14,6 +14,7 @@ import { ChecklistPresetsSection } from './sections/ChecklistPresetsSection'
 import { PartnerSection } from './sections/PartnerSection'
 import { KinderwunschSection } from './sections/KinderwunschSection'
 import { WochenbettSection } from './sections/WochenbettSection'
+import { NotificationsSection } from './sections/NotificationsSection'
 
 interface Props {
   initialPrefs: UserPreferences
@@ -38,6 +39,7 @@ export function EinstellungenTabs({ initialPrefs, pregnancyMode }: Props) {
             <TabsTrigger value="partner">Partner</TabsTrigger>
             {isPlanning && <TabsTrigger value="kinderwunsch">Kinderwunsch</TabsTrigger>}
             <TabsTrigger value="wochenbett">Wochenbett</TabsTrigger>
+            <TabsTrigger value="notifications">Mails</TabsTrigger>
           </TabsList>
         </div>
 
@@ -54,6 +56,7 @@ export function EinstellungenTabs({ initialPrefs, pregnancyMode }: Props) {
           <TabsContent value="kinderwunsch"><KinderwunschSection /></TabsContent>
         )}
         <TabsContent value="wochenbett"><WochenbettSection /></TabsContent>
+        <TabsContent value="notifications"><NotificationsSection /></TabsContent>
       </Tabs>
     </PreferencesProvider>
   )

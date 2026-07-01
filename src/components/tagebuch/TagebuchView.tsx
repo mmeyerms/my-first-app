@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Download } from 'lucide-react'
+import { Download, ImagePlus, X } from 'lucide-react'
 import { getMilestonesUpToSSW, getNextMilestone, getMilestoneTitle, getMilestoneDescription } from '@/lib/milestones'
 import { useLocale, useT } from '@/lib/i18n/client'
 import { usePreferences } from '@/lib/preferences/client'
@@ -15,6 +15,7 @@ type DiaryEntry = {
   rating: number | null
   word: string | null
   surprise: string | null
+  photo_url?: string | null
 }
 
 const RATING_VALUES: Array<1 | 2 | 3 | 4 | 5> = [1, 2, 3, 4, 5]
@@ -45,10 +46,13 @@ export function TagebuchView({ ssw, babyName }: Props) {
   const t = useT()
   const { prefs } = usePreferences()
   const [entries, setEntries] = useState<DiaryEntry[]>([])
-  const [currentEntry, setCurrentEntry] = useState<DiaryEntry>({ ssw, rating: null, word: null, surprise: null })
+  const [currentEntry, setCurrentEntry] = useState<DiaryEntry>({ ssw, rating: null, word: null, surprise: null, photo_url: null })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [activeSSW, setActiveSSW] = useState(ssw)
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [photoError, setPhotoError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const currentPrompt = useMemo(() => {
@@ -117,8 +121,9 @@ export function TagebuchView({ ssw, babyName }: Props) {
   function selectSSW(s: number) {
     setActiveSSW(s)
     const existing = entries.find((e) => e.ssw === s)
-    setCurrentEntry(existing ?? { ssw: s, rating: null, word: null, surprise: null })
+    setCurrentEntry(existing ?? { ssw: s, rating: null, word: null, surprise: null, photo_url: null })
     setSaved(false)
+    setPhotoError(null)
   }
 
   function handleChange(field: keyof DiaryEntry, value: unknown) {
@@ -135,7 +140,13 @@ export function TagebuchView({ ssw, babyName }: Props) {
       await fetch('/api/tagebuch', {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ ssw: entry.ssw, rating: entry.rating ?? undefined, word: entry.word ?? undefined, surprise: entry.surprise ?? undefined }),
+        body: JSON.stringify({
+          ssw: entry.ssw,
+          rating: entry.rating ?? undefined,
+          word: entry.word ?? undefined,
+          surprise: entry.surprise ?? undefined,
+          photo_url: entry.photo_url ?? null,
+        }),
       })
       setEntries((prev) => {
         const idx = prev.findIndex((e) => e.ssw === entry.ssw)
@@ -146,6 +157,48 @@ export function TagebuchView({ ssw, babyName }: Props) {
     } finally {
       setSaving(false)
     }
+  }
+
+  async function handlePhotoSelect(file: File | null) {
+    if (!file) return
+    setPhotoError(null)
+    if (file.size > 3 * 1024 * 1024) {
+      setPhotoError('Bild ist zu groß (max. 3 MB).')
+      return
+    }
+    if (!file.type.startsWith('image/')) {
+      setPhotoError('Bitte ein Bild auswählen.')
+      return
+    }
+    setUploadingPhoto(true)
+    try {
+      const form = new FormData()
+      form.append('file', file)
+      const res = await fetch('/api/uploads/diary', { method: 'POST', body: form })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        setPhotoError(err.error ?? 'Upload fehlgeschlagen.')
+        return
+      }
+      const { url } = (await res.json()) as { url: string; path: string }
+      const updated: DiaryEntry = { ...currentEntry, ssw: activeSSW, photo_url: url }
+      setCurrentEntry(updated)
+      clearTimeout(saveTimeout.current)
+      await autosave(updated)
+    } catch {
+      setPhotoError('Upload fehlgeschlagen.')
+    } finally {
+      setUploadingPhoto(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  function handleRemovePhoto() {
+    const updated: DiaryEntry = { ...currentEntry, ssw: activeSSW, photo_url: null }
+    setCurrentEntry(updated)
+    setPhotoError(null)
+    clearTimeout(saveTimeout.current)
+    saveTimeout.current = setTimeout(() => autosave(updated), 300)
   }
 
   const reached = getMilestonesUpToSSW(ssw)
@@ -335,6 +388,64 @@ export function TagebuchView({ ssw, babyName }: Props) {
           </div>
         </div>
 
+        {/* Photo attachment */}
+        <div className="mt-4">
+          <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+            Foto anhängen
+          </label>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            aria-label="Foto für Tagebuch-Eintrag auswählen"
+            onChange={(e) => handlePhotoSelect(e.target.files?.[0] ?? null)}
+          />
+          {currentEntry.photo_url ? (
+            <div className="flex items-start gap-3">
+              <div className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={currentEntry.photo_url}
+                  alt="Angehängtes Foto"
+                  className="h-24 w-24 rounded-lg border border-border object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={handleRemovePhoto}
+                  className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-background text-foreground shadow ring-1 ring-border hover:bg-muted"
+                  aria-label="Foto entfernen"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Foto ist gespeichert. Du kannst es jederzeit entfernen oder ersetzen.
+              </p>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                disabled={uploadingPhoto}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <ImagePlus className="h-3.5 w-3.5" />
+                {uploadingPhoto ? 'Lädt hoch…' : 'Foto anhängen'}
+              </Button>
+              <span className="text-[10px] text-muted-foreground">max. 3 MB</span>
+            </div>
+          )}
+          {photoError && (
+            <p role="alert" className="mt-2 text-xs text-red-600">
+              {photoError}
+            </p>
+          )}
+        </div>
+
         {!isCurrentSSW && (
           <div className="mt-4 flex justify-end">
             <Button variant="outline" size="sm" onClick={() => selectSSW(ssw)}>
@@ -345,7 +456,7 @@ export function TagebuchView({ ssw, babyName }: Props) {
       </div>
 
       {/* Filled entries overview */}
-      {entries.filter((e) => e.rating || e.word || e.surprise).length > 0 && (
+      {entries.filter((e) => e.rating || e.word || e.surprise || e.photo_url).length > 0 && (
         <div className="rounded-2xl bg-card p-5 shadow-sm">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-foreground">{t.tagebuch.entriesTitle}</h2>
@@ -355,7 +466,7 @@ export function TagebuchView({ ssw, babyName }: Props) {
           </div>
           <div className="space-y-2">
             {entries
-              .filter((e) => e.rating || e.word || e.surprise)
+              .filter((e) => e.rating || e.word || e.surprise || e.photo_url)
               .sort((a, b) => b.ssw - a.ssw)
               .map((e) => {
                 const emoji = e.rating ? RATING_EMOJI[e.rating as 1 | 2 | 3 | 4 | 5] : '📝'
@@ -365,7 +476,16 @@ export function TagebuchView({ ssw, babyName }: Props) {
                     onClick={() => selectSSW(e.ssw)}
                     className="flex w-full items-center gap-3 rounded-xl bg-gray-50 px-4 py-3 text-left hover:bg-rose-50 transition-colors"
                   >
-                    <span className="text-xl">{emoji}</span>
+                    {e.photo_url ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={e.photo_url}
+                        alt=""
+                        className="h-10 w-10 shrink-0 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <span className="text-xl">{emoji}</span>
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold text-gray-700">{t.tagebuch.sswHeading.replace('{ssw}', String(e.ssw))}</p>
                       {e.word && <p className="truncate text-xs text-muted-foreground">„{e.word}"</p>}

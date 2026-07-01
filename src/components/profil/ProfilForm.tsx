@@ -1,10 +1,12 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
+import Image from 'next/image'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { Camera, Trash2, Upload } from 'lucide-react'
 import { calculateSSW } from '@/lib/utils'
 import { useT } from '@/lib/i18n/client'
 import { Button } from '@/components/ui/button'
@@ -41,9 +43,143 @@ interface Profile {
   due_date: string | null
   mode: Mode | null
   baby_gender: BabyGender | null
+  avatar_url: string | null
 }
 
 const NONE_VALUE = '__none__'
+
+function AvatarUpload({
+  initialUrl,
+  initialLetter,
+}: {
+  initialUrl: string | null
+  initialLetter: string
+}) {
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(initialUrl)
+  const [busy, setBusy] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+
+  async function handleFile(file: File) {
+    if (!file.type.startsWith('image/')) {
+      toast.error('Bitte wähle ein Bild (JPG, PNG oder WebP).')
+      return
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Datei zu groß — max. 2 MB erlaubt.')
+      return
+    }
+    setBusy(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/uploads/avatar', { method: 'POST', body: fd })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(typeof body.error === 'string' ? body.error : 'Upload fehlgeschlagen')
+      }
+      const data = (await res.json()) as { url: string }
+      setAvatarUrl(data.url)
+      toast.success('Profilbild aktualisiert')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Upload fehlgeschlagen'
+      toast.error(msg)
+    } finally {
+      setBusy(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  async function handleDelete() {
+    setBusy(true)
+    try {
+      const res = await fetch('/api/uploads/avatar', { method: 'DELETE' })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(typeof body.error === 'string' ? body.error : 'Löschen fehlgeschlagen')
+      }
+      setAvatarUrl(null)
+      toast.success('Profilbild entfernt')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Löschen fehlgeschlagen'
+      toast.error(msg)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-4">
+      <div
+        className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted"
+        aria-hidden={avatarUrl ? undefined : 'true'}
+      >
+        {avatarUrl ? (
+          <Image
+            src={avatarUrl}
+            alt="Profilbild"
+            fill
+            sizes="80px"
+            className="object-cover"
+            unoptimized
+          />
+        ) : (
+          <span className="font-display text-2xl text-muted-foreground">
+            {initialLetter.toUpperCase()}
+          </span>
+        )}
+      </div>
+      <div className="flex flex-1 flex-col gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={busy}
+            aria-label={avatarUrl ? 'Profilbild ändern' : 'Profilbild hochladen'}
+          >
+            {avatarUrl ? (
+              <>
+                <Camera className="mr-1.5 h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+                Ändern
+              </>
+            ) : (
+              <>
+                <Upload className="mr-1.5 h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+                Hochladen
+              </>
+            )}
+          </Button>
+          {avatarUrl && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleDelete}
+              disabled={busy}
+              aria-label="Profilbild entfernen"
+              className="text-muted-foreground hover:text-destructive"
+            >
+              <Trash2 className="mr-1.5 h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+              Entfernen
+            </Button>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground">JPG, PNG oder WebP · max. 2 MB</p>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            if (file) void handleFile(file)
+          }}
+        />
+      </div>
+    </div>
+  )
+}
 
 export function ProfilForm({ profile }: { profile: Profile }) {
   const t = useT()
@@ -181,6 +317,11 @@ export function ProfilForm({ profile }: { profile: Profile }) {
         onOpenChange={setCelebrateOpen}
         babyName={form.watch('baby_name') || profile.baby_name}
       />
+      <AvatarUpload
+        initialUrl={profile.avatar_url ?? null}
+        initialLetter={(profile.name?.trim().charAt(0) || '?').toString()}
+      />
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
           <FormField

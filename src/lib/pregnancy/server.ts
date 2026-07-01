@@ -3,6 +3,13 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 export type PregnancyStatus = 'planning' | 'pregnant' | 'born' | 'sternenkind'
 export type BabyGender = 'female' | 'male' | 'diverse' | 'surprise' | 'unknown'
 
+export interface UltrasoundEntry {
+  url: string
+  path: string
+  ssw: number | null
+  uploadedAt: string
+}
+
 export interface Pregnancy {
   id: string
   user_id: string
@@ -17,6 +24,7 @@ export interface Pregnancy {
   birth_date: string | null
   ended_date: string | null
   memorial_note: string | null
+  ultrasound_urls: UltrasoundEntry[] | null
   created_at: string
   updated_at: string
 }

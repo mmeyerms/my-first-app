@@ -1,22 +1,29 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { calculateSSW } from '@/lib/utils'
-import { getPartnerTipForDay, getPartnerTipText, getPartnerTipLabel } from '@/lib/partnerTips'
-import { QUESTIONS, getQuestionLabel } from '@/lib/questions'
+import { getPartnerTipForDay } from '@/lib/partnerTips'
 import { getServerLocale } from '@/lib/i18n/server'
 import { getMessages } from '@/lib/i18n/messages'
 import { getPreferences } from '@/lib/preferences/server'
 import { getActivePregnancy } from '@/lib/pregnancy/server'
-import { Badge } from '@/components/ui/badge'
-import { PartnerTodosBlock, type PartnerTodoItem } from '@/components/partner/PartnerTodosBlock'
+import { PartnerDashboardClient } from '@/components/partner/PartnerDashboardClient'
+import type { PartnerTodoItem } from '@/components/partner/PartnerTodosBlock'
 
+/**
+ * Partner Dashboard — thin server shell.
+ *
+ * Fetches the initial snapshot (profile, active pregnancy, birth plan, partner
+ * todos, visibility flags) and hands it off to `PartnerDashboardClient`, which
+ * subscribes to Supabase Realtime (Feature 49) and re-renders as the mother
+ * updates data in real time.
+ */
 export default async function PartnerDashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   const locale = await getServerLocale()
-  const t = getMessages(locale)
+  const messages = getMessages(locale)
 
   const { data: link } = await supabase
     .from('partner_links')
@@ -44,10 +51,11 @@ export default async function PartnerDashboardPage() {
   const motherActivePregnancy = await getActivePregnancy(supabase, link.mother_id)
   const dueDate = motherActivePregnancy?.due_date ?? null
   const ssw = dueDate ? calculateSSW(dueDate) : 20
-  const babyName = motherActivePregnancy?.baby_name ?? profile.baby_name ?? t.partner.fallbackBabyName
+  const babyName =
+    motherActivePregnancy?.baby_name ?? profile.baby_name ?? messages.partner.fallbackBabyName
   const tip = getPartnerTipForDay(ssw)
 
-  // Read mother's personalization to respect visibility settings
+  // Read mother's personalization to respect visibility settings.
   const motherPrefs = await getPreferences(supabase, link.mother_id)
   const partnerLabel = motherPrefs.partnerLabel || 'Partner:in'
   const visibility = motherPrefs.partnerVisibility
@@ -58,14 +66,10 @@ export default async function PartnerDashboardPage() {
     .eq('user_id', link.mother_id)
     .single()
 
-  const answers: Record<string, string | string[]> = birthPlan?.answers ?? {}
-  const answeredQuestions = QUESTIONS.filter((q) => {
-    const a = answers[q.id]
-    return Array.isArray(a) ? a.length > 0 : typeof a === 'string' && a.trim().length > 0
-  })
+  const initialAnswers: Record<string, string | string[]> = birthPlan?.answers ?? {}
 
   // Partner-Todos — Aufgaben, die die Mutter der Partner:in zugewiesen hat.
-  let partnerTodos: PartnerTodoItem[] = []
+  let initialTodos: PartnerTodoItem[] = []
   if (visibility.partnerTodos) {
     let todoQuery = supabase
       .from('partner_todos')
@@ -77,7 +81,7 @@ export default async function PartnerDashboardPage() {
       .limit(200)
     if (motherActivePregnancy) todoQuery = todoQuery.eq('pregnancy_id', motherActivePregnancy.id)
     const { data: todoRows } = await todoQuery
-    partnerTodos = ((todoRows ?? []) as Array<{
+    initialTodos = ((todoRows ?? []) as Array<{
       id: string
       title: string
       description: string | null
@@ -93,71 +97,19 @@ export default async function PartnerDashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background">
-      <div className="mx-auto max-w-sm px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="font-display text-2xl font-medium text-primary">{t.partner.dashboardTitle}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {profile.name} &amp; {babyName} · <span className="italic">{partnerLabel}</span>
-          </p>
-        </div>
-
-        {/* SSW */}
-        {visibility.woche && (
-          <div className="mb-4 rounded-2xl bg-card p-6 shadow-sm">
-            <p className="text-sm text-muted-foreground">{t.partner.sswCaption}</p>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="font-display text-5xl font-bold text-primary">{t.partner.sswCard.replace('{ssw}', String(ssw))}</span>
-            </div>
-            <p className="mt-1 text-sm text-muted-foreground">{t.partner.babyOnWay.replace('{babyName}', babyName)}</p>
-          </div>
-        )}
-
-        {/* Daily partner tip — always visible */}
-        <div className="mb-4 rounded-2xl bg-card p-5 shadow-sm">
-          <div className="mb-3 flex items-center justify-between">
-            <p className="text-sm font-semibold text-foreground">{t.partner.tipTodayLabel}</p>
-            <Badge variant="secondary">{getPartnerTipLabel(tip.type, locale)}</Badge>
-          </div>
-          <p className="mb-2 text-3xl">{tip.emoji}</p>
-          <p className="text-sm leading-relaxed text-foreground">{getPartnerTipText(tip, locale)}</p>
-        </div>
-
-        {/* Partner-Todos — konkrete Aufgaben von der Mutter */}
-        {visibility.partnerTodos && (
-          <PartnerTodosBlock
-            initialTodos={partnerTodos}
-            heading={`Aufgaben von ${profile.name}`}
-            emptyText={`${profile.name} hat dir noch keine Aufgaben zugewiesen.`}
-          />
-        )}
-
-        {/* Birth plan (read-only) — respect visibility */}
-        {visibility.geburtsplan && (
-          <div className="rounded-2xl bg-card p-5 shadow-sm">
-            <p className="mb-4 text-sm font-semibold text-foreground">{t.partner.birthPlanHeading}</p>
-            {answeredQuestions.length > 0 ? (
-              <div className="space-y-3">
-                {answeredQuestions.map((q) => (
-                  <div key={q.id} className="text-sm">
-                    <p className="text-xs text-muted-foreground">{getQuestionLabel(q, locale)}</p>
-                    <p className="text-foreground">
-                      {Array.isArray(answers[q.id])
-                        ? (answers[q.id] as string[]).join(', ')
-                        : answers[q.id]}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                {t.partner.birthPlanEmpty.replace('{name}', profile.name)}
-              </p>
-            )}
-          </div>
-        )}
-      </div>
-    </main>
+    <PartnerDashboardClient
+      motherId={link.mother_id}
+      pregnancyId={motherActivePregnancy?.id ?? null}
+      motherName={profile.name}
+      babyName={babyName}
+      partnerLabel={partnerLabel}
+      ssw={ssw}
+      tip={tip}
+      locale={locale}
+      messages={messages}
+      visibility={visibility}
+      initialAnswers={initialAnswers}
+      initialTodos={initialTodos}
+    />
   )
 }

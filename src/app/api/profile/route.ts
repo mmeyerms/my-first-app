@@ -25,6 +25,7 @@ const profileSchema = z
     baby_gender: babyGenderSchema.optional().or(z.literal('')),
     tour_completed: z.boolean().optional(),
     locale: localeSchema.optional(),
+    avatar_url: z.string().url().optional().or(z.literal('')),
   })
   .refine(
     (d) => {
@@ -53,7 +54,7 @@ const PARTIAL_KEYS = new Set(['locale', 'mode', 'baby_gender', 'tour_completed']
 // database stores SQL NULL rather than an empty string.
 function nullifyEmpty<T extends Record<string, unknown>>(data: T): T {
   const out: Record<string, unknown> = { ...data }
-  for (const key of ['baby_name', 'positive_test_date', 'due_date', 'baby_gender']) {
+  for (const key of ['baby_name', 'positive_test_date', 'due_date', 'baby_gender', 'avatar_url']) {
     if (out[key] === '') out[key] = null
   }
   return out as T
@@ -67,7 +68,7 @@ export async function GET() {
   const { data, error } = await supabase
     .from('profiles')
     .select(
-      'name, baby_name, positive_test_date, due_date, mode, baby_gender, tour_completed, locale, updated_at',
+      'name, baby_name, positive_test_date, due_date, mode, baby_gender, tour_completed, locale, avatar_url, updated_at',
     )
     .eq('user_id', user.id)
     .single()

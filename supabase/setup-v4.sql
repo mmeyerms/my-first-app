@@ -522,6 +522,71 @@ CREATE POLICY "partner_reads_mother_birth_plan" ON birth_plans FOR SELECT
 ALTER TABLE pregnancies ADD COLUMN IF NOT EXISTS baby_names TEXT[] DEFAULT NULL;
 ALTER TABLE pregnancies ADD COLUMN IF NOT EXISTS is_multiple BOOLEAN NOT NULL DEFAULT FALSE;
 
+-- ------------------------------------------------------------
+-- 16) STORAGE — Profil-Avatar (public bucket) + Ultraschall (private bucket)
+-- ------------------------------------------------------------
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+ALTER TABLE pregnancies ADD COLUMN IF NOT EXISTS ultrasound_urls JSONB DEFAULT '[]'::jsonb;
+
+INSERT INTO storage.buckets (id, name, public) VALUES ('avatars', 'avatars', TRUE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO storage.buckets (id, name, public) VALUES ('ultrasounds', 'ultrasounds', FALSE) ON CONFLICT (id) DO NOTHING;
+
+DROP POLICY IF EXISTS "avatars_public_read" ON storage.objects;
+CREATE POLICY "avatars_public_read" ON storage.objects FOR SELECT USING (bucket_id = 'avatars');
+DROP POLICY IF EXISTS "avatars_owner_insert" ON storage.objects;
+CREATE POLICY "avatars_owner_insert" ON storage.objects FOR INSERT
+  WITH CHECK (bucket_id = 'avatars' AND auth.uid()::text = (storage.foldername(name))[1]);
+DROP POLICY IF EXISTS "avatars_owner_update" ON storage.objects;
+CREATE POLICY "avatars_owner_update" ON storage.objects FOR UPDATE
+  USING (bucket_id = 'avatars' AND auth.uid()::text = (storage.foldername(name))[1]);
+DROP POLICY IF EXISTS "avatars_owner_delete" ON storage.objects;
+CREATE POLICY "avatars_owner_delete" ON storage.objects FOR DELETE
+  USING (bucket_id = 'avatars' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+DROP POLICY IF EXISTS "ultrasounds_owner_all" ON storage.objects;
+CREATE POLICY "ultrasounds_owner_all" ON storage.objects FOR ALL
+  USING (bucket_id = 'ultrasounds' AND auth.uid()::text = (storage.foldername(name))[1])
+  WITH CHECK (bucket_id = 'ultrasounds' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+-- ------------------------------------------------------------
+-- 17) STORAGE — Tagebuch-Fotos (private bucket) + diary_entries.photo_url
+-- ------------------------------------------------------------
+ALTER TABLE diary_entries ADD COLUMN IF NOT EXISTS photo_url TEXT;
+
+INSERT INTO storage.buckets (id, name, public) VALUES ('diary-photos', 'diary-photos', FALSE) ON CONFLICT (id) DO NOTHING;
+
+DROP POLICY IF EXISTS "diary_photos_select_own" ON storage.objects;
+CREATE POLICY "diary_photos_select_own" ON storage.objects FOR SELECT
+  USING (bucket_id = 'diary-photos' AND (storage.foldername(name))[1] = auth.uid()::text);
+DROP POLICY IF EXISTS "diary_photos_insert_own" ON storage.objects;
+CREATE POLICY "diary_photos_insert_own" ON storage.objects FOR INSERT
+  WITH CHECK (bucket_id = 'diary-photos' AND (storage.foldername(name))[1] = auth.uid()::text);
+DROP POLICY IF EXISTS "diary_photos_update_own" ON storage.objects;
+CREATE POLICY "diary_photos_update_own" ON storage.objects FOR UPDATE
+  USING (bucket_id = 'diary-photos' AND (storage.foldername(name))[1] = auth.uid()::text);
+DROP POLICY IF EXISTS "diary_photos_delete_own" ON storage.objects;
+CREATE POLICY "diary_photos_delete_own" ON storage.objects FOR DELETE
+  USING (bucket_id = 'diary-photos' AND (storage.foldername(name))[1] = auth.uid()::text);
+
+-- ------------------------------------------------------------
+-- 18) REALTIME PARTNER-RLS — Termine + Tagebuch fuer Live-Sync freischalten
+-- ------------------------------------------------------------
+DROP POLICY IF EXISTS "partner_reads_mother_termine" ON termine;
+CREATE POLICY "partner_reads_mother_termine" ON termine FOR SELECT
+  USING (
+    auth.uid() IN (SELECT partner_user_id FROM partner_links WHERE mother_id = termine.user_id AND active = TRUE)
+    AND COALESCE((SELECT (settings->'partnerVisibility'->>'termine')::boolean
+                  FROM user_preferences WHERE user_id = termine.user_id), TRUE) = TRUE
+  );
+
+DROP POLICY IF EXISTS "partner_reads_mother_diary" ON diary_entries;
+CREATE POLICY "partner_reads_mother_diary" ON diary_entries FOR SELECT
+  USING (
+    auth.uid() IN (SELECT partner_user_id FROM partner_links WHERE mother_id = diary_entries.user_id AND active = TRUE)
+    AND COALESCE((SELECT (settings->'partnerVisibility'->>'tagebuch')::boolean
+                  FROM user_preferences WHERE user_id = diary_entries.user_id), FALSE) = TRUE
+  );
+
 -- ============================================================
 -- FERTIG. Alle Tabellen + RLS + Trigger sind idempotent angelegt.
 -- ============================================================

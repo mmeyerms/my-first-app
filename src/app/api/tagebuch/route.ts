@@ -8,6 +8,7 @@ const schema = z.object({
   rating: z.number().int().min(1).max(5).optional(),
   word: z.string().max(100).optional(),
   surprise: z.string().max(500).optional(),
+  photo_url: z.string().url().max(2048).nullable().optional(),
 })
 
 export async function GET() {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CheckCircle2, Circle } from 'lucide-react'
 
 export interface PartnerTodoItem {
@@ -15,25 +15,50 @@ interface PartnerTodosBlockProps {
   initialTodos: PartnerTodoItem[]
   heading: string
   emptyText: string
+  /**
+   * Optional externally-managed list of todos. When provided, replaces the
+   * component's internal state — used by the realtime dashboard client to push
+   * live updates from Supabase into the block.
+   */
+  externalTodos?: PartnerTodoItem[]
+  /**
+   * Optional callback invoked whenever the partner toggles a todo. The parent
+   * (PartnerDashboardClient) can use this to sync back into its live state so
+   * both optimistic UI and realtime events stay in agreement.
+   */
+  onLocalToggle?: (id: string, done: boolean) => void
 }
 
 /**
  * PartnerTodosBlock — read-only-ish widget on the partner dashboard.
  * The partner can tick a todo done/undone; the mother's edits happen
  * from the Einstellungen page.
+ *
+ * Realtime (Feature 49): The parent can pass `externalTodos` to hand in a
+ * live-synced list. When it changes, the block re-renders instantly.
  */
 export function PartnerTodosBlock({
   initialTodos,
   heading,
   emptyText,
+  externalTodos,
+  onLocalToggle,
 }: PartnerTodosBlockProps) {
   const [todos, setTodos] = useState<PartnerTodoItem[]>(initialTodos)
   const [pending, setPending] = useState<Record<string, boolean>>({})
+
+  // Sync from parent (realtime) when a new list is pushed down.
+  useEffect(() => {
+    if (externalTodos) {
+      setTodos(externalTodos)
+    }
+  }, [externalTodos])
 
   async function toggle(id: string, done: boolean) {
     setPending((p) => ({ ...p, [id]: true }))
     // optimistic
     setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, done } : t)))
+    onLocalToggle?.(id, done)
     try {
       const res = await fetch('/api/partner-todos', {
         method: 'PATCH',
@@ -44,6 +69,7 @@ export function PartnerTodosBlock({
     } catch {
       // revert
       setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, done: !done } : t)))
+      onLocalToggle?.(id, !done)
     } finally {
       setPending((p) => {
         const next = { ...p }
