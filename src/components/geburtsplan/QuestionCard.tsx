@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Question } from '@/lib/questions'
+import { Question, getQuestionSuggestions } from '@/lib/questions'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -10,6 +10,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Badge } from '@/components/ui/badge'
 import { useLocale, useT } from '@/lib/i18n/client'
 import { localized } from '@/lib/i18n/localized'
+import { usePreferences } from '@/lib/preferences/client'
 
 interface Props {
   question: Question
@@ -18,6 +19,60 @@ interface Props {
 }
 
 const CUSTOM_SENTINEL = '__custom__'
+
+/**
+ * Append `text` to an existing free-text field, separating with ", "
+ * if the field is not empty. Trims trailing whitespace first so double-taps
+ * do not produce weird spacing.
+ */
+function appendSuggestion(current: string, text: string): string {
+  const trimmed = current.trimEnd()
+  if (trimmed.length === 0) return text
+  // Avoid inserting the exact same phrase twice back-to-back
+  if (trimmed.toLowerCase().endsWith(text.toLowerCase())) return trimmed
+  return `${trimmed}, ${text}`
+}
+
+interface SuggestionChipsProps {
+  question: Question
+  currentText: string
+  onInsert: (next: string) => void
+}
+
+/**
+ * Renders tappable answer chips below an open text input.
+ * Chips are always shown when the question has suggestions AND the user is
+ * looking at an editable free-text surface. Tap inserts / appends the text.
+ */
+function SuggestionChips({ question, currentText, onInsert }: SuggestionChipsProps) {
+  const { locale } = useLocale()
+  const { prefs } = usePreferences()
+  const suggestions = getQuestionSuggestions(question, prefs.geburtsplanClinicPreset)
+  if (suggestions.length === 0) return null
+
+  return (
+    <div
+      className="mt-2 flex flex-wrap gap-1.5"
+      role="group"
+      aria-label={locale === 'en' ? 'Answer suggestions' : 'Antwort-Vorschläge'}
+    >
+      {suggestions.map((s) => {
+        const text = localized(s, locale)
+        return (
+          <button
+            key={s.de}
+            type="button"
+            onClick={() => onInsert(appendSuggestion(currentText, text))}
+            className="rounded-full border border-primary/30 bg-secondary/40 px-3 py-1 text-xs text-foreground transition-colors hover:border-primary hover:bg-secondary active:bg-secondary/80"
+            aria-label={locale === 'en' ? `Insert suggestion: ${text}` : `Vorschlag einfügen: ${text}`}
+          >
+            + {text}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
 
 export function QuestionCard({ question, value, onChange }: Props) {
   const { locale } = useLocale()
@@ -46,12 +101,19 @@ export function QuestionCard({ question, value, onChange }: Props) {
       )}
 
       {question.type === 'text' && (
-        <Textarea
-          placeholder={t.geburtsplan.textPlaceholder}
-          value={typeof value === 'string' ? value : ''}
-          onChange={(e) => onChange(question.id, e.target.value)}
-          className="min-h-[80px] text-sm resize-none"
-        />
+        <>
+          <Textarea
+            placeholder={t.geburtsplan.textPlaceholder}
+            value={typeof value === 'string' ? value : ''}
+            onChange={(e) => onChange(question.id, e.target.value)}
+            className="min-h-[80px] text-sm resize-none"
+          />
+          <SuggestionChips
+            question={question}
+            currentText={typeof value === 'string' ? value : ''}
+            onInsert={(next) => onChange(question.id, next)}
+          />
+        </>
       )}
 
       {question.hint && (
@@ -137,13 +199,20 @@ function SingleChoice({ question, value, onChange }: Props) {
         </Label>
       </div>
       {(customSelected || isCustomValue) && (
-        <Input
-          ref={inputRef}
-          placeholder={t.geburtsplan.customOption.placeholder}
-          value={inputValue}
-          onChange={(e) => onChange(question.id, e.target.value)}
-          className="mt-2 text-sm ml-6"
-        />
+        <div className="ml-6">
+          <Input
+            ref={inputRef}
+            placeholder={t.geburtsplan.customOption.placeholder}
+            value={inputValue}
+            onChange={(e) => onChange(question.id, e.target.value)}
+            className="mt-2 text-sm"
+          />
+          <SuggestionChips
+            question={question}
+            currentText={inputValue}
+            onInsert={(next) => onChange(question.id, next)}
+          />
+        </div>
       )}
     </RadioGroup>
   )
@@ -217,12 +286,19 @@ function MultiChoice({ question, value, onChange }: Props) {
         </Label>
       </div>
       {customChecked && (
-        <Input
-          placeholder={t.geburtsplan.customOption.placeholder}
-          value={customText}
-          onChange={(e) => handleCustomTextChange(e.target.value)}
-          className="mt-2 text-sm ml-6"
-        />
+        <div className="ml-6">
+          <Input
+            placeholder={t.geburtsplan.customOption.placeholder}
+            value={customText}
+            onChange={(e) => handleCustomTextChange(e.target.value)}
+            className="mt-2 text-sm"
+          />
+          <SuggestionChips
+            question={question}
+            currentText={customText}
+            onInsert={(next) => handleCustomTextChange(next)}
+          />
+        </div>
       )}
     </div>
   )

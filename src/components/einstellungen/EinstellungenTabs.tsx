@@ -10,7 +10,7 @@ import { WocheSection } from './sections/WocheSection'
 import { TermineSection } from './sections/TermineSection'
 import { TagebuchSection } from './sections/TagebuchSection'
 import { GeburtsplanSection } from './sections/GeburtsplanSection'
-import { ChecklistsSection } from './sections/ChecklistsSection'
+import { ChecklistPresetsSection } from './sections/ChecklistPresetsSection'
 import { PartnerSection } from './sections/PartnerSection'
 import { KinderwunschSection } from './sections/KinderwunschSection'
 import { WochenbettSection } from './sections/WochenbettSection'
@@ -48,7 +48,7 @@ export function EinstellungenTabs({ initialPrefs, pregnancyMode }: Props) {
         <TabsContent value="termine"><TermineSection /></TabsContent>
         <TabsContent value="tagebuch"><TagebuchSection /></TabsContent>
         <TabsContent value="geburtsplan"><GeburtsplanSection /></TabsContent>
-        <TabsContent value="checklists"><ChecklistsSection /></TabsContent>
+        <TabsContent value="checklists"><ChecklistPresetsSection /></TabsContent>
         <TabsContent value="partner"><PartnerSection /></TabsContent>
         {isPlanning && (
           <TabsContent value="kinderwunsch"><KinderwunschSection /></TabsContent>

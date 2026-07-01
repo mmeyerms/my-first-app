@@ -14,8 +14,9 @@ const CARD_META: Record<SnapshotCardKey, { label: string; hint: string; emoji: s
   tagebuch: { label: 'Letzter Tagebuch-Eintrag', hint: 'Rückblick', emoji: '📝' },
   countdown: { label: 'Countdown zum ET', hint: 'Verbleibende Tage', emoji: '⏳' },
   wochenbettChef: { label: 'Wochenbett-Anfragen', hint: 'Wer will helfen?', emoji: '🤝' },
+  sternzeichen: { label: 'Baby-Sternzeichen', hint: 'Basierend auf dem ET', emoji: '✨' },
 }
-const ALL_KEYS: SnapshotCardKey[] = ['nextTermin', 'ssw', 'tipp', 'tagebuch', 'countdown', 'wochenbettChef']
+const ALL_KEYS: SnapshotCardKey[] = ['nextTermin', 'ssw', 'tipp', 'tagebuch', 'countdown', 'wochenbettChef', 'sternzeichen']
 
 export function SnapshotSection() {
   const { prefs, update } = usePreferences()

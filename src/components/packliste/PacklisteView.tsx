@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { ChevronDown, ChevronUp, Plus, RotateCcw, Undo2, X } from 'lucide-react'
 
-import { PACK_CATEGORIES } from '@/lib/packliste'
+import { PACK_CATEGORIES, getPresetHiddenIds } from '@/lib/packliste'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -13,11 +13,19 @@ import { Progress } from '@/components/ui/progress'
 import { useLocale } from '@/lib/i18n/client'
 import { localized } from '@/lib/i18n/localized'
 import { useChecklistState } from '@/hooks/useChecklistState'
+import { usePreferences } from '@/lib/preferences/client'
+import { ChecklistPresetBanner } from './ChecklistPresetBanner'
+import { ChecklistItemNote } from '@/components/checklist/ChecklistItemNote'
 
 const STORAGE_KEY = 'mamamap-packliste'
 
 export function PacklisteView() {
   const { locale, t } = useLocale()
+  const { prefs } = usePreferences()
+  const presetHidden = useMemo(
+    () => getPresetHiddenIds(prefs.listPresets),
+    [prefs.listPresets],
+  )
   const {
     state,
     isChecked,
@@ -26,8 +34,19 @@ export function PacklisteView() {
     restore,
     addCustom,
     removeCustom,
+    getNote,
+    setNote,
     resetAll,
   } = useChecklistState(STORAGE_KEY)
+
+  // Combine user-excluded and preset-hidden IDs — presets take precedence for filtering,
+  // but user restores still work for user-excluded items.
+  function isHiddenByPreset(id: string) {
+    return presetHidden.has(id)
+  }
+  function isVisible(id: string) {
+    return !state.excluded.includes(id) && !isHiddenByPreset(id)
+  }
 
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>(
     () => Object.fromEntries(PACK_CATEGORIES.map((c) => [c.id, true])),
@@ -41,6 +60,7 @@ export function PacklisteView() {
     for (const cat of PACK_CATEGORIES) {
       for (const it of cat.items) {
         if (state.excluded.includes(it.id)) continue
+        if (presetHidden.has(it.id)) continue
         total += 1
         if (state.checked.includes(it.id)) checkedC += 1
       }
@@ -51,7 +71,7 @@ export function PacklisteView() {
       if (state.checked.includes(c.id)) checkedC += 1
     }
     return { totalVisible: total, checkedCount: checkedC }
-  }, [state])
+  }, [state, presetHidden])
 
   const progress = totalVisible === 0 ? 0 : Math.round((checkedCount / totalVisible) * 100)
   const allDone = checkedCount === totalVisible && totalVisible > 0
@@ -122,6 +142,8 @@ export function PacklisteView() {
 
   return (
     <div className="space-y-5">
+      <ChecklistPresetBanner presets={prefs.listPresets} />
+
       {/* Progress card */}
       <section
         aria-label={t.packliste.progressAria}
@@ -161,7 +183,7 @@ export function PacklisteView() {
       {PACK_CATEGORIES.map((cat) => {
         const isOpen = openCategories[cat.id]
         const customItems = customByCategory[cat.id] ?? []
-        const visibleItems = cat.items.filter((it) => !state.excluded.includes(it.id))
+        const visibleItems = cat.items.filter((it) => isVisible(it.id))
         const totalVisibleInCat = visibleItems.length + customItems.length
         const catChecked =
           visibleItems.filter((it) => isChecked(it.id)).length +
@@ -230,6 +252,11 @@ export function PacklisteView() {
                               💡 {localized(item.tip, locale)}
                             </p>
                           )}
+                          <ChecklistItemNote
+                            itemId={item.id}
+                            note={getNote(item.id)}
+                            onSave={(n) => setNote(item.id, n)}
+                          />
                         </div>
                         <button
                           type="button"
@@ -276,6 +303,11 @@ export function PacklisteView() {
                               💡 {c.tip}
                             </p>
                           )}
+                          <ChecklistItemNote
+                            itemId={c.id}
+                            note={getNote(c.id)}
+                            onSave={(n) => setNote(c.id, n)}
+                          />
                         </div>
                         <button
                           type="button"

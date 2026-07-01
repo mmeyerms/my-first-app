@@ -13,6 +13,9 @@ import { Progress } from '@/components/ui/progress'
 import { useLocale } from '@/lib/i18n/client'
 import { localized } from '@/lib/i18n/localized'
 import { useChecklistState } from '@/hooks/useChecklistState'
+import { ChecklistItemNote } from '@/components/checklist/ChecklistItemNote'
+import { usePreferences } from '@/lib/preferences/client'
+import { ChecklistPresetBanner } from '@/components/packliste/ChecklistPresetBanner'
 
 const STORAGE_KEY = 'mamamap-einkaufsliste'
 
@@ -26,6 +29,7 @@ const PRIORITY_EMOJI: Record<Priority, string> = {
 
 export function EinkaufslisteView() {
   const { locale, t } = useLocale()
+  const { prefs } = usePreferences()
   const {
     state,
     isChecked,
@@ -34,6 +38,8 @@ export function EinkaufslisteView() {
     restore,
     addCustom,
     removeCustom,
+    getNote,
+    setNote,
   } = useChecklistState(STORAGE_KEY)
 
   const [customDraftCategory, setCustomDraftCategory] = useState<string | null>(null)
@@ -123,6 +129,8 @@ export function EinkaufslisteView() {
 
   return (
     <div className="space-y-6">
+      <ChecklistPresetBanner presets={prefs.listPresets} />
+
       {/* Congratulatory empty state when all suggested items are hidden AND no custom items */}
       {totalVisibleItems === 0 && (
         <section className="rounded-2xl border border-dashed border-border/60 bg-secondary/30 p-6 text-center">
@@ -241,6 +249,11 @@ export function EinkaufslisteView() {
                                   💡 {localized(item.tip, locale)}
                                 </p>
                               )}
+                              <ChecklistItemNote
+                                itemId={item.id}
+                                note={getNote(item.id)}
+                                onSave={(n) => setNote(item.id, n)}
+                              />
                             </div>
                             <button
                               type="button"
@@ -281,6 +294,11 @@ export function EinkaufslisteView() {
                                   {t.checklist.customBadge}
                                 </Badge>
                               </Label>
+                              <ChecklistItemNote
+                                itemId={c.id}
+                                note={getNote(c.id)}
+                                onSave={(n) => setNote(c.id, n)}
+                              />
                             </div>
                             <button
                               type="button"

@@ -6,7 +6,9 @@ import { QUESTIONS, getQuestionLabel } from '@/lib/questions'
 import { getServerLocale } from '@/lib/i18n/server'
 import { getMessages } from '@/lib/i18n/messages'
 import { getPreferences } from '@/lib/preferences/server'
+import { getActivePregnancy } from '@/lib/pregnancy/server'
 import { Badge } from '@/components/ui/badge'
+import { PartnerTodosBlock, type PartnerTodoItem } from '@/components/partner/PartnerTodosBlock'
 
 export default async function PartnerDashboardPage() {
   const supabase = await createClient()
@@ -59,6 +61,35 @@ export default async function PartnerDashboardPage() {
     return Array.isArray(a) ? a.length > 0 : typeof a === 'string' && a.trim().length > 0
   })
 
+  // Partner-Todos — Aufgaben, die die Mutter der Partner:in zugewiesen hat.
+  let partnerTodos: PartnerTodoItem[] = []
+  if (visibility.partnerTodos) {
+    const activePregnancy = await getActivePregnancy(supabase, link.mother_id)
+    let todoQuery = supabase
+      .from('partner_todos')
+      .select('id, title, description, due_date, done')
+      .eq('user_id', link.mother_id)
+      .order('done', { ascending: true })
+      .order('due_date', { ascending: true, nullsFirst: false })
+      .order('created_at', { ascending: false })
+      .limit(200)
+    if (activePregnancy) todoQuery = todoQuery.eq('pregnancy_id', activePregnancy.id)
+    const { data: todoRows } = await todoQuery
+    partnerTodos = ((todoRows ?? []) as Array<{
+      id: string
+      title: string
+      description: string | null
+      due_date: string | null
+      done: boolean
+    }>).map((r) => ({
+      id: r.id,
+      title: r.title,
+      description: r.description,
+      dueDate: r.due_date,
+      done: r.done,
+    }))
+  }
+
   return (
     <main className="min-h-screen bg-background">
       <div className="mx-auto max-w-sm px-4 py-8">
@@ -90,6 +121,15 @@ export default async function PartnerDashboardPage() {
           <p className="mb-2 text-3xl">{tip.emoji}</p>
           <p className="text-sm leading-relaxed text-foreground">{getPartnerTipText(tip, locale)}</p>
         </div>
+
+        {/* Partner-Todos — konkrete Aufgaben von der Mutter */}
+        {visibility.partnerTodos && (
+          <PartnerTodosBlock
+            initialTodos={partnerTodos}
+            heading={`Aufgaben von ${profile.name}`}
+            emptyText={`${profile.name} hat dir noch keine Aufgaben zugewiesen.`}
+          />
+        )}
 
         {/* Birth plan (read-only) — respect visibility */}
         {visibility.geburtsplan && (

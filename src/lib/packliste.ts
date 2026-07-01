@@ -285,6 +285,47 @@ export const PACK_CATEGORIES: PackCategory[] = [
   },
 ]
 
+/**
+ * Item IDs hidden when a specific preset value is active.
+ *
+ * - `location`: Hausgeburt/Geburtshaus do not need Krankenhaus-specific gear
+ *   (slippers for clinic floors, hospital pre-registration, referral etc.)
+ * - `season`: Sommer hides warm socks; Winter keeps everything.
+ * - `setup`: Solo (no partner) hides the entire partner category items
+ *   (labelled with the pk-p- prefix).
+ */
+export const PRESET_HIDES: Record<string, string[]> = {
+  // location
+  hausgeburt: ['pk-pr-1', 'pk-pr-2', 'pk-d-6', 'pk-d-5'],
+  geburtshaus: ['pk-d-6'],
+  klinik: [],
+  // season
+  sommer: ['pk-m-6'],
+  winter: [],
+  // setup
+  solo: ['pk-p-1', 'pk-p-2', 'pk-p-3', 'pk-p-4', 'pk-p-5', 'pk-p-6', 'pk-p-7'],
+  duo: [],
+}
+
+/**
+ * Compute the set of item IDs to hide based on active presets.
+ */
+export function getPresetHiddenIds(presets: {
+  location: string | null
+  season: string | null
+  setup: string | null
+}): Set<string> {
+  const hidden = new Set<string>()
+  const keys = [presets.location, presets.season, presets.setup]
+  for (const k of keys) {
+    if (!k) continue
+    const ids = PRESET_HIDES[k]
+    if (!ids) continue
+    for (const id of ids) hidden.add(id)
+  }
+  return hidden
+}
+
 export function getPackCategoryTitle(category: PackCategory, locale: Locale): string {
   return localized(category.title, locale)
 }

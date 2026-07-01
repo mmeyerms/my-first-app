@@ -13,11 +13,15 @@ import { Progress } from '@/components/ui/progress'
 import { useLocale } from '@/lib/i18n/client'
 import { localized } from '@/lib/i18n/localized'
 import { useChecklistState } from '@/hooks/useChecklistState'
+import { ChecklistItemNote } from '@/components/checklist/ChecklistItemNote'
+import { usePreferences } from '@/lib/preferences/client'
+import { ChecklistPresetBanner } from '@/components/packliste/ChecklistPresetBanner'
 
 const STORAGE_KEY = 'mamamap-wochenbett'
 
 export function WochenbettView() {
   const { locale, t } = useLocale()
+  const { prefs } = usePreferences()
   const {
     state,
     isChecked,
@@ -27,6 +31,8 @@ export function WochenbettView() {
     restore,
     addCustom,
     removeCustom,
+    getNote,
+    setNote,
     resetAll,
   } = useChecklistState(STORAGE_KEY)
 
@@ -125,6 +131,8 @@ export function WochenbettView() {
 
   return (
     <div className="space-y-5">
+      <ChecklistPresetBanner presets={prefs.listPresets} />
+
       {/* Progress card */}
       <section
         aria-label={t.wochenbett.progressLabel}
@@ -233,6 +241,11 @@ export function WochenbettView() {
                               💡 {localized(item.tip, locale)}
                             </p>
                           )}
+                          <ChecklistItemNote
+                            itemId={item.id}
+                            note={getNote(item.id)}
+                            onSave={(n) => setNote(item.id, n)}
+                          />
                         </div>
                         <button
                           type="button"
@@ -279,6 +292,11 @@ export function WochenbettView() {
                               💡 {c.tip}
                             </p>
                           )}
+                          <ChecklistItemNote
+                            itemId={c.id}
+                            note={getNote(c.id)}
+                            onSave={(n) => setNote(c.id, n)}
+                          />
                         </div>
                         <button
                           type="button"

@@ -8,6 +8,7 @@ export type SnapshotCardKey =
   | 'tagebuch'
   | 'countdown'
   | 'wochenbettChef'
+  | 'sternzeichen'
 export type SnapshotDensity = 'compact' | 'expanded'
 export type WocheProgressStyle = 'bar' | 'percent' | 'weeksLeft' | 'none'
 export type PartnerRole = 'partner' | 'grandparent' | 'friend' | 'other'
@@ -34,6 +35,7 @@ export interface PartnerVisibility {
   geburtsplan: boolean
   woche: boolean
   wochenbett: boolean
+  partnerTodos: boolean
 }
 
 export interface KinderwunschTracking {
@@ -48,6 +50,16 @@ export interface KinderwunschReminders {
   vitaminsTime: string | null
   ovuTestActive: boolean
   wunschEt: string | null
+}
+
+export type ChecklistLocation = 'klinik' | 'hausgeburt' | 'geburtshaus'
+export type ChecklistSeason = 'sommer' | 'winter'
+export type ChecklistSetup = 'solo' | 'duo'
+
+export interface ChecklistPresets {
+  location: ChecklistLocation | null
+  season: ChecklistSeason | null
+  setup: ChecklistSetup | null
 }
 
 export interface UserPreferences {
@@ -84,6 +96,9 @@ export interface UserPreferences {
   kinderwunschCycleLength: number
   kinderwunschTracking: KinderwunschTracking
   kinderwunschReminders: KinderwunschReminders
+
+  // Checklist presets (Packliste, Einkaufsliste, Wochenbett)
+  listPresets: ChecklistPresets
 }
 
 export const DEFAULT_PREFERENCES: UserPreferences = {
@@ -109,6 +124,7 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
   partnerRole: 'partner',
   partnerLabel: 'Partner:in',
   partnerVisibility: {
+    partnerTodos: true,
     termine: true,
     tagebuch: false,
     geburtsplan: true,
@@ -128,6 +144,12 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
     vitaminsTime: null,
     ovuTestActive: false,
     wunschEt: null,
+  },
+
+  listPresets: {
+    location: null,
+    season: null,
+    setup: null,
   },
 }
 
@@ -152,6 +174,10 @@ export function mergePreferences(
     kinderwunschReminders: {
       ...DEFAULT_PREFERENCES.kinderwunschReminders,
       ...(partial.kinderwunschReminders ?? {}),
+    },
+    listPresets: {
+      ...DEFAULT_PREFERENCES.listPresets,
+      ...(partial.listPresets ?? {}),
     },
   }
 }

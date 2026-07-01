@@ -2,12 +2,13 @@
 
 import { useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { CalendarDays, NotebookPen, Sparkle, Stethoscope, Baby, Hourglass, HandHeart } from 'lucide-react'
+import { CalendarDays, NotebookPen, Sparkle, Stethoscope, Baby, Hourglass, HandHeart, Sparkles } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { useLocale, useT } from '@/lib/i18n/client'
 import { useTheme } from '@/lib/theme/client'
 import { usePreferences } from '@/lib/preferences/client'
 import type { SnapshotCardKey } from '@/lib/preferences/types'
+import { getZodiacForDate } from '@/lib/sternzeichen'
 import { cn } from '@/lib/utils'
 
 interface NextTerminSnapshot {
@@ -241,6 +242,22 @@ export function DailySnapshot({
         compact={compact}
       />
     ),
+    sternzeichen: () => {
+      const zodiac = dueDate ? getZodiacForDate(dueDate) : null
+      return (
+        <SnapshotCard
+          key="sternzeichen"
+          onClick={() => router.push('/woche')}
+          ariaLabel="Baby-Sternzeichen"
+          icon={isClassic ? <span className="text-sm">{zodiac?.emoji ?? '✨'}</span> : <Sparkles className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden="true" />}
+          eyebrow="Baby-Sternzeichen"
+          title={zodiac ? `${zodiac.label} ${zodiac.emoji}` : 'Trage dein ET ein'}
+          body={zodiac?.hint ?? 'Dein Baby-Sternzeichen erscheint hier.'}
+          isClassic={isClassic}
+          compact={compact}
+        />
+      )
+    },
   }
 
   // KI-Hebamme card is always shown as final "emphasis" tile — 1 klick zur Hebamme

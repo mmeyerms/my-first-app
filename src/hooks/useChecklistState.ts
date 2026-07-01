@@ -13,18 +13,41 @@ export type ChecklistState = {
   checked: string[]
   excluded: string[]
   custom: CustomItem[]
+  /**
+   * Optional short per-item notes (e.g. "3 Stück", "Marke Pampers Premium",
+   * "beim dm besorgen"). Keyed by item ID — works for both built-in and
+   * custom items. Values are trimmed and capped at NOTE_MAX_LENGTH; empty
+   * / whitespace-only values remove the entry.
+   */
+  notes: Record<string, string>
 }
 
 export type ChecklistKind = 'packliste' | 'einkaufsliste' | 'wochenbett'
+
+/** Maximum length of a per-item note, in characters. */
+export const NOTE_MAX_LENGTH = 120
 
 const EMPTY_STATE: ChecklistState = {
   checked: [],
   excluded: [],
   custom: [],
+  notes: {},
 }
 
 function legacyStorageKey(kind: ChecklistKind): string {
   return `mamamap-${kind}`
+}
+
+function normalizeNotes(input: unknown): Record<string, string> {
+  if (!input || typeof input !== 'object') return {}
+  const out: Record<string, string> = {}
+  for (const [k, v] of Object.entries(input as Record<string, unknown>)) {
+    if (typeof k !== 'string' || !k) continue
+    if (typeof v !== 'string') continue
+    const trimmed = v.trim().slice(0, NOTE_MAX_LENGTH)
+    if (trimmed) out[k] = trimmed
+  }
+  return out
 }
 
 function normalizeState(parsed: unknown): ChecklistState {
@@ -33,6 +56,7 @@ function normalizeState(parsed: unknown): ChecklistState {
       checked: parsed.filter((x): x is string => typeof x === 'string'),
       excluded: [],
       custom: [],
+      notes: {},
     }
   }
   if (parsed && typeof parsed === 'object') {
@@ -54,6 +78,7 @@ function normalizeState(parsed: unknown): ChecklistState {
               typeof (c as CustomItem).label === 'string',
           )
         : [],
+      notes: normalizeNotes(obj.notes),
     }
   }
   return EMPTY_STATE
@@ -96,7 +121,8 @@ export function useChecklistState(kindOrKey: ChecklistKind | string) {
         const isEmpty =
           apiState.checked.length === 0 &&
           apiState.custom.length === 0 &&
-          apiState.excluded.length === 0
+          apiState.excluded.length === 0 &&
+          Object.keys(apiState.notes).length === 0
 
         if (isEmpty && typeof window !== 'undefined') {
           try {
@@ -106,7 +132,8 @@ export function useChecklistState(kindOrKey: ChecklistKind | string) {
               const hasLocal =
                 localState.checked.length > 0 ||
                 localState.custom.length > 0 ||
-                localState.excluded.length > 0
+                localState.excluded.length > 0 ||
+                Object.keys(localState.notes).length > 0
               if (hasLocal) {
                 await fetch(`/api/checklists/${kind}`, {
                   method: 'PUT',
@@ -209,12 +236,37 @@ export function useChecklistState(kindOrKey: ChecklistKind | string) {
   }, [])
 
   const removeCustom = useCallback((id: string) => {
-    setState((prev) => ({
-      ...prev,
-      custom: prev.custom.filter((c) => c.id !== id),
-      checked: prev.checked.filter((x) => x !== id),
-      excluded: prev.excluded.filter((x) => x !== id),
-    }))
+    setState((prev) => {
+      const nextNotes = { ...prev.notes }
+      delete nextNotes[id]
+      return {
+        ...prev,
+        custom: prev.custom.filter((c) => c.id !== id),
+        checked: prev.checked.filter((x) => x !== id),
+        excluded: prev.excluded.filter((x) => x !== id),
+        notes: nextNotes,
+      }
+    })
+  }, [])
+
+  /**
+   * Sets (or clears, when `note` is empty/whitespace) the per-item note.
+   * Values are trimmed and hard-capped at NOTE_MAX_LENGTH characters.
+   */
+  const setNote = useCallback((id: string, note: string) => {
+    if (!id) return
+    const trimmed = note.trim().slice(0, NOTE_MAX_LENGTH)
+    setState((prev) => {
+      const nextNotes = { ...prev.notes }
+      if (trimmed) {
+        if (nextNotes[id] === trimmed) return prev
+        nextNotes[id] = trimmed
+      } else {
+        if (!(id in nextNotes)) return prev
+        delete nextNotes[id]
+      }
+      return { ...prev, notes: nextNotes }
+    })
   }, [])
 
   const resetAll = useCallback(() => {
@@ -226,17 +278,20 @@ export function useChecklistState(kindOrKey: ChecklistKind | string) {
 
   const isChecked = useCallback((id: string) => state.checked.includes(id), [state.checked])
   const isExcluded = useCallback((id: string) => state.excluded.includes(id), [state.excluded])
+  const getNote = useCallback((id: string) => state.notes[id] ?? '', [state.notes])
 
   return {
     state,
     hydrated,
     isChecked,
     isExcluded,
+    getNote,
     toggleChecked,
     exclude,
     restore,
     addCustom,
     removeCustom,
+    setNote,
     resetAll,
   }
 }

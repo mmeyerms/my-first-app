@@ -8,6 +8,7 @@ import { getMessages } from '@/lib/i18n/messages'
 import { getServerTheme } from '@/lib/theme/server'
 import { getActivePregnancy } from '@/lib/pregnancy/server'
 import { getPreferences } from '@/lib/preferences/server'
+import { getZodiacForDate } from '@/lib/sternzeichen'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -74,6 +75,7 @@ export default async function WochePage() {
   const totalWeeks = 40
   const progressPct = Math.min(100, Math.max(0, Math.round((ssw / totalWeeks) * 100)))
   const weeksLeft = Math.max(0, totalWeeks - ssw)
+  const zodiac = getZodiacForDate(dueDate)
 
   const categoryLabels = t.woche.categoryLabels as Record<
     SswComparisonCategory,
@@ -346,6 +348,21 @@ export default async function WochePage() {
             </p>
             <p className="text-sm leading-relaxed text-foreground">
               {localized(info.partnerTip, locale)}
+            </p>
+          </section>
+        )}
+
+        {/* Sternzeichen — small info card near end */}
+        {zodiac && (
+          <section className="card-elevated mb-6 rounded-2xl border p-6" style={{ backgroundColor: 'hsl(var(--secondary) / 0.35)' }}>
+            <div className="mb-2 flex items-center gap-2">
+              <span aria-hidden="true" className="text-2xl">{zodiac.emoji}</span>
+              <h2 className={isClassic ? 'text-base font-semibold text-foreground' : 'font-display text-lg font-semibold text-foreground'}>
+                Baby-Sternzeichen: {zodiac.label}
+              </h2>
+            </div>
+            <p className={isClassic ? 'text-sm leading-relaxed text-foreground' : 'font-display text-sm italic leading-relaxed text-muted-foreground'}>
+              {zodiac.hint} — falls das Baby zum ET kommt.
             </p>
           </section>
         )}

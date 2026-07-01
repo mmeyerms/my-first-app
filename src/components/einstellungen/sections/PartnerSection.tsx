@@ -5,6 +5,7 @@ import { Switch } from '@/components/ui/switch'
 import { usePreferences } from '@/lib/preferences/client'
 import type { PartnerRole } from '@/lib/preferences/types'
 import { cn } from '@/lib/utils'
+import { PartnerTodosManager } from './PartnerTodosManager'
 
 const ROLES: Array<{ key: PartnerRole; label: string; hint: string }> = [
   { key: 'partner', label: 'Partner:in', hint: 'Der/die andere Elternteil' },
@@ -19,6 +20,7 @@ const VISIBILITY_KEYS = [
   { key: 'geburtsplan', label: 'Geburtsplan', hint: 'Antworten & Präferenzen' },
   { key: 'woche', label: 'Woche', hint: 'SSW-Ansicht' },
   { key: 'wochenbett', label: 'Wochenbett', hint: 'Hilfe-Anfragen etc.' },
+  { key: 'partnerTodos', label: 'To-Dos', hint: 'Von dir zugeteilte Aufgaben' },
 ] as const
 
 export function PartnerSection() {
@@ -82,6 +84,8 @@ export function PartnerSection() {
           ))}
         </ul>
       </section>
+
+      <PartnerTodosManager />
     </div>
   )
 }

@@ -19,6 +19,9 @@ interface ChecklistState {
   checked?: unknown[]
   custom?: Array<{ id: string; label: string; category?: string }>
   excluded?: string[]
+  /** Per-item notes (quantity / brand / reminder). Carried over so users
+   *  don't have to re-type "3 Stück" for the next baby. */
+  notes?: Record<string, string>
 }
 
 /**
@@ -91,12 +94,25 @@ export async function POST(request: NextRequest) {
       .single()
     const state = source?.state as ChecklistState | undefined
     if (!state) return false
+    const carriedNotes: Record<string, string> =
+      state.notes && typeof state.notes === 'object' && !Array.isArray(state.notes)
+        ? Object.fromEntries(
+            Object.entries(state.notes).filter(
+              ([k, v]) => typeof k === 'string' && k.length > 0 && typeof v === 'string',
+            ),
+          )
+        : {}
     const nextState: ChecklistState = {
       checked: [],
       custom: Array.isArray(state.custom) ? state.custom : [],
       excluded: Array.isArray(state.excluded) ? state.excluded : [],
+      notes: carriedNotes,
     }
-    if ((nextState.custom?.length ?? 0) === 0 && (nextState.excluded?.length ?? 0) === 0) {
+    if (
+      (nextState.custom?.length ?? 0) === 0 &&
+      (nextState.excluded?.length ?? 0) === 0 &&
+      Object.keys(carriedNotes).length === 0
+    ) {
       return false
     }
     await supabase.from('checklists').upsert(
