@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   Sparkles,
   Sprout,
@@ -44,6 +44,13 @@ interface SlideMeta {
 const FADE_MS = 180
 
 export function AppTour({ open, userName, onComplete, onSkip }: AppTourProps) {
+  const router = useRouter()
+
+  function completeAndGo(href: string) {
+    onComplete()
+    setTimeout(() => router.push(href), 50)
+  }
+
   const t = useT()
   const { theme } = useTheme()
   const isClassic = theme === 'classic'
@@ -223,16 +230,16 @@ export function AppTour({ open, userName, onComplete, onSkip }: AppTourProps) {
 
               {slide.cta && (
                 <div className="mt-6 flex justify-center">
-                  <Link
-                    href={slide.cta.href}
-                    onClick={onComplete}
+                  <button
+                    type="button"
+                    onClick={() => slide.cta && completeAndGo(slide.cta.href)}
                     className={cn(
                       'inline-flex items-center justify-center rounded-full border border-primary/30 bg-secondary/60 px-4 py-2 text-sm font-medium text-primary shadow-sm transition-all hover:-translate-y-0.5 hover:bg-secondary hover:shadow',
                       'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card',
                     )}
                   >
                     {slide.cta.label}
-                  </Link>
+                  </button>
                 </div>
               )}
             </div>

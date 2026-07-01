@@ -28,6 +28,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Separator } from '@/components/ui/separator'
+import { PregnancyCelebrationModal } from './PregnancyCelebrationModal'
 
 type Mode = 'planning' | 'pregnant'
 type BabyGender = 'female' | 'male' | 'diverse' | 'surprise' | 'unknown'
@@ -51,6 +52,7 @@ export function ProfilForm({ profile }: { profile: Profile }) {
   const [deleting, setDeleting] = useState(false)
   const [modeUpdating, setModeUpdating] = useState(false)
   const [replaying, setReplaying] = useState(false)
+  const [celebrateOpen, setCelebrateOpen] = useState(false)
 
   const currentMode: Mode = profile.mode ?? 'pregnant'
 
@@ -117,7 +119,11 @@ export function ProfilForm({ profile }: { profile: Profile }) {
         const body = await res.json()
         throw new Error(typeof body.error === 'string' ? body.error : t.profile.saveError)
       }
+      const body = await res.json().catch(() => ({}))
       setSaveSuccess(true)
+      if (body?.modeTransitioned === 'pregnant') {
+        setCelebrateOpen(true)
+      }
     } catch (err: unknown) {
       setSaveError(err instanceof Error ? err.message : t.profile.saveError)
     } finally {
@@ -166,6 +172,11 @@ export function ProfilForm({ profile }: { profile: Profile }) {
 
   return (
     <div className="space-y-8">
+      <PregnancyCelebrationModal
+        open={celebrateOpen}
+        onOpenChange={setCelebrateOpen}
+        babyName={form.watch('baby_name') || profile.baby_name}
+      />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
           <FormField

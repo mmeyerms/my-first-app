@@ -145,10 +145,26 @@ export async function PUT(request: NextRequest) {
 
   const cleaned = nullifyEmpty(result.data)
 
-  const { error } = await supabase.from('profiles').upsert({
-    user_id: user.id,
-    ...cleaned,
-  })
+  // Auto-Transition: wenn positive_test_date gesetzt wird und der aktuelle
+  // Modus 'planning' ist, automatisch auf 'pregnant' wechseln. Wir informieren
+  // den Client via `modeTransitioned` in der Response, damit er das Glückwunsch-
+  // Popup zeigen kann.
+  let modeTransitioned: 'pregnant' | null = null
+  if (cleaned.positive_test_date && !cleaned.mode) {
+    const { data: currentProfile } = await supabase
+      .from('profiles')
+      .select('mode')
+      .eq('user_id', user.id)
+      .single() as { data: { mode: 'planning' | 'pregnant' | null } | null }
+    if (currentProfile?.mode === 'planning') {
+      ;(cleaned as Record<string, unknown>).mode = 'pregnant'
+      modeTransitioned = 'pregnant'
+    }
+  }
+
+  const { error } = await supabase
+    .from('profiles')
+    .upsert({ user_id: user.id, ...cleaned }, { onConflict: 'user_id' })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
@@ -162,16 +178,18 @@ export async function PUT(request: NextRequest) {
       mirrorPayload[key] = (cleaned as Record<string, unknown>)[key]
     }
   }
-  if (Object.keys(mirrorPayload).length > 0) {
+  if (Object.keys(mirrorPayload).length > 0 || modeTransitioned) {
     const active = await getActivePregnancy(supabase, user.id)
     if (active) {
+      const pregnancyPayload = { ...mirrorPayload }
+      if (modeTransitioned) pregnancyPayload.status = 'pregnant'
       await supabase
         .from('pregnancies')
-        .update(mirrorPayload)
+        .update(pregnancyPayload)
         .eq('id', active.id)
         .eq('user_id', user.id)
     }
   }
 
-  return NextResponse.json({ success: true })
+  return NextResponse.json({ success: true, modeTransitioned })
 }

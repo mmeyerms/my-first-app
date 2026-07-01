@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Heart, Star } from 'lucide-react'
 import { useT } from '@/lib/i18n/client'
 import { Button } from '@/components/ui/button'
@@ -34,6 +34,7 @@ export function SternenkindModal({
   onSuccess,
 }: SternenkindModalProps) {
   const t = useT()
+  const router = useRouter()
   const [step, setStep] = useState(1)
   const [endedDate, setEndedDate] = useState('')
   const [memorial, setMemorial] = useState('')
@@ -253,13 +254,17 @@ export function SternenkindModal({
                   </li>
                   <li className="flex gap-2">
                     <Star className="mt-1 h-3 w-3 shrink-0" strokeWidth={1.5} style={{ color: 'hsl(280 25% 50%)' }} aria-hidden="true" />
-                    <Link
-                      href="/trauer"
-                      className="underline-offset-2 transition-colors hover:underline"
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onOpenChange(false)
+                        setTimeout(() => router.push('/trauer'), 50)
+                      }}
+                      className="underline-offset-2 transition-colors hover:underline text-left"
                       style={{ color: 'hsl(280 30% 38%)' }}
                     >
                       {t.pregnancy.sternenkind.step3.appLink}
-                    </Link>
+                    </button>
                   </li>
                 </ul>
               </>
