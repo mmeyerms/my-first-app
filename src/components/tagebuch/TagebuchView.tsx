@@ -1,8 +1,10 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Download } from 'lucide-react'
 import { getMilestonesUpToSSW, getNextMilestone, getMilestoneTitle, getMilestoneDescription } from '@/lib/milestones'
 import { useLocale, useT } from '@/lib/i18n/client'
+import { usePreferences } from '@/lib/preferences/client'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
@@ -23,6 +25,15 @@ const RATING_EMOJI: Record<1 | 2 | 3 | 4 | 5, string> = {
   5: '🤩',
 }
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
 interface Props {
   ssw: number
   babyName: string
@@ -31,12 +42,64 @@ interface Props {
 export function TagebuchView({ ssw, babyName }: Props) {
   const { locale } = useLocale()
   const t = useT()
+  const { prefs } = usePreferences()
   const [entries, setEntries] = useState<DiaryEntry[]>([])
   const [currentEntry, setCurrentEntry] = useState<DiaryEntry>({ ssw, rating: null, word: null, surprise: null })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [activeSSW, setActiveSSW] = useState(ssw)
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>(undefined)
+
+  const currentPrompt = useMemo(() => {
+    const prompts = prefs.tagebuchCustomPrompts
+    if (prompts.length === 0) return null
+    if (!prefs.tagebuchPromptRotation) return prompts[0]
+    // Rotate based on activeSSW so it's stable for the same week
+    return prompts[activeSSW % prompts.length]
+  }, [prefs.tagebuchCustomPrompts, prefs.tagebuchPromptRotation, activeSSW])
+
+  const rueckblickEntry = useMemo(() => {
+    if (!prefs.tagebuchShowRueckblick) return null
+    // Entry 4 weeks ago
+    const target = activeSSW - 4
+    if (target < 1) return null
+    return entries.find((e) => e.ssw === target && (e.rating || e.word || e.surprise)) ?? null
+  }, [entries, activeSSW, prefs.tagebuchShowRueckblick])
+
+  function exportPdf() {
+    const relevant = entries.filter((e) => e.rating || e.word || e.surprise).sort((a, b) => a.ssw - b.ssw)
+    if (relevant.length === 0) {
+      alert('Noch keine Einträge zum Exportieren.')
+      return
+    }
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Baby-Buch für ${babyName}</title>
+<style>
+  body { font-family: Georgia, serif; max-width: 620px; margin: 40px auto; padding: 0 24px; color: #2a1f22; }
+  h1 { font-size: 32px; font-weight: 500; margin-bottom: 8px; }
+  h2 { font-size: 18px; margin-top: 24px; color: #5E3D44; border-bottom: 1px solid #dcc; padding-bottom: 4px; }
+  .lead { font-style: italic; color: #666; margin-bottom: 32px; }
+  .entry { margin: 20px 0; padding: 12px 16px; background: #faf5ee; border-radius: 8px; }
+  .word { font-style: italic; margin: 6px 0; }
+  .surprise { margin: 6px 0; }
+  .rating { display: inline-block; font-size: 20px; }
+  @media print { body { margin: 20px auto; } }
+</style></head><body>
+  <h1>Baby-Buch für ${escapeHtml(babyName)}</h1>
+  <p class="lead">Aus dem Tagebuch — deine Reise durch die Schwangerschaft.</p>
+  ${relevant.map((e) => `
+    <div class="entry">
+      <h2>SSW ${e.ssw} ${e.rating ? `<span class="rating">${RATING_EMOJI[e.rating as 1|2|3|4|5]}</span>` : ''}</h2>
+      ${e.word ? `<div class="word">„${escapeHtml(e.word)}"</div>` : ''}
+      ${e.surprise ? `<div class="surprise">${escapeHtml(e.surprise)}</div>` : ''}
+    </div>
+  `).join('')}
+</body></html>`
+    const win = window.open('', '_blank')
+    if (!win) return
+    win.document.write(html)
+    win.document.close()
+    setTimeout(() => win.print(), 500)
+  }
 
   useEffect(() => {
     fetch('/api/tagebuch')
@@ -173,6 +236,20 @@ export function TagebuchView({ ssw, babyName }: Props) {
             {t.emptyStates.tagebuchIntro}
           </p>
         )}
+        {currentPrompt && (
+          <div className="mb-4 rounded-xl border border-primary/20 bg-secondary/30 p-3">
+            <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-primary">Impuls</div>
+            <p className="mt-1 font-display text-sm italic text-foreground">{currentPrompt}</p>
+          </div>
+        )}
+        {rueckblickEntry && (
+          <div className="mb-4 rounded-xl border border-border bg-secondary/20 p-3">
+            <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">Vor 4 Wochen</div>
+            <p className="mt-1 text-sm text-foreground">
+              {rueckblickEntry.word ? `„${rueckblickEntry.word}"` : rueckblickEntry.surprise?.slice(0, 80) ?? '—'}
+            </p>
+          </div>
+        )}
 
         {/* Rating */}
         <div className="mb-5">
@@ -239,7 +316,12 @@ export function TagebuchView({ ssw, babyName }: Props) {
       {/* Filled entries overview */}
       {entries.filter((e) => e.rating || e.word || e.surprise).length > 0 && (
         <div className="rounded-2xl bg-card p-5 shadow-sm">
-          <h2 className="mb-3 text-sm font-semibold text-foreground">{t.tagebuch.entriesTitle}</h2>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-foreground">{t.tagebuch.entriesTitle}</h2>
+            <Button variant="outline" size="sm" onClick={exportPdf} className="gap-1.5">
+              <Download className="h-3.5 w-3.5" /> Baby-Buch PDF
+            </Button>
+          </div>
           <div className="space-y-2">
             {entries
               .filter((e) => e.rating || e.word || e.surprise)

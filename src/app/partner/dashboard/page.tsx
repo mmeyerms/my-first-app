@@ -5,6 +5,7 @@ import { getPartnerTipForDay, getPartnerTipText, getPartnerTipLabel } from '@/li
 import { QUESTIONS, getQuestionLabel } from '@/lib/questions'
 import { getServerLocale } from '@/lib/i18n/server'
 import { getMessages } from '@/lib/i18n/messages'
+import { getPreferences } from '@/lib/preferences/server'
 import { Badge } from '@/components/ui/badge'
 
 export default async function PartnerDashboardPage() {
@@ -41,6 +42,11 @@ export default async function PartnerDashboardPage() {
   const babyName = profile.baby_name ?? t.partner.fallbackBabyName
   const tip = getPartnerTipForDay(ssw)
 
+  // Read mother's personalization to respect visibility settings
+  const motherPrefs = await getPreferences(supabase, link.mother_id)
+  const partnerLabel = motherPrefs.partnerLabel || 'Partner:in'
+  const visibility = motherPrefs.partnerVisibility
+
   const { data: birthPlan } = await supabase
     .from('birth_plans')
     .select('answers')
@@ -60,20 +66,22 @@ export default async function PartnerDashboardPage() {
         <div className="mb-8">
           <h1 className="font-display text-2xl font-medium text-primary">{t.partner.dashboardTitle}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {profile.name} &amp; {babyName}
+            {profile.name} &amp; {babyName} · <span className="italic">{partnerLabel}</span>
           </p>
         </div>
 
         {/* SSW */}
-        <div className="mb-4 rounded-2xl bg-card p-6 shadow-sm">
-          <p className="text-sm text-muted-foreground">{t.partner.sswCaption}</p>
-          <div className="mt-1 flex items-baseline gap-2">
-            <span className="font-display text-5xl font-bold text-primary">{t.partner.sswCard.replace('{ssw}', String(ssw))}</span>
+        {visibility.woche && (
+          <div className="mb-4 rounded-2xl bg-card p-6 shadow-sm">
+            <p className="text-sm text-muted-foreground">{t.partner.sswCaption}</p>
+            <div className="mt-1 flex items-baseline gap-2">
+              <span className="font-display text-5xl font-bold text-primary">{t.partner.sswCard.replace('{ssw}', String(ssw))}</span>
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">{t.partner.babyOnWay.replace('{babyName}', babyName)}</p>
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">{t.partner.babyOnWay.replace('{babyName}', babyName)}</p>
-        </div>
+        )}
 
-        {/* Daily partner tip */}
+        {/* Daily partner tip — always visible */}
         <div className="mb-4 rounded-2xl bg-card p-5 shadow-sm">
           <div className="mb-3 flex items-center justify-between">
             <p className="text-sm font-semibold text-foreground">{t.partner.tipTodayLabel}</p>
@@ -83,28 +91,30 @@ export default async function PartnerDashboardPage() {
           <p className="text-sm leading-relaxed text-foreground">{getPartnerTipText(tip, locale)}</p>
         </div>
 
-        {/* Birth plan (read-only) */}
-        <div className="rounded-2xl bg-card p-5 shadow-sm">
-          <p className="mb-4 text-sm font-semibold text-foreground">{t.partner.birthPlanHeading}</p>
-          {answeredQuestions.length > 0 ? (
-            <div className="space-y-3">
-              {answeredQuestions.map((q) => (
-                <div key={q.id} className="text-sm">
-                  <p className="text-xs text-muted-foreground">{getQuestionLabel(q, locale)}</p>
-                  <p className="text-foreground">
-                    {Array.isArray(answers[q.id])
-                      ? (answers[q.id] as string[]).join(', ')
-                      : answers[q.id]}
-                  </p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              {t.partner.birthPlanEmpty.replace('{name}', profile.name)}
-            </p>
-          )}
-        </div>
+        {/* Birth plan (read-only) — respect visibility */}
+        {visibility.geburtsplan && (
+          <div className="rounded-2xl bg-card p-5 shadow-sm">
+            <p className="mb-4 text-sm font-semibold text-foreground">{t.partner.birthPlanHeading}</p>
+            {answeredQuestions.length > 0 ? (
+              <div className="space-y-3">
+                {answeredQuestions.map((q) => (
+                  <div key={q.id} className="text-sm">
+                    <p className="text-xs text-muted-foreground">{getQuestionLabel(q, locale)}</p>
+                    <p className="text-foreground">
+                      {Array.isArray(answers[q.id])
+                        ? (answers[q.id] as string[]).join(', ')
+                        : answers[q.id]}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                {t.partner.birthPlanEmpty.replace('{name}', profile.name)}
+              </p>
+            )}
+          </div>
+        )}
       </div>
     </main>
   )

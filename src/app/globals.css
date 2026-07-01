@@ -187,3 +187,38 @@
       0 4px 12px hsl(20 14% 12% / 0.04);
   }
 }
+
+/* Accent color overrides — applied on top of theme */
+[data-accent='rose'] {
+  --primary: 340 65% 45%;
+  --primary-foreground: 0 0% 100%;
+  --accent: 340 65% 88%;
+  --accent-foreground: 340 40% 25%;
+  --ring: 340 65% 45%;
+}
+[data-accent='sage'] {
+  --primary: 145 25% 35%;
+  --primary-foreground: 0 0% 100%;
+  --accent: 145 30% 82%;
+  --accent-foreground: 145 40% 20%;
+  --ring: 145 25% 35%;
+}
+[data-accent='blue'] {
+  --primary: 210 55% 40%;
+  --primary-foreground: 0 0% 100%;
+  --accent: 210 60% 85%;
+  --accent-foreground: 210 50% 20%;
+  --ring: 210 55% 40%;
+}
+
+/* Font size scale */
+[data-fontsize='sm'] {
+  font-size: 14px;
+}
+[data-fontsize='md'] {
+  font-size: 16px;
+}
+[data-fontsize='lg'] {
+  font-size: 18px;
+}
+

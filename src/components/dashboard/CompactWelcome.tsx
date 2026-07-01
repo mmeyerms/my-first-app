@@ -12,6 +12,18 @@ interface CompactWelcomeProps {
   ssw: number | null
   dueDate: string | null
   mode: 'planning' | 'pregnant'
+  customGreeting?: string
+}
+
+function renderGreeting(fallbackParts: string[], name: string, custom: string | undefined) {
+  if (custom) return <>{custom}</>
+  return (
+    <>
+      {fallbackParts[0]}
+      <span className="font-semibold">{name}</span>
+      {fallbackParts[1] ?? ''}
+    </>
+  )
 }
 
 /**
@@ -25,6 +37,7 @@ export function CompactWelcome({
   ssw,
   dueDate,
   mode,
+  customGreeting,
 }: CompactWelcomeProps) {
   const t = useT()
   const { theme } = useTheme()
@@ -47,9 +60,7 @@ export function CompactWelcome({
                 isClassic ? '' : 'font-display',
               )}
             >
-              {greetingParts[0]}
-              <span className="font-semibold">{name}</span>
-              {greetingParts[1] ?? ''}
+              {renderGreeting(greetingParts, name, customGreeting)}
             </h1>
             <p
               className={cn(
@@ -84,9 +95,7 @@ export function CompactWelcome({
               isClassic ? '' : 'font-display',
             )}
           >
-            {greetingParts[0]}
-            <span className="font-semibold">{name}</span>
-            {greetingParts[1] ?? ''}
+            {renderGreeting(greetingParts, name, customGreeting)}
           </h1>
           <p
             className={cn(
@@ -125,9 +134,7 @@ export function CompactWelcome({
               isClassic ? '' : 'font-display',
             )}
           >
-            {greetingParts[0]}
-            <span className="font-semibold">{name}</span>
-            {greetingParts[1] ?? ''}
+            {renderGreeting(greetingParts, name, customGreeting)}
           </h1>
           <p
             className={cn(

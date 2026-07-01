@@ -1,0 +1,157 @@
+export type GreetingTone = 'warm' | 'sachlich' | 'locker' | 'liebevoll'
+export type AccentColor = 'burgundy' | 'rose' | 'sage' | 'blue'
+export type FontSize = 'sm' | 'md' | 'lg'
+export type SnapshotCardKey =
+  | 'nextTermin'
+  | 'ssw'
+  | 'tipp'
+  | 'tagebuch'
+  | 'countdown'
+  | 'wochenbettChef'
+export type SnapshotDensity = 'compact' | 'expanded'
+export type WocheProgressStyle = 'bar' | 'percent' | 'weeksLeft' | 'none'
+export type PartnerRole = 'partner' | 'grandparent' | 'friend' | 'other'
+export type QuestionSetMode = 'short' | 'full'
+export type WocheBlockKey =
+  | 'development'
+  | 'comparisons'
+  | 'momBody'
+  | 'funFact'
+  | 'partnerTip'
+  | 'nextWeek'
+export type WocheComparisonCategory =
+  | 'frucht'
+  | 'suessigkeit'
+  | 'spielzeug'
+  | 'tier'
+  | 'alltag'
+  | 'sport'
+  | 'beauty'
+
+export interface PartnerVisibility {
+  termine: boolean
+  tagebuch: boolean
+  geburtsplan: boolean
+  woche: boolean
+  wochenbett: boolean
+}
+
+export interface KinderwunschTracking {
+  temperature: boolean
+  lh: boolean
+  symptothermal: boolean
+  gv: boolean
+  mens: boolean
+}
+
+export interface KinderwunschReminders {
+  vitaminsTime: string | null
+  ovuTestActive: boolean
+  wunschEt: string | null
+}
+
+export interface UserPreferences {
+  // Design
+  accentColor: AccentColor
+  fontSize: FontSize
+
+  // Snapshot / Dashboard
+  greetingTone: GreetingTone
+  snapshotCards: SnapshotCardKey[]
+  snapshotDensity: SnapshotDensity
+  showCountdownWidget: boolean
+
+  // Woche
+  wocheProgressStyle: WocheProgressStyle
+  wocheBlocks: WocheBlockKey[]
+  wocheComparisonCategories: WocheComparisonCategory[]
+
+  // Tagebuch
+  tagebuchCustomPrompts: string[]
+  tagebuchPromptRotation: boolean
+  tagebuchShowRueckblick: boolean
+
+  // Geburtsplan
+  geburtsplanQuestionSet: QuestionSetMode
+  geburtsplanClinicPreset: string | null
+
+  // Partner
+  partnerRole: PartnerRole
+  partnerLabel: string
+  partnerVisibility: PartnerVisibility
+
+  // Kinderwunsch
+  kinderwunschCycleLength: number
+  kinderwunschTracking: KinderwunschTracking
+  kinderwunschReminders: KinderwunschReminders
+}
+
+export const DEFAULT_PREFERENCES: UserPreferences = {
+  accentColor: 'burgundy',
+  fontSize: 'md',
+
+  greetingTone: 'warm',
+  snapshotCards: ['nextTermin', 'ssw', 'tipp', 'tagebuch'],
+  snapshotDensity: 'expanded',
+  showCountdownWidget: true,
+
+  wocheProgressStyle: 'bar',
+  wocheBlocks: ['development', 'comparisons', 'momBody', 'funFact', 'partnerTip', 'nextWeek'],
+  wocheComparisonCategories: ['frucht', 'suessigkeit', 'spielzeug', 'tier', 'alltag', 'sport', 'beauty'],
+
+  tagebuchCustomPrompts: [],
+  tagebuchPromptRotation: true,
+  tagebuchShowRueckblick: true,
+
+  geburtsplanQuestionSet: 'full',
+  geburtsplanClinicPreset: null,
+
+  partnerRole: 'partner',
+  partnerLabel: 'Partner:in',
+  partnerVisibility: {
+    termine: true,
+    tagebuch: false,
+    geburtsplan: true,
+    woche: true,
+    wochenbett: true,
+  },
+
+  kinderwunschCycleLength: 28,
+  kinderwunschTracking: {
+    temperature: true,
+    lh: true,
+    symptothermal: false,
+    gv: true,
+    mens: true,
+  },
+  kinderwunschReminders: {
+    vitaminsTime: null,
+    ovuTestActive: false,
+    wunschEt: null,
+  },
+}
+
+/**
+ * Merge partial prefs from DB with defaults so new fields do not crash old data.
+ */
+export function mergePreferences(
+  partial: Partial<UserPreferences> | null | undefined,
+): UserPreferences {
+  if (!partial) return { ...DEFAULT_PREFERENCES }
+  return {
+    ...DEFAULT_PREFERENCES,
+    ...partial,
+    partnerVisibility: {
+      ...DEFAULT_PREFERENCES.partnerVisibility,
+      ...(partial.partnerVisibility ?? {}),
+    },
+    kinderwunschTracking: {
+      ...DEFAULT_PREFERENCES.kinderwunschTracking,
+      ...(partial.kinderwunschTracking ?? {}),
+    },
+    kinderwunschReminders: {
+      ...DEFAULT_PREFERENCES.kinderwunschReminders,
+      ...(partial.kinderwunschReminders ?? {}),
+    },
+  }
+}

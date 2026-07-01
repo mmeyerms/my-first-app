@@ -28,6 +28,16 @@ import { useTheme } from '@/lib/theme/client'
 import { localized } from '@/lib/i18n/localized'
 import { TERMIN_TYPES } from '@/lib/termine/data'
 import type { RecurrenceRhythm, Termin, TerminTypeId } from '@/lib/termine/types'
+
+interface CustomCategory {
+  slug: string
+  label: string
+  emoji: string | null
+  color: string | null
+  default_location: string | null
+  default_reminder_hours: number | null
+  notes_template: string | null
+}
 import {
   generateGroupId,
   generateOccurrenceDates,
@@ -88,6 +98,24 @@ export function TerminForm({
   const [recurrenceRhythm, setRecurrenceRhythm] =
     useState<RecurrenceRhythm>('weekly')
   const [recurrenceCount, setRecurrenceCount] = useState<number>(6)
+
+  // Custom categories loaded from DB
+  const [customCategories, setCustomCategories] = useState<CustomCategory[]>([])
+
+  useEffect(() => {
+    if (!open) return
+    fetch('/api/termin-categories')
+      .then((r) => r.json())
+      .then((data) => Array.isArray(data) && setCustomCategories(data))
+      .catch(() => {})
+  }, [open])
+
+  function applyCustomCategory(cat: CustomCategory) {
+    setType('custom')
+    setTitle((prev) => (prev ? prev : cat.label))
+    if (cat.default_location) setLocation((prev) => prev || cat.default_location || '')
+    if (cat.notes_template) setNotes((prev) => prev || cat.notes_template || '')
+  }
 
   // Reset form when opened with new initial values
   useEffect(() => {
@@ -233,6 +261,33 @@ export function TerminForm({
               </SelectContent>
             </Select>
           </div>
+
+          {customCategories.length > 0 && (
+            <div className="space-y-1.5">
+              <Label>Eigene Kategorien</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {customCategories.map((c) => (
+                  <button
+                    key={c.slug}
+                    type="button"
+                    onClick={() => applyCustomCategory(c)}
+                    className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-secondary/40 px-3 py-1 text-xs text-primary transition-colors hover:bg-secondary"
+                    title={
+                      c.default_location
+                        ? `${c.default_location}${c.default_reminder_hours ? ` · ${c.default_reminder_hours}h vor` : ''}`
+                        : undefined
+                    }
+                  >
+                    <span>{c.emoji ?? '📅'}</span>
+                    <span>{c.label}</span>
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] italic text-muted-foreground">
+                Klick auf eine Kategorie füllt Titel/Ort/Notiz automatisch.
+              </p>
+            </div>
+          )}
 
           <div className="space-y-1.5">
             <Label htmlFor="termin-title">{t.termine.form.title}</Label>

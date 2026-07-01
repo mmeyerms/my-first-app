@@ -17,12 +17,36 @@ import {
 import { getServerLocale } from '@/lib/i18n/server'
 import { getMessages } from '@/lib/i18n/messages'
 import { getActivePregnancy } from '@/lib/pregnancy/server'
+import { getPreferences } from '@/lib/preferences/server'
 
 interface Profile {
   name: string
   baby_name: string | null
   due_date: string | null
   mode: 'planning' | 'pregnant' | null
+}
+
+function pickGreeting(tone: 'warm' | 'sachlich' | 'locker' | 'liebevoll', name: string, timeOfDay: 'morning' | 'day' | 'evening') {
+  const first = name.split(' ')[0]
+  const timeMap = { morning: 'Guten Morgen', day: 'Hallo', evening: 'Guten Abend' } as const
+  const timeCasual = { morning: 'Morgen', day: 'Hey', evening: 'Abend' } as const
+  switch (tone) {
+    case 'warm':
+      return `${timeMap[timeOfDay]}, ${first} — schön, dass du da bist.`
+    case 'sachlich':
+      return `${timeMap[timeOfDay]}, ${first}.`
+    case 'locker':
+      return `${timeCasual[timeOfDay]}, ${first} 👋`
+    case 'liebevoll':
+      return `${timeMap[timeOfDay]}, liebe ${first} 💛`
+  }
+}
+
+function currentTimeOfDay(): 'morning' | 'day' | 'evening' {
+  const h = new Date().getHours()
+  if (h < 11) return 'morning'
+  if (h < 17) return 'day'
+  return 'evening'
 }
 
 interface DbTermin {
@@ -72,11 +96,16 @@ export default async function DashboardPage() {
   const mode: 'planning' | 'pregnant' = profile.mode ?? 'pregnant'
   const isPlanning = mode === 'planning'
 
-  const ssw = profile.due_date ? calculateSSW(profile.due_date) : null
+  const active = await getActivePregnancy(supabase, user.id)
+  const effectiveDueDate = active?.due_date ?? profile.due_date ?? null
+  const effectiveBabyName = active?.baby_name ?? profile.baby_name ?? null
+  const ssw = effectiveDueDate ? calculateSSW(effectiveDueDate) : null
   const tipSsw = ssw ?? 1
   const tip = getTipForDay(tipSsw)
   const locale = await getServerLocale()
   const t = getMessages(locale)
+  const prefs = await getPreferences(supabase, user.id)
+  const greeting = pickGreeting(prefs.greetingTone, profile.name, currentTimeOfDay())
 
   // -------- Snapshot data (only meaningful in pregnant mode) --------
   let nextTermin: { title: string; date: string; time?: string | null } | null = null
@@ -86,9 +115,9 @@ export default async function DashboardPage() {
     rating: number | null
     updatedAt: string
   } | null = null
+  let helpRequestsOpen = 0
 
   if (!isPlanning) {
-    const active = await getActivePregnancy(supabase, user.id)
     const today = todayLocalISO()
 
     // Next upcoming, not-done termin scoped to active pregnancy.
@@ -130,6 +159,14 @@ export default async function DashboardPage() {
           updatedAt: firstDiary.updated_at,
         }
       }
+
+      // Count of open Wochenbett-Chef help_requests
+      const { count } = await supabase
+        .from('help_requests')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('pregnancy_id', active.id)
+      helpRequestsOpen = count ?? 0
     }
   }
 
@@ -260,10 +297,11 @@ export default async function DashboardPage() {
         {/* Compact welcome (greeting + SSW line) */}
         <CompactWelcome
           name={profile.name}
-          babyName={profile.baby_name}
+          babyName={effectiveBabyName}
           ssw={ssw}
-          dueDate={profile.due_date}
+          dueDate={effectiveDueDate}
           mode={mode}
+          customGreeting={greeting}
         />
 
         {/* Daily snapshot: tip · next termin · latest diary · ki-hebamme */}
@@ -274,6 +312,9 @@ export default async function DashboardPage() {
             tipTextEn={tip.text.en}
             nextTermin={nextTermin}
             latestDiary={latestDiary}
+            ssw={ssw}
+            dueDate={effectiveDueDate}
+            helpRequestsOpen={helpRequestsOpen}
           />
         )}
 

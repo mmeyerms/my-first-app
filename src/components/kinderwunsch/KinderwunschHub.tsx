@@ -18,6 +18,7 @@ import { TEAM_FRAGEN } from '@/lib/kinderwunsch/teamFragen'
 import { MANIFEST_VORSCHLAEGE } from '@/lib/kinderwunsch/manifest'
 import { useTheme } from '@/lib/theme/client'
 import { useT } from '@/lib/i18n/client'
+import { usePreferences } from '@/lib/preferences/client'
 import type { Messages } from '@/lib/i18n/messages'
 
 type IslandProgress = {
@@ -184,7 +185,18 @@ const ISLANDS: IslandConfig[] = [
 export function KinderwunschHub() {
   const { theme } = useTheme()
   const t = useT()
+  const { prefs } = usePreferences()
   const isClassic = theme === 'classic'
+  const trackingKeys = (Object.entries(prefs.kinderwunschTracking) as Array<[keyof typeof prefs.kinderwunschTracking, boolean]>)
+    .filter(([, v]) => v)
+    .map(([k]) => k)
+  const TRACKING_LABEL: Record<string, string> = {
+    temperature: 'Basaltemp.',
+    lh: 'LH-Test',
+    symptothermal: 'Symptothermal',
+    gv: 'GV',
+    mens: 'Mens',
+  }
   const [progressMap, setProgressMap] = useState<Record<string, IslandProgress | null>>({})
   const [hydrated, setHydrated] = useState(false)
 
@@ -204,7 +216,7 @@ export function KinderwunschHub() {
 
   return (
     <div className="mx-auto max-w-sm px-4 py-8">
-      <div className="mb-4">
+      <div className="mb-4 flex items-center justify-between">
         <Link
           href="/dashboard"
           className={
@@ -215,7 +227,36 @@ export function KinderwunschHub() {
         >
           {t.common.backToDashboard}
         </Link>
+        <Link
+          href="/einstellungen"
+          className="text-xs text-muted-foreground underline decoration-dotted hover:text-primary"
+        >
+          Personalisieren
+        </Link>
       </div>
+
+      {(trackingKeys.length > 0 || prefs.kinderwunschReminders.wunschEt) && (
+        <div className="mb-6 rounded-2xl border border-border/60 bg-secondary/30 p-4">
+          <div className="flex items-baseline justify-between">
+            <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Dein Setup</p>
+            <span className="text-xs text-muted-foreground">
+              Zyklus <span className="font-medium text-primary">{prefs.kinderwunschCycleLength}d</span>
+            </span>
+          </div>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {trackingKeys.map((k) => (
+              <span key={k} className="rounded-full bg-card px-2 py-0.5 text-[11px] text-primary">
+                {TRACKING_LABEL[k] ?? k}
+              </span>
+            ))}
+          </div>
+          {prefs.kinderwunschReminders.wunschEt && (
+            <p className="mt-2 font-display text-xs italic text-muted-foreground">
+              Wunsch-ET: {prefs.kinderwunschReminders.wunschEt}
+            </p>
+          )}
+        </div>
+      )}
 
       <section
         aria-label={t.kinderwunsch.hub.sectionAria}

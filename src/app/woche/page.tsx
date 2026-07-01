@@ -7,6 +7,7 @@ import { getServerLocale } from '@/lib/i18n/server'
 import { getMessages } from '@/lib/i18n/messages'
 import { getServerTheme } from '@/lib/theme/server'
 import { getActivePregnancy } from '@/lib/pregnancy/server'
+import { getPreferences } from '@/lib/preferences/server'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -61,9 +62,18 @@ export default async function WochePage() {
   const t = getMessages(locale)
   const theme = await getServerTheme()
   const isClassic = theme === 'classic'
+  const prefs = await getPreferences(supabase, user.id)
+  const showBlock = (k: 'development' | 'comparisons' | 'momBody' | 'funFact' | 'partnerTip' | 'nextWeek') =>
+    prefs.wocheBlocks.includes(k)
+  const allowedCategories = new Set(prefs.wocheComparisonCategories)
 
   const nextSsw = ssw < 42 ? ssw + 1 : null
   const nextInfo = nextSsw ? getSswInfo(nextSsw) : null
+
+  // Progress calculation for chosen style
+  const totalWeeks = 40
+  const progressPct = Math.min(100, Math.max(0, Math.round((ssw / totalWeeks) * 100)))
+  const weeksLeft = Math.max(0, totalWeeks - ssw)
 
   const categoryLabels = t.woche.categoryLabels as Record<
     SswComparisonCategory,
@@ -138,10 +148,38 @@ export default async function WochePage() {
           <p className="mt-6 font-display text-base italic text-muted-foreground">
             {t.woche.forBaby.replace('{babyName}', babyName ?? t.partner.fallbackBabyName)}
           </p>
+
+          {/* Progress style */}
+          {prefs.wocheProgressStyle !== 'none' && (
+            <div className="mt-6">
+              {prefs.wocheProgressStyle === 'bar' && (
+                <>
+                  <div className="mb-1 flex items-center justify-between text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                    <span>Fortschritt</span>
+                    <span>{progressPct}%</span>
+                  </div>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+                    <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progressPct}%` }} />
+                  </div>
+                </>
+              )}
+              {prefs.wocheProgressStyle === 'percent' && (
+                <div className="font-display text-2xl font-medium text-primary">
+                  {progressPct}%
+                  <span className="ml-2 text-xs italic text-muted-foreground">der 40 Wochen</span>
+                </div>
+              )}
+              {prefs.wocheProgressStyle === 'weeksLeft' && (
+                <div className="font-display text-lg italic text-muted-foreground">
+                  noch <span className="font-medium text-primary">{weeksLeft}</span> Wochen bis zum ET
+                </div>
+              )}
+            </div>
+          )}
         </header>
 
         {/* Development */}
-        {info && (
+        {info && showBlock('development') && (
           <section className="card-elevated mb-6 rounded-2xl bg-card p-6">
             <h2
               className={
@@ -159,7 +197,7 @@ export default async function WochePage() {
         )}
 
         {/* Funny comparisons */}
-        {info && info.comparisons.length > 0 && (
+        {info && info.comparisons.length > 0 && showBlock('comparisons') && (
           <section className="card-elevated mb-6 rounded-2xl bg-card p-6">
             <h2
               className={
@@ -171,7 +209,7 @@ export default async function WochePage() {
               {t.woche.funnyComparisons}
             </h2>
             <ul className="space-y-3" aria-label={t.woche.funnyComparisons}>
-              {info.comparisons.map((c, i) => (
+              {info.comparisons.filter((c) => allowedCategories.has(c.category)).map((c, i) => (
                 <li key={`${c.category}-${i}`}>
                   <Card
                     className={`border-border/60 ${CATEGORY_BG[c.category]}`}
@@ -213,7 +251,7 @@ export default async function WochePage() {
         )}
 
         {/* Mom body — "Was passiert in dir?" */}
-        {info?.momBody && (
+        {info?.momBody && showBlock('momBody') && (
           <section
             className="card-elevated mb-6 rounded-2xl p-6"
             style={{ backgroundColor: 'hsl(var(--secondary) / 0.45)' }}
@@ -241,7 +279,7 @@ export default async function WochePage() {
         )}
 
         {/* Fun fact — "Wusstest du?" */}
-        {info?.funFact && (
+        {info?.funFact && showBlock('funFact') && (
           <section
             className="card-elevated mb-6 rounded-2xl border p-6"
             style={{
@@ -279,7 +317,7 @@ export default async function WochePage() {
         )}
 
         {/* Partner tip — "Für deinen Partner" */}
-        {info?.partnerTip && (
+        {info?.partnerTip && showBlock('partnerTip') && (
           <section className="card-elevated mb-6 rounded-2xl border-2 border-primary/20 bg-card p-6">
             <div className="mb-1 flex items-center gap-2">
               {isClassic ? (
@@ -313,7 +351,7 @@ export default async function WochePage() {
         )}
 
         {/* Next week */}
-        {nextInfo && (
+        {nextInfo && showBlock('nextWeek') && (
           <section className="card-elevated rounded-2xl bg-card p-6">
             <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
               {t.woche.nextWeekTitle}

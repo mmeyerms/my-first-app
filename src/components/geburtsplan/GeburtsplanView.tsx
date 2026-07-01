@@ -4,11 +4,27 @@ import { useMemo, useRef, useState } from 'react'
 import { Question, STAGE_UNLOCK, getStageQuestions } from '@/lib/questions'
 import { exportGeburtsplanPDF } from '@/lib/pdfExport'
 import { useLocale, useT } from '@/lib/i18n/client'
+import { usePreferences } from '@/lib/preferences/client'
 import { QuestionCard } from './QuestionCard'
 import { AudioBriefing } from './AudioBriefing'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
+
+const SHORT_SET = new Set([
+  'location',
+  'companions',
+  'pain_management',
+  'wishes',
+  'no_gos',
+])
+
+const CLINIC_PRESET_LABEL: Record<string, string> = {
+  klinik: 'Klinikgeburt',
+  hausgeburt: 'Hausgeburt',
+  geburtshaus: 'Geburtshaus',
+  ambulant: 'Ambulante Geburt',
+}
 
 interface Props {
   initialAnswers: Record<string, unknown>
@@ -48,18 +64,23 @@ function toBriefingAnswers(
 export function GeburtsplanView({ initialAnswers, ssw, babyName, dueDate }: Props) {
   const { locale } = useLocale()
   const t = useT()
+  const { prefs } = usePreferences()
   const [answers, setAnswers] = useState<Record<string, unknown>>(initialAnswers)
   const [saving, setSaving] = useState(false)
   const [exporting, setExporting] = useState(false)
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const stageTitle = (stage: 1 | 2 | 3) => t.geburtsplan.stages[stage]
+  const isShort = prefs.geburtsplanQuestionSet === 'short'
+  const clinicPreset = prefs.geburtsplanClinicPreset
 
   const allQuestions: Question[] = useMemo(() => {
-    return ([1, 2, 3] as const).flatMap((stage) =>
+    const all = ([1, 2, 3] as const).flatMap((stage) =>
       ssw >= STAGE_UNLOCK[stage] ? getStageQuestions(stage) : [],
     )
-  }, [ssw])
+    if (isShort) return all.filter((q) => SHORT_SET.has(q.id))
+    return all
+  }, [ssw, isShort])
 
   const initialIndex = useMemo(() => {
     if (allQuestions.length === 0) return 0
@@ -204,6 +225,22 @@ export function GeburtsplanView({ initialAnswers, ssw, babyName, dueDate }: Prop
 
   return (
     <div className="space-y-4">
+      {(isShort || clinicPreset) && (
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-primary/20 bg-secondary/40 px-3 py-2 text-xs">
+          {isShort && (
+            <span className="rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary">Kurzform</span>
+          )}
+          {clinicPreset && CLINIC_PRESET_LABEL[clinicPreset] && (
+            <span className="rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary">
+              {CLINIC_PRESET_LABEL[clinicPreset]}
+            </span>
+          )}
+          <Link href="/einstellungen" className="ml-auto text-muted-foreground underline decoration-dotted hover:text-primary">
+            ändern
+          </Link>
+        </div>
+      )}
+
       {/* Progress header */}
       <div className="rounded-2xl bg-white p-4 shadow-sm">
         <div className="mb-2 flex items-center justify-between text-xs text-gray-500">

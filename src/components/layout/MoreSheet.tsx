@@ -14,6 +14,7 @@ import {
   Palette,
   PlayCircle,
   ShoppingBag,
+  Sliders,
   Sparkles,
   Star,
   User,
@@ -173,6 +174,12 @@ export function MoreSheet({ trigger }: MoreSheetProps) {
               href="/profil"
               icon={<UserCircle2 className="h-4 w-4" strokeWidth={1.5} />}
               label={ms.profile}
+              onNavigate={() => setOpen(false)}
+            />
+            <MoreLink
+              href="/einstellungen"
+              icon={<Sliders className="h-4 w-4" strokeWidth={1.5} />}
+              label="Personalisierung"
               onNavigate={() => setOpen(false)}
             />
             <MoreButton

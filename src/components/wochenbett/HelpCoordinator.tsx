@@ -520,8 +520,38 @@ interface SlotRowProps {
   onDelete: () => void
 }
 
+const THANK_YOU_TEMPLATES: Record<string, string[]> = {
+  kochen: [
+    'Danke {name} — dein Essen war wie eine warme Umarmung. 🫶',
+    'Ich weiß gar nicht wie ich dir für die Mahlzeit danken soll, {name}. Du hast mir einen Abend geschenkt.',
+    'Das schmeckt so gut, {name}. Danke, dass du an uns denkst.',
+  ],
+  putzen: [
+    'Danke {name} — dass hier heute alles sauber ist, fühlt sich fast surreal an. 💛',
+    'Du hast keine Ahnung wie sehr das gerade geholfen hat, {name}. Danke.',
+    'Ohne dich läge hier noch alles am Boden, {name}. Riesen-Dank.',
+  ],
+  einkaufen: [
+    'Danke {name} — der Kühlschrank ist voll und ich bin unendlich dankbar.',
+    'Du bist ein Engel, {name}. Danke fürs Einkaufen.',
+    'Das war so lieb von dir, {name}. Wirklich.',
+  ],
+  kinderbetreuung: [
+    'Danke {name} — dass du dich um die Kleinen kümmerst, hat mir eine echte Pause geschenkt. 🙏',
+    'Ich konnte tatsächlich schlafen dank dir, {name}. Das bedeutet gerade alles.',
+    'Du hast heute alles möglich gemacht, {name}. Danke von Herzen.',
+  ],
+  emotionale_unterstützung: [
+    'Danke {name} — dass du einfach da warst hat mir mehr gegeben als du weißt.',
+    'Deine Nachricht/dein Besuch heute hat mich getragen, {name}. Danke.',
+    'Ich fühle mich weniger allein mit dir an meiner Seite, {name}. Danke.',
+  ],
+}
+
 function SlotRow({ slot, tc, onDelete }: SlotRowProps) {
   const isClaimed = !!slot.helper_name && slot.helper_name.trim() !== ''
+  const [showThankYou, setShowThankYou] = useState(false)
+  const templates = THANK_YOU_TEMPLATES[slot.category] ?? []
   const dateLabel = slot.date
     ? slot.time
       ? `${formatDate(slot.date)} · ${slot.time}`
@@ -554,6 +584,54 @@ function SlotRow({ slot, tc, onDelete }: SlotRowProps) {
           <p className="mt-1 text-xs italic text-muted-foreground">
             “{slot.helper_message}”
           </p>
+        )}
+        {isClaimed && templates.length > 0 && (
+          <div className="mt-2">
+            {!showThankYou ? (
+              <button
+                type="button"
+                onClick={() => setShowThankYou(true)}
+                className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-secondary/40 px-2.5 py-1 text-[11px] font-medium text-primary hover:bg-secondary"
+              >
+                <Heart className="h-3 w-3" strokeWidth={1.5} /> Danke sagen
+              </button>
+            ) : (
+              <div className="mt-1 space-y-1.5 rounded-lg border border-border/60 bg-secondary/30 p-2">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Vorlagen</p>
+                {templates.map((tpl, i) => {
+                  const text = tpl.replace('{name}', slot.helper_name!.trim())
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          if (navigator.share) {
+                            await navigator.share({ text })
+                          } else {
+                            await navigator.clipboard.writeText(text)
+                            alert('In Zwischenablage kopiert!')
+                          }
+                        } catch {
+                          // user cancelled share
+                        }
+                      }}
+                      className="w-full rounded-md bg-card p-2 text-left text-xs leading-snug transition-colors hover:bg-secondary"
+                    >
+                      {text}
+                    </button>
+                  )
+                })}
+                <button
+                  type="button"
+                  onClick={() => setShowThankYou(false)}
+                  className="text-[10px] text-muted-foreground underline decoration-dotted"
+                >
+                  schließen
+                </button>
+              </div>
+            )}
+          </div>
         )}
       </div>
       <button
