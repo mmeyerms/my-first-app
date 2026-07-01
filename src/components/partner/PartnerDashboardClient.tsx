@@ -5,9 +5,11 @@ import type { RealtimeChannel } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { Badge } from '@/components/ui/badge'
 import { PartnerTodosBlock, type PartnerTodoItem } from '@/components/partner/PartnerTodosBlock'
+import { PartnerPreparationBlock } from '@/components/partner/PartnerPreparationBlock'
 import { RealtimeIndicator, type RealtimeStatus } from '@/components/partner/RealtimeIndicator'
 import { QUESTIONS, getQuestionLabel, type Question } from '@/lib/questions'
 import { getPartnerTipText, getPartnerTipLabel, type PartnerTip } from '@/lib/partnerTips'
+import type { PreparationTask } from '@/lib/partnerPreparation'
 import type { Locale } from '@/lib/i18n/types'
 import type { Messages } from '@/lib/i18n/messages'
 
@@ -281,6 +283,39 @@ export function PartnerDashboardClient({
     setTodos((prev) => prev.map((td) => (td.id === id ? { ...td, done } : td)))
   }, [])
 
+  // Adopt a preparation task — POST it as a new partner_todo. The mother
+  // then sees it in her Einstellungen → Partner-Todos panel too.
+  const adoptPreparation = useCallback(async (task: PreparationTask) => {
+    const res = await fetch('/api/partner-todos', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        title: task.title,
+        description: task.description,
+      }),
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(typeof err.error === 'string' ? err.error : 'Konnte nicht angelegt werden')
+    }
+    const created = await res.json()
+    setTodos((prev) => [
+      {
+        id: created.id,
+        title: created.title,
+        description: created.description,
+        dueDate: created.dueDate ?? null,
+        done: false,
+      },
+      ...prev,
+    ])
+  }, [])
+
+  const existingTodoTitles = useMemo(
+    () => new Set(todos.map((t) => t.title)),
+    [todos],
+  )
+
   const answeredQuestions: Question[] = QUESTIONS.filter((q) => {
     const a = answers[q.id]
     return Array.isArray(a) ? a.length > 0 : typeof a === 'string' && a.trim().length > 0
@@ -288,85 +323,125 @@ export function PartnerDashboardClient({
 
   return (
     <main className="min-h-screen bg-background">
-      <div className="mx-auto max-w-sm px-4 py-8">
-        {/* Header with live indicator */}
-        <div className="mb-8 flex items-start justify-between gap-3">
-          <div>
-            <h1 className="font-display text-2xl font-medium text-primary">
+      <div className="mx-auto max-w-sm space-y-6 px-4 py-8">
+        {/* ─────────────  HEADER  ───────────── */}
+        <header className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
               {t.partner.dashboardTitle}
+            </p>
+            <h1 className="mt-1 font-display text-2xl font-medium leading-tight text-foreground">
+              {partnerLabel} von {babyName}
             </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {motherName} &amp; {babyName} · <span className="italic">{partnerLabel}</span>
+            <p className="mt-0.5 font-display text-sm italic text-muted-foreground">
+              An der Seite von {motherName}
             </p>
           </div>
           <RealtimeIndicator status={status} className="mt-1 shrink-0" />
-        </div>
+        </header>
 
-        {/* SSW */}
-        {visibility.woche && (
-          <div className="mb-4 rounded-2xl bg-card p-6 shadow-sm">
-            <p className="text-sm text-muted-foreground">{t.partner.sswCaption}</p>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="font-display text-5xl font-bold text-primary">
-                {t.partner.sswCard.replace('{ssw}', String(ssw))}
-              </span>
-            </div>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {t.partner.babyOnWay.replace('{babyName}', babyName)}
-            </p>
-          </div>
-        )}
-
-        {/* Daily partner tip — always visible */}
-        <div className="mb-4 rounded-2xl bg-card p-5 shadow-sm">
+        {/* ─────────────  1. HEUTE  ─────────────
+            Hero-Impuls: prominent, groß, mit klarer CTA-Logik. */}
+        <section
+          aria-label="Impuls für heute"
+          className="card-elevated rounded-2xl bg-card p-6"
+          style={{ backgroundImage: 'linear-gradient(180deg, hsl(var(--secondary)/0.55) 0%, hsl(var(--card)) 100%)' }}
+        >
           <div className="mb-3 flex items-center justify-between">
-            <p className="text-sm font-semibold text-foreground">{t.partner.tipTodayLabel}</p>
-            <Badge variant="secondary">{getPartnerTipLabel(tip.type, locale)}</Badge>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">
+              Heute
+            </span>
+            <Badge variant="secondary" className="text-[10px] uppercase tracking-wider">
+              {getPartnerTipLabel(tip.type, locale)}
+            </Badge>
           </div>
-          <p className="mb-2 text-3xl">{tip.emoji}</p>
-          <p className="text-sm leading-relaxed text-foreground">
+          <p aria-hidden="true" className="mb-3 text-5xl leading-none">{tip.emoji}</p>
+          <p className="font-display text-lg leading-snug text-foreground">
             {getPartnerTipText(tip, locale)}
           </p>
-        </div>
+          <p className="mt-4 text-[10px] italic text-muted-foreground">
+            Ein Impuls pro Tag. Kein Muss — nur ein Anstupser.
+          </p>
+        </section>
 
-        {/* Partner-Todos — live-synced from mother's changes */}
-        {visibility.partnerTodos && (
-          <PartnerTodosBlock
-            initialTodos={initialTodos}
-            externalTodos={todos}
-            onLocalToggle={handleLocalToggle}
-            heading={`Aufgaben von ${motherName}`}
-            emptyText={`${motherName} hat dir noch keine Aufgaben zugewiesen.`}
-          />
+        {/* ─────────────  2. DEINE MAMA DIESE WOCHE  ─────────────
+            SSW-Kontext + Baby-Update, gated by visibility.woche. */}
+        {visibility.woche && (
+          <section aria-label={motherName + ' diese Woche'}>
+            <h2 className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+              {motherName} diese Woche
+            </h2>
+            <div className="card-elevated rounded-2xl bg-card p-5">
+              <div className="flex items-baseline gap-3">
+                <span className="font-display text-4xl font-medium text-primary">
+                  SSW {ssw}
+                </span>
+                <span className="font-display text-sm italic text-muted-foreground">
+                  · noch {Math.max(0, 40 - ssw)} Wochen
+                </span>
+              </div>
+              <p className="mt-2 text-sm leading-relaxed text-foreground">
+                {t.partner.babyOnWay.replace('{babyName}', babyName)}
+              </p>
+            </div>
+          </section>
         )}
 
-        {/* Birth plan (read-only) — respect visibility */}
+        {/* ─────────────  3. DEINE AUFGABEN  ─────────────
+            Konkrete Aufgaben von {motherName} (live-synced) + Kurator-Bibliothek
+            zum Selbstübernehmen, sortiert nach Fälligkeit. */}
+        <section aria-label="Deine Aufgaben" className="space-y-4">
+          <h2 className="px-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            Deine Aufgaben
+          </h2>
+
+          {visibility.partnerTodos && (
+            <PartnerTodosBlock
+              initialTodos={initialTodos}
+              externalTodos={todos}
+              onLocalToggle={handleLocalToggle}
+              heading={`Von ${motherName} für dich`}
+              emptyText={`${motherName} hat dir noch keine Aufgaben zugewiesen. Übernimm gerne selbst welche aus der Vorbereitungs-Liste unten.`}
+            />
+          )}
+
+          <PartnerPreparationBlock
+            ssw={ssw}
+            existingTodoTitles={existingTodoTitles}
+            onAdopt={adoptPreparation}
+          />
+        </section>
+
+        {/* ─────────────  4. GEBURTSPLAN  ─────────────
+            Nur wenn die Mutter das teilt — sonst nicht anzeigen. */}
         {visibility.geburtsplan && (
-          <div className="rounded-2xl bg-card p-5 shadow-sm">
-            <p className="mb-4 text-sm font-semibold text-foreground">
+          <section aria-label={t.partner.birthPlanHeading}>
+            <h2 className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
               {t.partner.birthPlanHeading}
-            </p>
-            {answeredQuestions.length > 0 ? (
-              <div className="space-y-3">
-                {answeredQuestions.map((q) => (
-                  <div key={q.id} className="text-sm">
-                    <p className="text-xs text-muted-foreground">
-                      {getQuestionLabel(q, locale)}
-                    </p>
-                    <p className="text-foreground">
-                      {Array.isArray(answers[q.id])
-                        ? (answers[q.id] as string[]).join(', ')
-                        : (answers[q.id] as string)}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                {t.partner.birthPlanEmpty.replace('{name}', motherName)}
-              </p>
-            )}
-          </div>
+            </h2>
+            <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+              {answeredQuestions.length > 0 ? (
+                <div className="space-y-3">
+                  {answeredQuestions.map((q) => (
+                    <div key={q.id} className="text-sm">
+                      <p className="text-xs text-muted-foreground">
+                        {getQuestionLabel(q, locale)}
+                      </p>
+                      <p className="text-foreground">
+                        {Array.isArray(answers[q.id])
+                          ? (answers[q.id] as string[]).join(', ')
+                          : (answers[q.id] as string)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {t.partner.birthPlanEmpty.replace('{name}', motherName)}
+                </p>
+              )}
+            </div>
+          </section>
         )}
       </div>
     </main>
