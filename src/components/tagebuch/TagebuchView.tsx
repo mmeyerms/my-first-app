@@ -8,6 +8,7 @@ import { usePreferences } from '@/lib/preferences/client'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
+import { VoiceInputButton } from '@/components/tagebuch/VoiceInputButton'
 
 type DiaryEntry = {
   ssw: number
@@ -281,14 +282,30 @@ export function TagebuchView({ ssw, babyName }: Props) {
           <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
             {t.tagebuch.wordLabel}
           </label>
-          <input
-            type="text"
-            maxLength={100}
-            placeholder={t.tagebuch.wordPlaceholder}
-            value={currentEntry.word ?? ''}
-            onChange={(e) => handleChange('word', e.target.value || null)}
-            className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20"
-          />
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              maxLength={100}
+              placeholder={t.tagebuch.wordPlaceholder}
+              value={currentEntry.word ?? ''}
+              onChange={(e) => handleChange('word', e.target.value || null)}
+              className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20"
+            />
+            <VoiceInputButton
+              locale={locale}
+              size="sm"
+              variant="ghost"
+              className="h-9 w-9 p-0"
+              onTranscript={(text) => {
+                const existing = (currentEntry.word ?? '').trim()
+                // Take just the first word for the one-word capture.
+                const firstWord = text.trim().split(/\s+/)[0] ?? ''
+                if (!firstWord) return
+                const next = existing ? `${existing} ${firstWord}`.slice(0, 100) : firstWord.slice(0, 100)
+                handleChange('word', next || null)
+              }}
+            />
+          </div>
         </div>
 
         {/* Surprise */}
@@ -296,12 +313,26 @@ export function TagebuchView({ ssw, babyName }: Props) {
           <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
             {t.tagebuch.surpriseLabel}
           </label>
-          <Textarea
-            placeholder={surprisePlaceholder}
-            value={currentEntry.surprise ?? ''}
-            onChange={(e) => handleChange('surprise', e.target.value || null)}
-            className="min-h-[80px] resize-none text-sm"
-          />
+          <div className="flex items-start gap-2">
+            <Textarea
+              placeholder={surprisePlaceholder}
+              value={currentEntry.surprise ?? ''}
+              onChange={(e) => handleChange('surprise', e.target.value || null)}
+              className="min-h-[80px] resize-none text-sm"
+            />
+            <VoiceInputButton
+              locale={locale}
+              size="icon"
+              variant="outline"
+              onTranscript={(text) => {
+                const trimmed = text.trim()
+                if (!trimmed) return
+                const existing = (currentEntry.surprise ?? '').trim()
+                const next = existing ? `${existing} ${trimmed}` : trimmed
+                handleChange('surprise', next || null)
+              }}
+            />
+          </div>
         </div>
 
         {!isCurrentSSW && (

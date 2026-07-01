@@ -9,6 +9,8 @@ export interface Pregnancy {
   status: PregnancyStatus
   is_active: boolean
   baby_name: string | null
+  baby_names: string[] | null
+  is_multiple: boolean
   baby_gender: BabyGender | null
   positive_test_date: string | null
   due_date: string | null

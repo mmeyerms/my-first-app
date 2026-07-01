@@ -1,10 +1,15 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
+import { createClient } from '@/lib/supabase/server'
 import { getServerLocale } from '@/lib/i18n/server'
 import { getMessages } from '@/lib/i18n/messages'
 import { SswOverview } from '@/components/ssw/SswOverview'
 
 export default async function SswUebersichtPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
   const locale = await getServerLocale()
   const t = getMessages(locale)
 

@@ -29,19 +29,22 @@ export default async function PartnerDashboardPage() {
 
   const { data: profile } = (await supabase
     .from('profiles')
-    .select('name, baby_name, due_date')
+    .select('name, baby_name')
     .eq('user_id', link.mother_id)
     .single()) as {
-    data: { name: string; baby_name: string | null; due_date: string | null } | null
+    data: { name: string; baby_name: string | null } | null
   }
 
   if (!profile) redirect('/dashboard')
 
+  // Active pregnancy is source of truth (profile.due_date is legacy).
   // For the partner dashboard, fall back to a neutral SSW (20) when the mother
   // hasn't entered a due date yet. The view is informational and degrades
   // gracefully without exact SSW data.
-  const ssw = profile.due_date ? calculateSSW(profile.due_date) : 20
-  const babyName = profile.baby_name ?? t.partner.fallbackBabyName
+  const motherActivePregnancy = await getActivePregnancy(supabase, link.mother_id)
+  const dueDate = motherActivePregnancy?.due_date ?? null
+  const ssw = dueDate ? calculateSSW(dueDate) : 20
+  const babyName = motherActivePregnancy?.baby_name ?? profile.baby_name ?? t.partner.fallbackBabyName
   const tip = getPartnerTipForDay(ssw)
 
   // Read mother's personalization to respect visibility settings
@@ -64,7 +67,6 @@ export default async function PartnerDashboardPage() {
   // Partner-Todos — Aufgaben, die die Mutter der Partner:in zugewiesen hat.
   let partnerTodos: PartnerTodoItem[] = []
   if (visibility.partnerTodos) {
-    const activePregnancy = await getActivePregnancy(supabase, link.mother_id)
     let todoQuery = supabase
       .from('partner_todos')
       .select('id, title, description, due_date, done')
@@ -73,7 +75,7 @@ export default async function PartnerDashboardPage() {
       .order('due_date', { ascending: true, nullsFirst: false })
       .order('created_at', { ascending: false })
       .limit(200)
-    if (activePregnancy) todoQuery = todoQuery.eq('pregnancy_id', activePregnancy.id)
+    if (motherActivePregnancy) todoQuery = todoQuery.eq('pregnancy_id', motherActivePregnancy.id)
     const { data: todoRows } = await todoQuery
     partnerTodos = ((todoRows ?? []) as Array<{
       id: string

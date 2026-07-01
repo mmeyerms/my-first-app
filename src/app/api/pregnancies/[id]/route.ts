@@ -10,6 +10,8 @@ const patchSchema = z
   .object({
     status: statusSchema.optional(),
     baby_name: z.string().min(1).max(50).optional().or(z.literal('')),
+    baby_names: z.array(z.string().min(1).max(50)).max(10).optional(),
+    is_multiple: z.boolean().optional(),
     baby_gender: babyGenderSchema.optional().or(z.literal('')),
     positive_test_date: dateSchema.optional().or(z.literal('')),
     due_date: dateSchema.optional().or(z.literal('')),
@@ -88,7 +90,25 @@ export async function PATCH(
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
   }
 
-  const updates = nullifyEmpty(parsed.data)
+  const updates = nullifyEmpty(parsed.data) as Record<string, unknown>
+
+  // Normalize baby_names: trim + drop empty entries. If provided empty, set null.
+  if ('baby_names' in updates) {
+    const arr = updates.baby_names
+    if (Array.isArray(arr)) {
+      const trimmed = arr.map((n) => (typeof n === 'string' ? n.trim() : '')).filter((n) => n.length > 0)
+      if (trimmed.length > 0) {
+        updates.baby_names = trimmed
+        // Keep baby_name in sync with first entry for legacy consumers unless
+        // the caller explicitly set baby_name in the same request.
+        if (updates.baby_name === undefined || updates.baby_name === null) {
+          updates.baby_name = trimmed[0]
+        }
+      } else {
+        updates.baby_names = null
+      }
+    }
+  }
 
   // Activating this pregnancy: deactivate all OTHERS first to satisfy the
   // unique index idx_pregnancies_user_active.

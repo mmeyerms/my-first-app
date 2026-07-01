@@ -9,10 +9,19 @@ import { cn } from '@/lib/utils'
 interface CompactWelcomeProps {
   name: string
   babyName?: string | null
+  babyNames?: string[] | null
+  isMultiple?: boolean
   ssw: number | null
   dueDate: string | null
   mode: 'planning' | 'pregnant'
   customGreeting?: string
+}
+
+function joinBabyNames(names: string[]): string {
+  const cleaned = names.filter((n) => n && n.trim().length > 0)
+  if (cleaned.length === 0) return ''
+  if (cleaned.length === 1) return cleaned[0]
+  return cleaned.slice(0, -1).join(', ') + ' & ' + cleaned[cleaned.length - 1]
 }
 
 function renderGreeting(fallbackParts: string[], name: string, custom: string | undefined) {
@@ -34,6 +43,8 @@ function renderGreeting(fallbackParts: string[], name: string, custom: string | 
 export function CompactWelcome({
   name,
   babyName,
+  babyNames,
+  isMultiple,
   ssw,
   dueDate,
   mode,
@@ -115,8 +126,13 @@ export function CompactWelcome({
 
   // ---------- Pregnant with due_date: greeting + SSW line, links to /woche ----------
   const greetingParts = t.dashboard.greeting.split('{name}')
-  const babyLine = babyName
-    ? t.dashboard.babyOnWay.replace('{babyName}', babyName)
+  const joinedNames =
+    isMultiple && Array.isArray(babyNames) && babyNames.length > 0
+      ? joinBabyNames(babyNames)
+      : ''
+  const displayBabyName = joinedNames || babyName || ''
+  const babyLine = displayBabyName
+    ? t.dashboard.babyOnWay.replace('{babyName}', displayBabyName)
     : t.dashboard.babyOnWayGeneric
   const sswLine = `${t.dashboard.sswCard.replace('{ssw}', String(ssw))} · ${babyLine}`
 

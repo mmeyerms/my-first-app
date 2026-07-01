@@ -81,7 +81,21 @@ function PregnancyCard({
   const isMemorial = pregnancy.status === 'born' || pregnancy.status === 'sternenkind'
   const isSternenkind = pregnancy.status === 'sternenkind'
 
-  const displayName = pregnancy.baby_name || t.pregnancy.overview.yourBaby
+  // For multiples, prefer joined baby_names (e.g. "Zwillinge: Emma & Leon").
+  // Falls back to the legacy baby_name when baby_names is empty/null.
+  const multipleNames =
+    pregnancy.is_multiple && Array.isArray(pregnancy.baby_names)
+      ? pregnancy.baby_names.filter((n) => n && n.trim().length > 0)
+      : []
+  const joinedMultipleNames =
+    multipleNames.length >= 2
+      ? multipleNames.slice(0, -1).join(', ') + ' & ' + multipleNames[multipleNames.length - 1]
+      : multipleNames[0] ?? ''
+  const displayName = pregnancy.is_multiple
+    ? multipleNames.length > 0
+      ? `Zwillinge: ${joinedMultipleNames}`
+      : 'Zwillinge'
+    : pregnancy.baby_name || t.pregnancy.overview.yourBaby
 
   async function handleActivate() {
     setBusy(true)

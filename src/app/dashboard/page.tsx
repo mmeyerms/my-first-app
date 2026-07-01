@@ -298,6 +298,8 @@ export default async function DashboardPage() {
         <CompactWelcome
           name={profile.name}
           babyName={effectiveBabyName}
+          babyNames={active?.baby_names ?? null}
+          isMultiple={active?.is_multiple ?? false}
           ssw={ssw}
           dueDate={effectiveDueDate}
           mode={mode}

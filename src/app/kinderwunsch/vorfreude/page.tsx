@@ -1,10 +1,15 @@
 import { VorfreudeView } from '@/components/kinderwunsch/VorfreudeView'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
 import { getServerLocale } from '@/lib/i18n/server'
 import { getMessages } from '@/lib/i18n/messages'
 import { getServerTheme } from '@/lib/theme/server'
 
 export default async function VorfreudePage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
   const t = getMessages(await getServerLocale())
   const theme = await getServerTheme()
   const isClassic = theme === 'classic'

@@ -1,9 +1,14 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
 import { getServerLocale } from '@/lib/i18n/server'
 import { getMessages } from '@/lib/i18n/messages'
 import { PacklisteView } from '@/components/packliste/PacklisteView'
 
 export default async function PacklistePage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
   const locale = await getServerLocale()
   const t = getMessages(locale)
 

@@ -1,9 +1,14 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
 import { getServerLocale } from '@/lib/i18n/server'
 import { getMessages } from '@/lib/i18n/messages'
 import { EinkaufslisteView } from '@/components/einkaufsliste/EinkaufslisteView'
 
 export default async function EinkaufslistePage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
   const locale = await getServerLocale()
   const t = getMessages(locale)
 

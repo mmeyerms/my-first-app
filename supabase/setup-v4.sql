@@ -516,6 +516,12 @@ CREATE POLICY "partner_reads_mother_birth_plan" ON birth_plans FOR SELECT
     ) = TRUE
   );
 
+-- ------------------------------------------------------------
+-- 15) MULTIPLES (Zwillinge / Drillinge)
+-- ------------------------------------------------------------
+ALTER TABLE pregnancies ADD COLUMN IF NOT EXISTS baby_names TEXT[] DEFAULT NULL;
+ALTER TABLE pregnancies ADD COLUMN IF NOT EXISTS is_multiple BOOLEAN NOT NULL DEFAULT FALSE;
+
 -- ============================================================
 -- FERTIG. Alle Tabellen + RLS + Trigger sind idempotent angelegt.
 -- ============================================================

@@ -276,7 +276,11 @@ export function DailySnapshot({
     />
   )
 
-  const cards = prefs.snapshotCards.map((k) => cardRenderers[k]?.()).filter(Boolean)
+  // Respect showCountdownWidget preference: if disabled, drop 'countdown' from the render list.
+  const activeKeys = prefs.showCountdownWidget
+    ? prefs.snapshotCards
+    : prefs.snapshotCards.filter((k) => k !== 'countdown')
+  const cards = activeKeys.map((k) => cardRenderers[k]?.()).filter(Boolean)
 
   return (
     <section

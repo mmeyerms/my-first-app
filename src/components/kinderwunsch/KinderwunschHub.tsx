@@ -255,6 +255,20 @@ export function KinderwunschHub() {
               Wunsch-ET: {prefs.kinderwunschReminders.wunschEt}
             </p>
           )}
+          {(prefs.kinderwunschReminders.vitaminsTime || prefs.kinderwunschReminders.ovuTestActive) && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {prefs.kinderwunschReminders.vitaminsTime && (
+                <span className="rounded-full bg-card px-2 py-0.5 text-[11px] text-muted-foreground">
+                  💊 {prefs.kinderwunschReminders.vitaminsTime}
+                </span>
+              )}
+              {prefs.kinderwunschReminders.ovuTestActive && (
+                <span className="rounded-full bg-card px-2 py-0.5 text-[11px] text-muted-foreground">
+                  🧪 Ovu-Test aktiv
+                </span>
+              )}
+            </div>
+          )}
         </div>
       )}
 
