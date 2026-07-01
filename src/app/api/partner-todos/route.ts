@@ -179,6 +179,36 @@ export async function PATCH(request: NextRequest) {
 
   const { id, done } = parsed.data
 
+  // Explicit ownership check — do NOT rely solely on RLS. Look up the todo,
+  // verify caller is either the owner (mother) OR a linked+active partner.
+  const { data: todo } = await supabase
+    .from('partner_todos')
+    .select('id, user_id')
+    .eq('id', id)
+    .limit(1)
+    .single()
+
+  if (!todo) {
+    return NextResponse.json({ error: 'Nicht gefunden' }, { status: 404 })
+  }
+
+  const ownerId = (todo as { user_id: string }).user_id
+  let allowed = ownerId === user.id
+  if (!allowed) {
+    const { data: link } = await supabase
+      .from('partner_links')
+      .select('id')
+      .eq('mother_id', ownerId)
+      .eq('partner_user_id', user.id)
+      .eq('active', true)
+      .limit(1)
+      .single()
+    allowed = Boolean(link)
+  }
+  if (!allowed) {
+    return NextResponse.json({ error: 'Kein Zugriff' }, { status: 403 })
+  }
+
   const { error } = await supabase
     .from('partner_todos')
     .update({ done })

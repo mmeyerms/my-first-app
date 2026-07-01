@@ -214,6 +214,42 @@ export function PartnerDashboardClient({
       )
     }
 
+    // Watch for partner_link deactivation — if the mother unlinks us, redirect
+    // to the caller's own dashboard instead of leaving a stale open channel.
+    channel.on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'partner_links',
+        filter: `mother_id=eq.${motherId}`,
+      },
+      (payload: { new?: { active?: boolean } }) => {
+        if (payload?.new?.active === false && typeof window !== 'undefined') {
+          window.location.href = '/dashboard'
+        }
+      },
+    )
+
+    // Watch for visibility-flag changes by the mother. When she toggles
+    // partnerVisibility.termine/tagebuch/etc., we tear down the channel and
+    // let the useEffect re-run with the new visibility (RLS would then
+    // reject any lingering subscriptions anyway).
+    channel.on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'user_preferences',
+        filter: `user_id=eq.${motherId}`,
+      },
+      () => {
+        if (typeof window !== 'undefined') {
+          window.location.reload()
+        }
+      },
+    )
+
     channel.subscribe((state) => {
       if (state === 'SUBSCRIBED') setStatus('live')
       else if (state === 'CHANNEL_ERROR' || state === 'TIMED_OUT') setStatus('offline')

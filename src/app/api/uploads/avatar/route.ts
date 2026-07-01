@@ -54,14 +54,13 @@ export async function POST(request: NextRequest) {
   const uuid = crypto.randomUUID()
   const path = `${user.id}/${uuid}.${ext}`
 
-  // Lösche vorherige Avatar-Datei(en) des Users (Cleanup).
+  // Snapshot old files BEFORE uploading — only delete them AFTER the new
+  // upload + DB update both succeed. Prevents "no avatar and no old file"
+  // failure mode when upload or DB update fails.
   const { data: existing } = await supabase.storage.from('avatars').list(user.id, {
     limit: 100,
   })
-  if (existing && existing.length > 0) {
-    const oldPaths = existing.map((obj) => `${user.id}/${obj.name}`)
-    await supabase.storage.from('avatars').remove(oldPaths)
-  }
+  const oldPaths = (existing ?? []).map((obj) => `${user.id}/${obj.name}`)
 
   const arrayBuffer = await file.arrayBuffer()
   const { error: uploadError } = await supabase.storage
@@ -78,14 +77,21 @@ export async function POST(request: NextRequest) {
   const { data: publicData } = supabase.storage.from('avatars').getPublicUrl(path)
   const url = publicData?.publicUrl ?? ''
 
-  // Aktualisiere profiles.avatar_url
   const { error: updateError } = await supabase
     .from('profiles')
     .update({ avatar_url: url })
     .eq('user_id', user.id)
 
   if (updateError) {
+    // Roll back the freshly uploaded file so we're not left with an orphan.
+    await supabase.storage.from('avatars').remove([path]).catch(() => {})
     return NextResponse.json({ error: updateError.message }, { status: 500 })
+  }
+
+  // Success — now safe to prune the previous files (best-effort).
+  const prunable = oldPaths.filter((p) => p !== path)
+  if (prunable.length > 0) {
+    await supabase.storage.from('avatars').remove(prunable).catch(() => {})
   }
 
   return NextResponse.json({ url, path })

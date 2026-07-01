@@ -1,6 +1,5 @@
 'use client'
 
-import { PreferencesProvider } from '@/lib/preferences/client'
 import type { UserPreferences } from '@/lib/preferences/types'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { DesignSection } from './sections/DesignSection'
@@ -17,14 +16,20 @@ import { WochenbettSection } from './sections/WochenbettSection'
 import { NotificationsSection } from './sections/NotificationsSection'
 
 interface Props {
+  // initialPrefs kept in the signature so the server-page callsite doesn't
+  // break, but we intentionally do NOT mount a second PreferencesProvider
+  // here — the root layout owns the provider. Nesting caused writes from
+  // /einstellungen (accent color, font size) to update inner state only,
+  // so PreferencesEffects in the outer provider never applied the change.
   initialPrefs: UserPreferences
   pregnancyMode: string | null
 }
 
-export function EinstellungenTabs({ initialPrefs, pregnancyMode }: Props) {
+export function EinstellungenTabs({ initialPrefs: _initialPrefs, pregnancyMode }: Props) {
+  void _initialPrefs
   const isPlanning = pregnancyMode === 'planning'
   return (
-    <PreferencesProvider initialPrefs={initialPrefs}>
+    <>
       <Tabs defaultValue="design" className="w-full">
         <div className="mb-6 -mx-4 overflow-x-auto px-4">
           <TabsList className="flex w-max gap-1">
@@ -58,6 +63,6 @@ export function EinstellungenTabs({ initialPrefs, pregnancyMode }: Props) {
         <TabsContent value="wochenbett"><WochenbettSection /></TabsContent>
         <TabsContent value="notifications"><NotificationsSection /></TabsContent>
       </Tabs>
-    </PreferencesProvider>
+    </>
   )
 }

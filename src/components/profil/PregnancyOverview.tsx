@@ -489,6 +489,7 @@ export function PregnancyOverview() {
   const [error, setError] = useState<string | null>(null)
   const [newOpen, setNewOpen] = useState(false)
   const [transferOpen, setTransferOpen] = useState(false)
+  const [pendingTransferTargetId, setPendingTransferTargetId] = useState<string | undefined>(undefined)
 
   const load = useCallback(async () => {
     try {
@@ -578,6 +579,12 @@ export function PregnancyOverview() {
           // If there was already at least one pregnancy, offer to transfer instead
           // of doing a full reload — the Transfer modal needs the fresh list.
           if (pregnancies && pregnancies.length >= 1 && newlyCreatedId) {
+            // Point the target at the freshly-created pregnancy explicitly.
+            // Otherwise the modal defaults to the currently-active pregnancy,
+            // which — when the user just set the new one active — is the same,
+            // but when the user unchecked "activate now", the transfer would
+            // silently write into the wrong pregnancy.
+            setPendingTransferTargetId(newlyCreatedId)
             void load().then(() => {
               setTransferOpen(true)
             })
@@ -588,7 +595,11 @@ export function PregnancyOverview() {
       />
       <TransferFromPregnancyModal
         open={transferOpen}
-        onOpenChange={setTransferOpen}
+        onOpenChange={(o) => {
+          setTransferOpen(o)
+          if (!o) setPendingTransferTargetId(undefined)
+        }}
+        targetPregnancyId={pendingTransferTargetId}
         onSuccess={handleChanged}
       />
     </div>

@@ -251,12 +251,18 @@ async function sendViaResend(params: {
 }
 
 export async function GET(request: NextRequest) {
+  // Default-DENY: at least one of two auth mechanisms must succeed.
+  // 1) Vercel Cron header (production): "x-vercel-cron" is set to "1" for
+  //    scheduled invocations and cannot be spoofed from outside.
+  // 2) Manual/development: explicit Bearer token via CRON_SECRET.
+  // If NEITHER is present, refuse. This prevents unauthenticated spam mails
+  // if CRON_SECRET is accidentally missing from env.
   const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const auth = request.headers.get("authorization");
-    if (auth !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-    }
+  const isVercelCron = request.headers.get("x-vercel-cron") === "1";
+  const authHeader = request.headers.get("authorization");
+  const bearerOk = cronSecret ? authHeader === `Bearer ${cronSecret}` : false;
+  if (!isVercelCron && !bearerOk) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
   const preferences = await loadOptedInPreferences();

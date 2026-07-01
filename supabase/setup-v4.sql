@@ -587,6 +587,60 @@ CREATE POLICY "partner_reads_mother_diary" ON diary_entries FOR SELECT
                   FROM user_preferences WHERE user_id = diary_entries.user_id), FALSE) = TRUE
   );
 
+-- ------------------------------------------------------------
+-- 19) REALTIME PUBLICATION — Tables must be added to supabase_realtime
+--     publication for change events to reach subscribed clients. Without
+--     this, Realtime subscriptions receive nothing even though RLS allows
+--     SELECT. REPLICA IDENTITY FULL ensures DELETE events include full row
+--     data (default REPLICA IDENTITY only sends the PRIMARY KEY).
+-- ------------------------------------------------------------
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'partner_todos'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE partner_todos;
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'birth_plans'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE birth_plans;
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'termine'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE termine;
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'diary_entries'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE diary_entries;
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'partner_links'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE partner_links;
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'user_preferences'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE user_preferences;
+  END IF;
+END $$;
+
+ALTER TABLE partner_todos REPLICA IDENTITY FULL;
+ALTER TABLE birth_plans REPLICA IDENTITY FULL;
+ALTER TABLE termine REPLICA IDENTITY FULL;
+ALTER TABLE diary_entries REPLICA IDENTITY FULL;
+ALTER TABLE partner_links REPLICA IDENTITY FULL;
+ALTER TABLE user_preferences REPLICA IDENTITY FULL;
+
 -- ============================================================
 -- FERTIG. Alle Tabellen + RLS + Trigger sind idempotent angelegt.
 -- ============================================================

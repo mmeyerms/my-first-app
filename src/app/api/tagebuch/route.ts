@@ -3,12 +3,28 @@ import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { getActivePregnancy } from '@/lib/pregnancy/server'
 
+// Only accept photo_urls that point at OUR Supabase Storage instance.
+// Prevents SSRF/phishing/cross-user URL injection.
+const SUPABASE_PROJECT_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
+const STORAGE_URL_PREFIX = SUPABASE_PROJECT_URL
+  ? `${SUPABASE_PROJECT_URL.replace(/\/$/, '')}/storage/v1/object/`
+  : null
+
+const photoUrlSchema = z
+  .string()
+  .url()
+  .max(2048)
+  .refine(
+    (v) => !STORAGE_URL_PREFIX || v.startsWith(STORAGE_URL_PREFIX),
+    { message: 'photo_url muss auf Supabase Storage zeigen' },
+  )
+
 const schema = z.object({
   ssw: z.number().int().min(1).max(45),
   rating: z.number().int().min(1).max(5).optional(),
   word: z.string().max(100).optional(),
   surprise: z.string().max(500).optional(),
-  photo_url: z.string().url().max(2048).nullable().optional(),
+  photo_url: photoUrlSchema.nullable().optional(),
 })
 
 export async function GET() {
