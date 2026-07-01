@@ -37,16 +37,15 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const active = await getActivePregnancy(supabase, user.id)
+  if (!active) return NextResponse.json(DEFAULTS)
 
-  let query = supabase
+  const { data, error } = await supabase
     .from('kinderwunsch_state')
     .select('koerper, team, aengste, vorfreude, manifest, arzt')
     .eq('user_id', user.id)
+    .eq('pregnancy_id', active.id)
     .limit(1)
-
-  if (active) query = query.eq('pregnancy_id', active.id)
-
-  const { data, error } = await query.single()
+    .single()
 
   if (error && (error as { code?: string }).code !== 'PGRST116') {
     return NextResponse.json({ error: error.message }, { status: 500 })

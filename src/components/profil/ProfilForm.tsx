@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { toast } from 'sonner'
 import { calculateSSW } from '@/lib/utils'
 import { useT } from '@/lib/i18n/client'
 import { Button } from '@/components/ui/button'
@@ -121,11 +122,14 @@ export function ProfilForm({ profile }: { profile: Profile }) {
       }
       const body = await res.json().catch(() => ({}))
       setSaveSuccess(true)
+      toast.success(t.toasts.profileSaved)
       if (body?.modeTransitioned === 'pregnant') {
         setCelebrateOpen(true)
       }
     } catch (err: unknown) {
-      setSaveError(err instanceof Error ? err.message : t.profile.saveError)
+      const msg = err instanceof Error ? err.message : t.profile.saveError
+      setSaveError(msg)
+      toast.error(msg)
     } finally {
       setSaving(false)
     }

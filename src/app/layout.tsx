@@ -7,6 +7,7 @@ import { getServerTheme } from "@/lib/theme/server";
 import { ThemeProvider } from "@/lib/theme/client";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { HebammenChat } from "@/components/chat/HebammenChat";
+import { Toaster } from "@/components/ui/sonner";
 
 const fontDisplay = Cormorant_Garamond({
   subsets: ["latin"],
@@ -48,6 +49,7 @@ export default async function RootLayout({
             {children}
             <BottomNav />
             <HebammenChat />
+            <Toaster position="top-center" richColors closeButton />
           </LocaleProvider>
         </ThemeProvider>
       </body>

@@ -81,17 +81,22 @@ export async function PUT(
   }
 
   const active = await getActivePregnancy(supabase, user.id)
-  const pregnancyId = active?.id ?? null
+  if (!active) {
+    return NextResponse.json(
+      { error: 'Keine aktive Schwangerschaft — bitte im Profil eine anlegen.' },
+      { status: 400 },
+    )
+  }
+  const pregnancyId = active.id
 
   // Look up existing row scoped to user + active pregnancy.
-  let lookup = supabase
+  const { data: existing, error: lookupError } = await supabase
     .from('kinderwunsch_state')
     .select('id')
     .eq('user_id', user.id)
+    .eq('pregnancy_id', pregnancyId)
     .limit(1)
-  if (pregnancyId) lookup = lookup.eq('pregnancy_id', pregnancyId)
-
-  const { data: existing, error: lookupError } = await lookup.single()
+    .single()
 
   if (lookupError && (lookupError as { code?: string }).code !== 'PGRST116') {
     return NextResponse.json({ error: lookupError.message }, { status: 500 })

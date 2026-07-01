@@ -87,6 +87,10 @@ export function TagebuchView({ ssw, babyName }: Props) {
   const reached = getMilestonesUpToSSW(ssw)
   const next = getNextMilestone(ssw)
   const isCurrentSSW = activeSSW === ssw
+  const hasAnyEntries = entries.some((e) => e.rating || e.word || e.surprise)
+  const isCurrentEmpty =
+    !currentEntry.rating && !currentEntry.word && !currentEntry.surprise
+  const showEmptyIntro = isCurrentSSW && isCurrentEmpty && !hasAnyEntries
 
   const sswHeading = t.tagebuch.sswHeading.replace('{ssw}', String(activeSSW))
   const surprisePlaceholder = t.tagebuch.surprisePlaceholder.replace('{babyName}', babyName)
@@ -164,6 +168,11 @@ export function TagebuchView({ ssw, babyName }: Props) {
             {saved && !saving && <span className="text-xs text-green-500">{t.tagebuch.savedShort}</span>}
           </div>
         </div>
+        {showEmptyIntro && (
+          <p className="mb-4 rounded-xl border border-dashed border-border/60 bg-secondary/30 p-3 font-display text-sm italic leading-relaxed text-muted-foreground">
+            {t.emptyStates.tagebuchIntro}
+          </p>
+        )}
 
         {/* Rating */}
         <div className="mb-5">

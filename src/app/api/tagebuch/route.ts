@@ -19,18 +19,16 @@ export async function GET() {
 
   const active = await getActivePregnancy(supabase, user.id)
 
-  let query = supabase
+  // Scope strictly to active pregnancy. No active pregnancy → empty list.
+  if (!active) return NextResponse.json([])
+
+  const { data, error } = await supabase
     .from('diary_entries')
     .select('*')
     .eq('user_id', user.id)
+    .eq('pregnancy_id', active.id)
     .order('ssw', { ascending: true })
     .limit(100)
-
-  if (active) {
-    query = query.eq('pregnancy_id', active.id)
-  }
-
-  const { data, error } = await query
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data ?? [])
@@ -48,17 +46,25 @@ export async function PUT(req: Request) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
 
   const active = await getActivePregnancy(supabase, user.id)
+  if (!active) {
+    return NextResponse.json(
+      { error: 'Keine aktive Schwangerschaft — bitte im Profil eine anlegen.' },
+      { status: 400 },
+    )
+  }
 
   const { ssw, ...rest } = parsed.data
   const payload: Record<string, unknown> = {
     user_id: user.id,
+    pregnancy_id: active.id,
     ssw,
     ...rest,
     updated_at: new Date().toISOString(),
   }
-  if (active) payload.pregnancy_id = active.id
 
-  const { error } = await supabase.from('diary_entries').upsert(payload)
+  const { error } = await supabase
+    .from('diary_entries')
+    .upsert(payload, { onConflict: 'user_id,pregnancy_id,ssw' })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

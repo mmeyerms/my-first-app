@@ -140,6 +140,14 @@ export function HebammenChat() {
     return () => window.clearTimeout(handle)
   }, [open])
 
+  // Allow other components (e.g. the dashboard snapshot card) to open the chat
+  // programmatically by dispatching a custom event on window.
+  useEffect(() => {
+    const handler = () => setOpen(true)
+    window.addEventListener('mamamap:open-chat', handler)
+    return () => window.removeEventListener('mamamap:open-chat', handler)
+  }, [])
+
   const suggestions = useMemo(
     () => [...(t.hebamme.suggestions ?? [])],
     [t.hebamme.suggestions],

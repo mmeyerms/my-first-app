@@ -96,17 +96,16 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const active = await getActivePregnancy(supabase, user.id)
+  if (!active) return NextResponse.json([])
 
-  let query = supabase
+  const { data, error } = await supabase
     .from('termine')
     .select('*')
     .eq('user_id', user.id)
+    .eq('pregnancy_id', active.id)
     .order('date', { ascending: true })
     .limit(500)
 
-  if (active) query = query.eq('pregnancy_id', active.id)
-
-  const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   const rows = (data ?? []) as DbTermin[]

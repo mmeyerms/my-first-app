@@ -68,14 +68,22 @@ export async function PUT(request: NextRequest) {
   }
 
   const active = await getActivePregnancy(supabase, user.id)
+  if (!active) {
+    return NextResponse.json(
+      { error: 'Keine aktive Schwangerschaft — bitte im Profil eine anlegen.' },
+      { status: 400 },
+    )
+  }
 
-  const payload: Record<string, unknown> = {
+  const payload = {
     user_id: user.id,
+    pregnancy_id: active.id,
     answers: result.data.answers,
   }
-  if (active) payload.pregnancy_id = active.id
 
-  const { error } = await supabase.from('birth_plans').upsert(payload)
+  const { error } = await supabase
+    .from('birth_plans')
+    .upsert(payload, { onConflict: 'user_id,pregnancy_id' })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

@@ -45,17 +45,16 @@ export async function GET(
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const active = await getActivePregnancy(supabase, user.id)
+  if (!active) return NextResponse.json(DEFAULT_STATE)
 
-  let query = supabase
+  const { data, error } = await supabase
     .from('checklists')
     .select('state')
     .eq('user_id', user.id)
     .eq('kind', kind)
+    .eq('pregnancy_id', active.id)
     .limit(1)
-
-  if (active) query = query.eq('pregnancy_id', active.id)
-
-  const { data, error } = await query.single()
+    .single()
 
   if (error && (error as { code?: string }).code !== 'PGRST116') {
     return NextResponse.json({ error: error.message }, { status: 500 })
@@ -93,13 +92,19 @@ export async function PUT(
   }
 
   const active = await getActivePregnancy(supabase, user.id)
+  if (!active) {
+    return NextResponse.json(
+      { error: 'Keine aktive Schwangerschaft — bitte im Profil eine anlegen.' },
+      { status: 400 },
+    )
+  }
 
-  const payload: Record<string, unknown> = {
+  const payload = {
     user_id: user.id,
+    pregnancy_id: active.id,
     kind,
     state: parsed.data.state,
   }
-  if (active) payload.pregnancy_id = active.id
 
   const { error } = await supabase
     .from('checklists')

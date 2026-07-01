@@ -3,15 +3,21 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getServerLocale } from '@/lib/i18n/server'
 import { getMessages } from '@/lib/i18n/messages'
-import { WochenbettView } from '@/components/wochenbett/WochenbettView'
+import { WochenbettTabs } from '@/components/wochenbett/WochenbettTabs'
 
-export default async function WochenbettPage() {
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>
+}
+
+export default async function WochenbettPage({ searchParams }: PageProps) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   const locale = await getServerLocale()
   const t = getMessages(locale)
+  const params = await searchParams
+  const initialTab = params?.tab === 'chef' ? 'chef' : 'liste'
 
   return (
     <main className="min-h-screen bg-background">
@@ -28,7 +34,7 @@ export default async function WochenbettPage() {
           </Link>
         </div>
         <p className="mb-6 text-sm text-muted-foreground">{t.wochenbett.intro}</p>
-        <WochenbettView />
+        <WochenbettTabs initialTab={initialTab} />
       </div>
     </main>
   )

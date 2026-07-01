@@ -17,6 +17,8 @@ import {
   X,
 } from 'lucide-react'
 
+import { toast } from 'sonner'
+
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -258,11 +260,10 @@ export function TermineView({ ssw }: TermineViewProps) {
           body: JSON.stringify({ termin }),
         })
         if (!res.ok) throw new Error('update failed')
-      } catch {
+        toast.success(t.toasts.terminSaved)
+      } catch (err) {
         setTermine(previous)
-        if (typeof window !== 'undefined') {
-          window.alert(t.termine.form.editTitle + ' — ' + 'Error')
-        }
+        toast.error(err instanceof Error ? err.message : t.toasts.genericError)
       }
       return
     }
@@ -296,11 +297,10 @@ export function TermineView({ ssw }: TermineViewProps) {
           // Replace optimistic siblings with server-authoritative records.
           setTermine([...previous, ...created])
         }
-      } catch {
+        toast.success(t.toasts.terminSaved)
+      } catch (err) {
         setTermine(previous)
-        if (typeof window !== 'undefined') {
-          window.alert('Error')
-        }
+        toast.error(err instanceof Error ? err.message : t.toasts.genericError)
       }
       return
     }
@@ -320,11 +320,10 @@ export function TermineView({ ssw }: TermineViewProps) {
       if (created.length > 0) {
         setTermine([...previous, ...created])
       }
-    } catch {
+      toast.success(t.toasts.terminSaved)
+    } catch (err) {
       setTermine(previous)
-      if (typeof window !== 'undefined') {
-        window.alert('Error')
-      }
+      toast.error(err instanceof Error ? err.message : t.toasts.genericError)
     }
   }
 
@@ -345,11 +344,10 @@ export function TermineView({ ssw }: TermineViewProps) {
       const url = `/api/termine/${encodeURIComponent(id)}?series=${scope === 'series' ? 'true' : 'false'}`
       const res = await fetch(url, { method: 'DELETE' })
       if (!res.ok) throw new Error('delete failed')
-    } catch {
+      toast.success(t.toasts.terminDeleted)
+    } catch (err) {
       setTermine(previous)
-      if (typeof window !== 'undefined') {
-        window.alert('Error')
-      }
+      toast.error(err instanceof Error ? err.message : t.toasts.genericError)
     }
   }
 
@@ -500,29 +498,45 @@ export function TermineView({ ssw }: TermineViewProps) {
         {upcoming.length === 0 ? (
           <Card className="card-elevated border-dashed border-border/60 bg-card/50">
             <CardContent className="p-6 text-center">
-              <p
-                className={
-                  isClassic
-                    ? 'text-sm text-gray-600'
-                    : 'font-display text-sm italic text-muted-foreground'
-                }
-              >
-                {selectedDate
-                  ? t.termine.empty
-                  : allUpcoming.length === 0
-                  ? t.termine.empty
-                  : t.termine.quickFilter.emptyInRange}
-              </p>
-              {!selectedDate && allUpcoming.length === 0 && (
-                <Button
-                  type="button"
-                  variant="link"
-                  size="sm"
-                  onClick={() => openAdd()}
-                  className="mt-2 h-auto px-0 text-primary"
+              {!selectedDate && allUpcoming.length === 0 ? (
+                <>
+                  <p
+                    className={
+                      isClassic
+                        ? 'text-base font-semibold text-gray-700'
+                        : 'font-display text-base font-medium text-foreground'
+                    }
+                  >
+                    {t.emptyStates.termineTitle}
+                  </p>
+                  <p
+                    className={
+                      isClassic
+                        ? 'mt-1 text-sm text-gray-600'
+                        : 'mt-1 font-display text-sm italic text-muted-foreground'
+                    }
+                  >
+                    {t.emptyStates.termineBody}
+                  </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => openAdd()}
+                    className="mt-4"
+                  >
+                    {t.emptyStates.termineCta}
+                  </Button>
+                </>
+              ) : (
+                <p
+                  className={
+                    isClassic
+                      ? 'text-sm text-gray-600'
+                      : 'font-display text-sm italic text-muted-foreground'
+                  }
                 >
-                  {t.termine.emptyCta} →
-                </Button>
+                  {selectedDate ? t.termine.empty : t.termine.quickFilter.emptyInRange}
+                </p>
               )}
               {!selectedDate && allUpcoming.length > 0 && quickFilter !== 'all' && (
                 <Button
