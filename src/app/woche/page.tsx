@@ -6,6 +6,7 @@ import { calculateSSW } from '@/lib/utils'
 import { getServerLocale } from '@/lib/i18n/server'
 import { getMessages } from '@/lib/i18n/messages'
 import { getServerTheme } from '@/lib/theme/server'
+import { getActivePregnancy } from '@/lib/pregnancy/server'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -20,7 +21,6 @@ import { BabyIllustration } from '@/components/ssw/BabyIllustration'
 interface Profile {
   name: string
   baby_name: string | null
-  due_date: string | null
 }
 
 const CATEGORY_BG: Record<SswComparisonCategory, string> = {
@@ -42,16 +42,20 @@ export default async function WochePage() {
 
   const { data: profile } = (await supabase
     .from('profiles')
-    .select('name, baby_name, due_date')
+    .select('name, baby_name')
     .eq('user_id', user.id)
     .single()) as { data: Profile | null }
 
   if (!profile) redirect('/onboarding')
-  // Woche page is SSW-driven and meaningless without due_date.
-  if (!profile.due_date) redirect('/profil')
 
-  const ssw = calculateSSW(profile.due_date)
+  // Active pregnancy is source of truth (profile.due_date is legacy).
+  const active = await getActivePregnancy(supabase, user.id)
+  const dueDate = active?.due_date ?? null
+  if (!dueDate) redirect('/profil')
+
+  const ssw = calculateSSW(dueDate)
   const info = getSswInfo(ssw)
+  const babyName = active?.baby_name ?? profile.baby_name
 
   const locale = await getServerLocale()
   const t = getMessages(locale)
@@ -132,7 +136,7 @@ export default async function WochePage() {
           )}
 
           <p className="mt-6 font-display text-base italic text-muted-foreground">
-            {t.woche.forBaby.replace('{babyName}', profile.baby_name ?? t.partner.fallbackBabyName)}
+            {t.woche.forBaby.replace('{babyName}', babyName ?? t.partner.fallbackBabyName)}
           </p>
         </header>
 

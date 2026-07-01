@@ -5,6 +5,7 @@ import { calculateSSW } from '@/lib/utils'
 import { getTipForDay, getTipText, getTipDetail, getCategoryLabel } from '@/lib/tips'
 import { getServerLocale } from '@/lib/i18n/server'
 import { getMessages } from '@/lib/i18n/messages'
+import { getActivePregnancy } from '@/lib/pregnancy/server'
 import { Badge } from '@/components/ui/badge'
 
 export default async function TippsPage() {
@@ -15,16 +16,19 @@ export default async function TippsPage() {
   const locale = await getServerLocale()
   const t = getMessages(locale)
 
-  const { data: profile } = (await supabase
+  const { data: profile } = await supabase
     .from('profiles')
-    .select('due_date')
+    .select('user_id')
     .eq('user_id', user.id)
-    .single()) as { data: { due_date: string | null } | null }
-
+    .single()
   if (!profile) redirect('/onboarding')
-  if (!profile.due_date) redirect('/profil')
 
-  const ssw = calculateSSW(profile.due_date)
+  // Active pregnancy is source of truth (profile.due_date is legacy).
+  const active = await getActivePregnancy(supabase, user.id)
+  const dueDate = active?.due_date ?? null
+  if (!dueDate) redirect('/profil')
+
+  const ssw = calculateSSW(dueDate)
   const tip = getTipForDay(ssw)
   const categoryLabel = getCategoryLabel(tip.category, locale)
   const dateLocale = locale === 'de' ? 'de-DE' : 'en-GB'

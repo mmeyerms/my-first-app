@@ -5,6 +5,7 @@ import { TagebuchView } from '@/components/tagebuch/TagebuchView'
 import Link from 'next/link'
 import { getServerLocale } from '@/lib/i18n/server'
 import { getMessages } from '@/lib/i18n/messages'
+import { getActivePregnancy } from '@/lib/pregnancy/server'
 
 export default async function TagebuchPage() {
   const supabase = await createClient()
@@ -14,16 +15,19 @@ export default async function TagebuchPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('baby_name, due_date')
+    .select('baby_name')
     .eq('user_id', user.id)
-    .single() as { data: { baby_name: string | null; due_date: string | null } | null }
+    .single() as { data: { baby_name: string | null } | null }
 
   if (!profile) redirect('/onboarding')
-  // Tagebuch is week-by-week, so due_date is required.
-  if (!profile.due_date) redirect('/profil')
 
-  const ssw = calculateSSW(profile.due_date)
-  const babyName = profile.baby_name ?? t.partner.fallbackBabyName
+  // Active pregnancy is source of truth (profile.due_date is legacy).
+  const active = await getActivePregnancy(supabase, user.id)
+  const dueDate = active?.due_date ?? null
+  if (!dueDate) redirect('/profil')
+
+  const ssw = calculateSSW(dueDate)
+  const babyName = active?.baby_name ?? profile.baby_name ?? t.partner.fallbackBabyName
 
   return (
     <main className="min-h-screen bg-background">

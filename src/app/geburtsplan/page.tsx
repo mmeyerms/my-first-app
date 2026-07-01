@@ -5,6 +5,7 @@ import { calculateSSW } from '@/lib/utils'
 import { GeburtsplanView } from '@/components/geburtsplan/GeburtsplanView'
 import { getServerLocale } from '@/lib/i18n/server'
 import { getMessages } from '@/lib/i18n/messages'
+import { getActivePregnancy } from '@/lib/pregnancy/server'
 
 export default async function GeburtsplanPage() {
   const supabase = await createClient()
@@ -14,24 +15,26 @@ export default async function GeburtsplanPage() {
 
   const { data: profile } = (await supabase
     .from('profiles')
-    .select('name, baby_name, due_date')
+    .select('name, baby_name')
     .eq('user_id', user.id)
     .single()) as {
-    data: { name: string; baby_name: string | null; due_date: string | null } | null
+    data: { name: string; baby_name: string | null } | null
   }
 
   if (!profile) redirect('/onboarding')
-  // Birth plan is SSW-anchored: due_date is required to unlock stages.
-  if (!profile.due_date) redirect('/profil')
 
-  const { data: plan } = await supabase
-    .from('birth_plans')
-    .select('answers')
-    .eq('user_id', user.id)
-    .single()
+  // Active pregnancy is source of truth (profile.due_date is legacy).
+  const active = await getActivePregnancy(supabase, user.id)
+  const dueDate = active?.due_date ?? null
+  if (!dueDate) redirect('/profil')
 
-  const ssw = calculateSSW(profile.due_date)
-  const babyName = profile.baby_name ?? t.partner.fallbackBabyName
+  // Prefer pregnancy-scoped plan; fall back to legacy user-scoped row.
+  let planQuery = supabase.from('birth_plans').select('answers').eq('user_id', user.id)
+  if (active) planQuery = planQuery.eq('pregnancy_id', active.id)
+  const { data: plan } = await planQuery.limit(1).single()
+
+  const ssw = calculateSSW(dueDate)
+  const babyName = active?.baby_name ?? profile.baby_name ?? t.partner.fallbackBabyName
   const subtitle = t.geburtsplan.subtitleFor
     .replace('{babyName}', babyName)
     .replace('{ssw}', String(ssw))
@@ -54,7 +57,7 @@ export default async function GeburtsplanPage() {
           initialAnswers={(plan?.answers as Record<string, unknown>) ?? {}}
           ssw={ssw}
           babyName={babyName}
-          dueDate={profile.due_date}
+          dueDate={dueDate}
         />
       </div>
     </main>
