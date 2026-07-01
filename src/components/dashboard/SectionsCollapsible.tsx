@@ -2,7 +2,20 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import {
+  ChevronDown,
+  ChevronRight,
+  Sprout,
+  ScrollText,
+  Sparkle,
+  NotebookPen,
+  CalendarDays,
+  ShoppingBag,
+  Briefcase,
+  HandHeart,
+  HeartHandshake,
+  type LucideIcon,
+} from 'lucide-react'
 import {
   Collapsible,
   CollapsibleContent,
@@ -20,6 +33,20 @@ export interface SectionsCollapsibleItem {
   title: string
   description: string
   available: boolean
+}
+
+// Map hrefs to Lucide icons for the editorial theme. Emojis are kept for
+// the classic theme via item.emoji.
+const HREF_ICON: Record<string, LucideIcon> = {
+  '/kinderwunsch': Sprout,
+  '/geburtsplan': ScrollText,
+  '/tipps': Sparkle,
+  '/tagebuch': NotebookPen,
+  '/termine': CalendarDays,
+  '/einkaufsliste': ShoppingBag,
+  '/packliste': Briefcase,
+  '/wochenbett': HandHeart,
+  '/partner': HeartHandshake,
 }
 
 export interface SectionsCollapsibleSection {
@@ -107,13 +134,21 @@ export function SectionsCollapsible({
               </header>
               <div className="space-y-2">
                 {section.items.map((item) => {
+                  const Icon = HREF_ICON[item.href]
                   const row = (
                     <CardContent className="flex items-center gap-3 p-3">
                       <span
                         aria-hidden="true"
                         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-base"
                       >
-                        {item.emoji}
+                        {isClassic || !Icon ? (
+                          item.emoji
+                        ) : (
+                          <Icon
+                            className="h-4 w-4 text-primary"
+                            strokeWidth={1.5}
+                          />
+                        )}
                       </span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">

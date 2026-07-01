@@ -39,6 +39,7 @@ const EMPTY_DRAFT: NewSlotDraft = {
 export function HelpCoordinator() {
   const { t } = useLocale()
   const tc = t.helpCoordinator
+  const empties = t.emptyStates
 
   const [lists, setLists] = useState<HelpRequestWithSlots[]>([])
   const [loading, setLoading] = useState(true)
@@ -195,28 +196,40 @@ export function HelpCoordinator() {
   return (
     <div className="space-y-6">
       {/* Header CTA */}
-      <div className="flex">
-        <Button
-          onClick={createList}
-          disabled={creating}
-          className="inline-flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" strokeWidth={2} />
-          {creating ? tc.creating : tc.createList}
-        </Button>
-      </div>
+      {hasLists && (
+        <div className="flex">
+          <Button
+            onClick={createList}
+            disabled={creating}
+            className="inline-flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" strokeWidth={2} />
+            {creating ? tc.creating : tc.createList}
+          </Button>
+        </div>
+      )}
 
       {loading ? (
         <div className="rounded-2xl border border-border/60 bg-card p-6 text-sm text-muted-foreground shadow-sm">
           {t.common.loading}
         </div>
       ) : !hasLists ? (
-        <div className="rounded-2xl border border-dashed border-border/60 bg-muted/30 p-8 text-center">
+        <div className="rounded-2xl border border-dashed border-border/60 bg-secondary/30 p-8 text-center">
           <HandHeart className="mx-auto mb-3 h-8 w-8 text-primary" strokeWidth={1.5} />
-          <h3 className="text-base font-semibold text-foreground">
-            {tc.emptyListsTitle}
+          <h3 className="font-display text-lg font-medium text-foreground">
+            {empties.helpCoordinatorTitle}
           </h3>
-          <p className="mt-1 text-sm text-muted-foreground">{tc.emptyListsBody}</p>
+          <p className="mx-auto mt-2 max-w-xs text-sm text-muted-foreground">
+            {empties.helpCoordinatorBody}
+          </p>
+          <Button
+            onClick={createList}
+            disabled={creating}
+            className="mt-5 inline-flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" strokeWidth={2} />
+            {creating ? tc.creating : empties.helpCoordinatorCta}
+          </Button>
         </div>
       ) : (
         <div className="space-y-6">

@@ -39,6 +39,20 @@ export function EinkaufslisteView() {
   const [customDraftCategory, setCustomDraftCategory] = useState<string | null>(null)
   const [customDraft, setCustomDraft] = useState('')
 
+  // Total visible items across all built-in categories (excluding hidden ones)
+  const totalVisibleItems = useMemo(() => {
+    let total = 0
+    for (const cat of EINKAUF_KATEGORIEN) {
+      for (const it of cat.items) {
+        if (!state.excluded.includes(it.id)) total += 1
+      }
+    }
+    for (const c of state.custom) {
+      if (!state.excluded.includes(c.id)) total += 1
+    }
+    return total
+  }, [state])
+
   // Group categories by priority
   const grouped = useMemo(() => {
     const map: Record<Priority, EinkaufKategorie[]> = {
@@ -109,6 +123,18 @@ export function EinkaufslisteView() {
 
   return (
     <div className="space-y-6">
+      {/* Congratulatory empty state when all suggested items are hidden AND no custom items */}
+      {totalVisibleItems === 0 && (
+        <section className="rounded-2xl border border-dashed border-border/60 bg-secondary/30 p-6 text-center">
+          <p className="font-display text-base font-medium text-foreground">
+            {t.emptyStates.listCompleteTitle}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t.emptyStates.listCompleteBody}
+          </p>
+        </section>
+      )}
+
       {priorities.map((priority) => {
         const cats = grouped[priority]
         if (cats.length === 0) return null

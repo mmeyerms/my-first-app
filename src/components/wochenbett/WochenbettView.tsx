@@ -148,6 +148,18 @@ export function WochenbettView() {
         </p>
       </section>
 
+      {/* Congratulatory empty state when all suggested items are handled AND no custom items */}
+      {totalVisible === 0 && state.custom.length === 0 && (
+        <section className="rounded-2xl border border-dashed border-border/60 bg-secondary/30 p-6 text-center">
+          <p className="font-display text-base font-medium text-foreground">
+            {t.emptyStates.listCompleteTitle}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t.emptyStates.listCompleteBody}
+          </p>
+        </section>
+      )}
+
       {/* Categories */}
       {WOCHENBETT_KATEGORIEN.map((cat) => {
         const isOpen = openCategories[cat.id]
