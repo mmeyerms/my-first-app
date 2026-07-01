@@ -1,0 +1,432 @@
+-- ============================================================
+-- MAMAMAP — KONSOLIDIERTES SETUP (Migrations 001-012)
+-- Idempotent: sicher auf neuer und bestehender DB ausführbar.
+-- Ausführung: Supabase Dashboard > SQL Editor > Run
+-- ============================================================
+
+-- ------------------------------------------------------------
+-- 1) SHARED TRIGGER FUNCTION
+-- ------------------------------------------------------------
+CREATE OR REPLACE FUNCTION set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ------------------------------------------------------------
+-- 2) PROFILES
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS profiles (
+  id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id            UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL UNIQUE,
+  name               TEXT NOT NULL CHECK (char_length(name) BETWEEN 1 AND 50),
+  baby_name          TEXT,
+  positive_test_date DATE,
+  due_date           DATE,
+  locale             TEXT DEFAULT 'de',
+  mode               TEXT DEFAULT 'pregnant',
+  baby_gender        TEXT,
+  tour_completed     BOOLEAN DEFAULT FALSE,
+  created_at         TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  updated_at         TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  CONSTRAINT due_date_after_test CHECK (
+    positive_test_date IS NULL OR due_date IS NULL OR due_date > positive_test_date
+  )
+);
+
+ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_locale_check;
+ALTER TABLE profiles ADD CONSTRAINT profiles_locale_check CHECK (locale IN ('de', 'en'));
+
+ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_mode_check;
+ALTER TABLE profiles ADD CONSTRAINT profiles_mode_check CHECK (mode IN ('planning', 'pregnant'));
+
+ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_baby_gender_check;
+ALTER TABLE profiles ADD CONSTRAINT profiles_baby_gender_check
+  CHECK (baby_gender IS NULL OR baby_gender IN ('female', 'male', 'diverse', 'surprise', 'unknown'));
+
+CREATE INDEX IF NOT EXISTS idx_profiles_user_id ON profiles(user_id);
+
+DROP TRIGGER IF EXISTS profiles_updated_at ON profiles;
+CREATE TRIGGER profiles_updated_at BEFORE UPDATE ON profiles
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "own_profile_select" ON profiles;
+CREATE POLICY "own_profile_select" ON profiles FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "own_profile_insert" ON profiles;
+CREATE POLICY "own_profile_insert" ON profiles FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "own_profile_update" ON profiles;
+CREATE POLICY "own_profile_update" ON profiles FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "own_profile_delete" ON profiles;
+CREATE POLICY "own_profile_delete" ON profiles FOR DELETE USING (auth.uid() = user_id);
+
+-- ------------------------------------------------------------
+-- 3) PARTNER SYSTEM (invites + links)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS partner_invites (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  mother_id  UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  token      TEXT NOT NULL UNIQUE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  used_at    TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_partner_invites_mother_id ON partner_invites(mother_id);
+CREATE INDEX IF NOT EXISTS idx_partner_invites_token ON partner_invites(token);
+ALTER TABLE partner_invites ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "mother_manages_own_invites" ON partner_invites;
+CREATE POLICY "mother_manages_own_invites" ON partner_invites FOR ALL USING (auth.uid() = mother_id);
+
+CREATE TABLE IF NOT EXISTS partner_links (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  mother_id       UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  partner_user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  active          BOOLEAN DEFAULT TRUE NOT NULL,
+  created_at      TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  UNIQUE (mother_id, partner_user_id)
+);
+CREATE INDEX IF NOT EXISTS idx_partner_links_mother_id ON partner_links(mother_id);
+CREATE INDEX IF NOT EXISTS idx_partner_links_partner_user_id ON partner_links(partner_user_id);
+ALTER TABLE partner_links ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "mother_sees_own_links" ON partner_links;
+CREATE POLICY "mother_sees_own_links" ON partner_links FOR SELECT USING (auth.uid() = mother_id);
+DROP POLICY IF EXISTS "partner_sees_own_link" ON partner_links;
+CREATE POLICY "partner_sees_own_link" ON partner_links FOR SELECT USING (auth.uid() = partner_user_id);
+DROP POLICY IF EXISTS "mother_manages_own_links" ON partner_links;
+CREATE POLICY "mother_manages_own_links" ON partner_links FOR ALL USING (auth.uid() = mother_id);
+
+-- Partner reads mother's profile
+DROP POLICY IF EXISTS "partner_reads_mother_profile" ON profiles;
+CREATE POLICY "partner_reads_mother_profile" ON profiles FOR SELECT
+  USING (auth.uid() IN (
+    SELECT partner_user_id FROM partner_links WHERE mother_id = profiles.user_id AND active = TRUE
+  ));
+
+-- ------------------------------------------------------------
+-- 4) PREGNANCIES (VOR den scoped Tabellen)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS pregnancies (
+  id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id            UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  status             TEXT NOT NULL DEFAULT 'pregnant',
+  is_active          BOOLEAN DEFAULT TRUE NOT NULL,
+  baby_name          TEXT,
+  baby_gender        TEXT,
+  positive_test_date DATE,
+  due_date           DATE,
+  birth_date         DATE,
+  ended_date         DATE,
+  memorial_note      TEXT,
+  created_at         TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  updated_at         TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+ALTER TABLE pregnancies DROP CONSTRAINT IF EXISTS pregnancies_status_check;
+ALTER TABLE pregnancies ADD CONSTRAINT pregnancies_status_check
+  CHECK (status IN ('planning', 'pregnant', 'born', 'sternenkind'));
+ALTER TABLE pregnancies DROP CONSTRAINT IF EXISTS pregnancies_baby_gender_check;
+ALTER TABLE pregnancies ADD CONSTRAINT pregnancies_baby_gender_check
+  CHECK (baby_gender IS NULL OR baby_gender IN ('female', 'male', 'diverse', 'surprise', 'unknown'));
+
+DROP INDEX IF EXISTS idx_pregnancies_user_active;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_pregnancies_user_active
+  ON pregnancies(user_id) WHERE is_active = TRUE;
+CREATE INDEX IF NOT EXISTS idx_pregnancies_user_id ON pregnancies(user_id);
+
+DROP TRIGGER IF EXISTS pregnancies_updated_at ON pregnancies;
+CREATE TRIGGER pregnancies_updated_at BEFORE UPDATE ON pregnancies
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+ALTER TABLE pregnancies ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "own_pregnancies_all" ON pregnancies;
+CREATE POLICY "own_pregnancies_all" ON pregnancies FOR ALL
+  USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "partner_reads_mother_pregnancy" ON pregnancies;
+CREATE POLICY "partner_reads_mother_pregnancy" ON pregnancies FOR SELECT
+  USING (auth.uid() IN (
+    SELECT partner_user_id FROM partner_links WHERE mother_id = pregnancies.user_id AND active = TRUE
+  ));
+
+-- ------------------------------------------------------------
+-- 5) BIRTH PLANS
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS birth_plans (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id      UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  pregnancy_id UUID REFERENCES pregnancies(id) ON DELETE CASCADE,
+  answers      JSONB NOT NULL DEFAULT '{}',
+  created_at   TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  updated_at   TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+ALTER TABLE birth_plans ADD COLUMN IF NOT EXISTS pregnancy_id UUID REFERENCES pregnancies(id) ON DELETE CASCADE;
+CREATE INDEX IF NOT EXISTS idx_birth_plans_user_id ON birth_plans(user_id);
+CREATE INDEX IF NOT EXISTS idx_birth_plans_pregnancy_id ON birth_plans(pregnancy_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_birth_plans_user_pregnancy
+  ON birth_plans(user_id, COALESCE(pregnancy_id, '00000000-0000-0000-0000-000000000000'::uuid));
+
+DROP TRIGGER IF EXISTS birth_plans_updated_at ON birth_plans;
+CREATE TRIGGER birth_plans_updated_at BEFORE UPDATE ON birth_plans
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+ALTER TABLE birth_plans ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "own_birth_plan_select" ON birth_plans;
+CREATE POLICY "own_birth_plan_select" ON birth_plans FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "own_birth_plan_insert" ON birth_plans;
+CREATE POLICY "own_birth_plan_insert" ON birth_plans FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "own_birth_plan_update" ON birth_plans;
+CREATE POLICY "own_birth_plan_update" ON birth_plans FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "own_birth_plan_delete" ON birth_plans;
+CREATE POLICY "own_birth_plan_delete" ON birth_plans FOR DELETE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "partner_reads_mother_birth_plan" ON birth_plans;
+CREATE POLICY "partner_reads_mother_birth_plan" ON birth_plans FOR SELECT
+  USING (auth.uid() IN (
+    SELECT partner_user_id FROM partner_links WHERE mother_id = birth_plans.user_id AND active = TRUE
+  ));
+
+-- ------------------------------------------------------------
+-- 6) DIARY ENTRIES
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS diary_entries (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id      UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  pregnancy_id UUID REFERENCES pregnancies(id) ON DELETE CASCADE,
+  ssw          INT NOT NULL,
+  rating       INT CHECK (rating BETWEEN 1 AND 5),
+  word         TEXT,
+  surprise     TEXT,
+  created_at   TIMESTAMPTZ DEFAULT NOW(),
+  updated_at   TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE diary_entries ADD COLUMN IF NOT EXISTS pregnancy_id UUID REFERENCES pregnancies(id) ON DELETE CASCADE;
+CREATE INDEX IF NOT EXISTS idx_diary_user_ssw ON diary_entries(user_id, ssw);
+CREATE INDEX IF NOT EXISTS idx_diary_pregnancy_id ON diary_entries(pregnancy_id);
+
+DROP TRIGGER IF EXISTS diary_entries_updated_at ON diary_entries;
+CREATE TRIGGER diary_entries_updated_at BEFORE UPDATE ON diary_entries
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+ALTER TABLE diary_entries ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own diary" ON diary_entries;
+CREATE POLICY "Users manage own diary" ON diary_entries FOR ALL
+  USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+-- ------------------------------------------------------------
+-- 7) TERMINE
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS termine (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id               UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  pregnancy_id          UUID REFERENCES pregnancies(id) ON DELETE CASCADE,
+  type                  TEXT NOT NULL,
+  title                 TEXT NOT NULL,
+  date                  DATE NOT NULL,
+  time                  TEXT,
+  location              TEXT,
+  doctor                TEXT,
+  notes                 TEXT,
+  done                  BOOLEAN DEFAULT FALSE NOT NULL,
+  group_id              TEXT,
+  reminder_hours_before INTEGER,
+  color                 TEXT,
+  category_slug         TEXT,
+  created_at            TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  updated_at            TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+ALTER TABLE termine ADD COLUMN IF NOT EXISTS pregnancy_id UUID REFERENCES pregnancies(id) ON DELETE CASCADE;
+ALTER TABLE termine ADD COLUMN IF NOT EXISTS reminder_hours_before INTEGER;
+ALTER TABLE termine ADD COLUMN IF NOT EXISTS color TEXT;
+ALTER TABLE termine ADD COLUMN IF NOT EXISTS category_slug TEXT;
+
+CREATE INDEX IF NOT EXISTS idx_termine_user_date ON termine(user_id, date);
+CREATE INDEX IF NOT EXISTS idx_termine_group_id ON termine(group_id) WHERE group_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_termine_pregnancy_id ON termine(pregnancy_id);
+CREATE INDEX IF NOT EXISTS idx_termine_user_location ON termine(user_id, location) WHERE location IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_termine_user_doctor ON termine(user_id, doctor) WHERE doctor IS NOT NULL;
+
+DROP TRIGGER IF EXISTS termine_updated_at ON termine;
+CREATE TRIGGER termine_updated_at BEFORE UPDATE ON termine
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+ALTER TABLE termine ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "own_termine_all" ON termine;
+CREATE POLICY "own_termine_all" ON termine FOR ALL
+  USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+-- ------------------------------------------------------------
+-- 8) CHECKLISTS
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS checklists (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id      UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  pregnancy_id UUID REFERENCES pregnancies(id) ON DELETE CASCADE,
+  kind         TEXT NOT NULL,
+  state        JSONB NOT NULL DEFAULT '{"checked":[],"custom":[],"excluded":[]}',
+  created_at   TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  updated_at   TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+ALTER TABLE checklists ADD COLUMN IF NOT EXISTS pregnancy_id UUID REFERENCES pregnancies(id) ON DELETE CASCADE;
+ALTER TABLE checklists DROP CONSTRAINT IF EXISTS checklists_kind_check;
+ALTER TABLE checklists ADD CONSTRAINT checklists_kind_check
+  CHECK (kind IN ('packliste', 'einkaufsliste', 'wochenbett'));
+CREATE INDEX IF NOT EXISTS idx_checklists_user_id ON checklists(user_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_checklists_user_pregnancy_kind
+  ON checklists(user_id, COALESCE(pregnancy_id, '00000000-0000-0000-0000-000000000000'::uuid), kind);
+
+DROP TRIGGER IF EXISTS checklists_updated_at ON checklists;
+CREATE TRIGGER checklists_updated_at BEFORE UPDATE ON checklists
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+ALTER TABLE checklists ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "own_checklists_all" ON checklists;
+CREATE POLICY "own_checklists_all" ON checklists FOR ALL
+  USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+-- ------------------------------------------------------------
+-- 9) KINDERWUNSCH STATE
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS kinderwunsch_state (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id      UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  pregnancy_id UUID REFERENCES pregnancies(id) ON DELETE CASCADE,
+  koerper      JSONB NOT NULL DEFAULT '[]',
+  team         JSONB NOT NULL DEFAULT '{}',
+  aengste      JSONB NOT NULL DEFAULT '{"fav":[],"read":[]}',
+  vorfreude    JSONB NOT NULL DEFAULT '{"first30":[],"bucket":[]}',
+  manifest     JSONB NOT NULL DEFAULT '{"agreed":[],"custom":[]}',
+  arzt         JSONB NOT NULL DEFAULT '{"asked":[],"custom":[]}',
+  created_at   TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  updated_at   TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+ALTER TABLE kinderwunsch_state ADD COLUMN IF NOT EXISTS pregnancy_id UUID REFERENCES pregnancies(id) ON DELETE CASCADE;
+CREATE INDEX IF NOT EXISTS idx_kinderwunsch_state_user_id ON kinderwunsch_state(user_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_kinderwunsch_user_pregnancy
+  ON kinderwunsch_state(user_id, COALESCE(pregnancy_id, '00000000-0000-0000-0000-000000000000'::uuid));
+
+DROP TRIGGER IF EXISTS kinderwunsch_state_updated_at ON kinderwunsch_state;
+CREATE TRIGGER kinderwunsch_state_updated_at BEFORE UPDATE ON kinderwunsch_state
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+ALTER TABLE kinderwunsch_state ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "own_kinderwunsch_all" ON kinderwunsch_state;
+CREATE POLICY "own_kinderwunsch_all" ON kinderwunsch_state FOR ALL
+  USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+-- ------------------------------------------------------------
+-- 10) HELP REQUESTS + SLOTS (Wochenbett-Chef)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS help_requests (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id      UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  pregnancy_id UUID REFERENCES pregnancies(id) ON DELETE CASCADE,
+  share_token  TEXT NOT NULL UNIQUE,
+  title        TEXT,
+  intro        TEXT,
+  created_at   TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  updated_at   TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_help_requests_user_id ON help_requests(user_id);
+CREATE INDEX IF NOT EXISTS idx_help_requests_token ON help_requests(share_token);
+CREATE INDEX IF NOT EXISTS idx_help_requests_pregnancy_id ON help_requests(pregnancy_id);
+
+DROP TRIGGER IF EXISTS help_requests_updated_at ON help_requests;
+CREATE TRIGGER help_requests_updated_at BEFORE UPDATE ON help_requests
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+ALTER TABLE help_requests ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "own_help_request_all" ON help_requests;
+CREATE POLICY "own_help_request_all" ON help_requests FOR ALL
+  USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "public_read_help_requests" ON help_requests;
+CREATE POLICY "public_read_help_requests" ON help_requests FOR SELECT USING (TRUE);
+
+CREATE TABLE IF NOT EXISTS help_slots (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  request_id     UUID REFERENCES help_requests(id) ON DELETE CASCADE NOT NULL,
+  category       TEXT NOT NULL,
+  description    TEXT,
+  date           DATE,
+  time           TEXT,
+  helper_name    TEXT,
+  helper_message TEXT,
+  created_at     TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  updated_at     TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+ALTER TABLE help_slots DROP CONSTRAINT IF EXISTS help_slots_category_check;
+ALTER TABLE help_slots ADD CONSTRAINT help_slots_category_check
+  CHECK (category IN ('kochen', 'einkaufen', 'reden', 'waesche', 'kinderbetreuung', 'andere'));
+CREATE INDEX IF NOT EXISTS idx_help_slots_request_id ON help_slots(request_id);
+CREATE INDEX IF NOT EXISTS idx_help_slots_date ON help_slots(date);
+
+DROP TRIGGER IF EXISTS help_slots_updated_at ON help_slots;
+CREATE TRIGGER help_slots_updated_at BEFORE UPDATE ON help_slots
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+ALTER TABLE help_slots ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "owner_manages_slots" ON help_slots;
+CREATE POLICY "owner_manages_slots" ON help_slots FOR ALL
+  USING (EXISTS (SELECT 1 FROM help_requests hr WHERE hr.id = help_slots.request_id AND hr.user_id = auth.uid()))
+  WITH CHECK (EXISTS (SELECT 1 FROM help_requests hr WHERE hr.id = help_slots.request_id AND hr.user_id = auth.uid()));
+DROP POLICY IF EXISTS "public_read_help_slots" ON help_slots;
+CREATE POLICY "public_read_help_slots" ON help_slots FOR SELECT USING (TRUE);
+DROP POLICY IF EXISTS "public_claims_slot" ON help_slots;
+CREATE POLICY "public_claims_slot" ON help_slots FOR UPDATE
+  USING (helper_name IS NULL OR helper_name = '') WITH CHECK (TRUE);
+
+-- ------------------------------------------------------------
+-- 11) USER PREFERENCES (Personalisierung)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS user_preferences (
+  user_id    UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  settings   JSONB NOT NULL DEFAULT '{}'::jsonb,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE user_preferences ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "prefs_select_own" ON user_preferences;
+CREATE POLICY "prefs_select_own" ON user_preferences FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "prefs_insert_own" ON user_preferences;
+CREATE POLICY "prefs_insert_own" ON user_preferences FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "prefs_update_own" ON user_preferences;
+CREATE POLICY "prefs_update_own" ON user_preferences FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "prefs_delete_own" ON user_preferences;
+CREATE POLICY "prefs_delete_own" ON user_preferences FOR DELETE USING (auth.uid() = user_id);
+
+DROP TRIGGER IF EXISTS user_preferences_updated_at ON user_preferences;
+CREATE TRIGGER user_preferences_updated_at BEFORE UPDATE ON user_preferences
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- ------------------------------------------------------------
+-- 12) TERMIN CATEGORIES (eigene Termin-Typen pro User)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS termin_categories (
+  id                     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id                UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  slug                   TEXT NOT NULL,
+  label                  TEXT NOT NULL,
+  emoji                  TEXT,
+  color                  TEXT,
+  default_location       TEXT,
+  default_reminder_hours INTEGER,
+  notes_template         TEXT,
+  is_builtin             BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at             TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (user_id, slug)
+);
+CREATE INDEX IF NOT EXISTS idx_termin_categories_user ON termin_categories(user_id);
+
+ALTER TABLE termin_categories ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "termin_cat_select_own" ON termin_categories;
+CREATE POLICY "termin_cat_select_own" ON termin_categories FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "termin_cat_insert_own" ON termin_categories;
+CREATE POLICY "termin_cat_insert_own" ON termin_categories FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "termin_cat_update_own" ON termin_categories;
+CREATE POLICY "termin_cat_update_own" ON termin_categories FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "termin_cat_delete_own" ON termin_categories;
+CREATE POLICY "termin_cat_delete_own" ON termin_categories FOR DELETE USING (auth.uid() = user_id);
+
+-- ============================================================
+-- FERTIG. Alle Tabellen + RLS + Trigger sind idempotent angelegt.
+-- ============================================================

@@ -23,7 +23,7 @@ import {
 interface NewPregnancyModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSuccess?: () => void
+  onSuccess?: (newPregnancyId?: string) => void
 }
 
 type CreateStatus = 'planning' | 'pregnant'
@@ -77,7 +77,9 @@ export function NewPregnancyModal({
         body: JSON.stringify(payload),
       })
       if (!res.ok) throw new Error('Failed')
-      onSuccess?.()
+      const created = await res.json().catch(() => ({}))
+      const newId = typeof created?.id === 'string' ? created.id : undefined
+      onSuccess?.(newId)
       onOpenChange(false)
     } catch {
       setError(t.pregnancy.newPregnancy.error)

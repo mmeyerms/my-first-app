@@ -24,6 +24,7 @@ import {
 import { BornModal } from '@/components/pregnancy/BornModal'
 import { SternenkindModal } from '@/components/pregnancy/SternenkindModal'
 import { NewPregnancyModal } from '@/components/pregnancy/NewPregnancyModal'
+import { TransferFromPregnancyModal } from '@/components/pregnancy/TransferFromPregnancyModal'
 import type { Pregnancy, PregnancyStatus } from '@/lib/pregnancy/server'
 
 function formatDate(iso: string | null, locale: string): string {
@@ -326,6 +327,7 @@ export function PregnancyOverview() {
   const [pregnancies, setPregnancies] = useState<Pregnancy[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [newOpen, setNewOpen] = useState(false)
+  const [transferOpen, setTransferOpen] = useState(false)
 
   const load = useCallback(async () => {
     try {
@@ -389,18 +391,43 @@ export function PregnancyOverview() {
         </div>
       )}
 
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full"
-        onClick={() => setNewOpen(true)}
-      >
-        {t.pregnancy.overview.addNew}
-      </Button>
+      <div className="grid gap-2 sm:grid-cols-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setNewOpen(true)}
+        >
+          {t.pregnancy.overview.addNew}
+        </Button>
+        {pregnancies && pregnancies.length >= 2 && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setTransferOpen(true)}
+          >
+            Aus vorheriger SS übernehmen
+          </Button>
+        )}
+      </div>
 
       <NewPregnancyModal
         open={newOpen}
         onOpenChange={setNewOpen}
+        onSuccess={(newlyCreatedId) => {
+          // If there was already at least one pregnancy, offer to transfer instead
+          // of doing a full reload — the Transfer modal needs the fresh list.
+          if (pregnancies && pregnancies.length >= 1 && newlyCreatedId) {
+            void load().then(() => {
+              setTransferOpen(true)
+            })
+          } else {
+            handleChanged()
+          }
+        }}
+      />
+      <TransferFromPregnancyModal
+        open={transferOpen}
+        onOpenChange={setTransferOpen}
         onSuccess={handleChanged}
       />
     </div>

@@ -101,12 +101,24 @@ export function TerminForm({
 
   // Custom categories loaded from DB
   const [customCategories, setCustomCategories] = useState<CustomCategory[]>([])
+  const [suggestions, setSuggestions] = useState<{ locations: string[]; doctors: string[] }>({
+    locations: [],
+    doctors: [],
+  })
 
   useEffect(() => {
     if (!open) return
     fetch('/api/termin-categories')
       .then((r) => r.json())
       .then((data) => Array.isArray(data) && setCustomCategories(data))
+      .catch(() => {})
+    fetch('/api/termine/suggestions')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && Array.isArray(data.locations) && Array.isArray(data.doctors)) {
+          setSuggestions(data)
+        }
+      })
       .catch(() => {})
   }, [open])
 
@@ -335,7 +347,19 @@ export function TerminForm({
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               placeholder={t.termine.form.locationPlaceholder}
+              list="termin-locations"
+              autoComplete="off"
             />
+            <datalist id="termin-locations">
+              {suggestions.locations.map((l) => (
+                <option key={l} value={l} />
+              ))}
+            </datalist>
+            {suggestions.locations.length > 0 && (
+              <p className="text-[10px] italic text-muted-foreground">
+                {suggestions.locations.length} vorherige Praxen als Vorschlag verfügbar
+              </p>
+            )}
           </div>
 
           <div className="space-y-1.5">
@@ -345,7 +369,14 @@ export function TerminForm({
               value={doctor}
               onChange={(e) => setDoctor(e.target.value)}
               placeholder={t.termine.form.doctorPlaceholder}
+              list="termin-doctors"
+              autoComplete="off"
             />
+            <datalist id="termin-doctors">
+              {suggestions.doctors.map((d) => (
+                <option key={d} value={d} />
+              ))}
+            </datalist>
           </div>
 
           <div className="space-y-1.5">
