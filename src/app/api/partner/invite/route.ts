@@ -10,8 +10,12 @@ export async function POST() {
   if (!user) return NextResponse.json({ error: 'Nicht eingeloggt' }, { status: 401 })
 
   // Do NOT invalidate other pending invites — a mother can want multiple open
-  // invitations at once (Papa via WhatsApp, Oma via Signal). Only reject when
-  // there are too many pending to prevent spam.
+  // invitations at once (different WhatsApp groups etc.). Only reject when
+  // there are too many active invites to prevent spam.
+  //
+  // Since Migration 024, `used_at` is only set once the invite reached
+  // `max_uses` — so "used_at IS NULL AND not expired" still means "still
+  // has capacity", i.e. an active invite.
   const { count: pendingCount } = await supabase
     .from('partner_invites')
     .select('id', { count: 'exact', head: true })
@@ -82,7 +86,7 @@ export async function GET() {
 
   const { data: invite } = await supabase
     .from('partner_invites')
-    .select('token, expires_at')
+    .select('token, expires_at, max_uses, uses_count')
     .eq('mother_id', user.id)
     .is('used_at', null)
     .gt('expires_at', new Date().toISOString())
@@ -97,11 +101,19 @@ export async function GET() {
     createdAt: (l as { created_at: string }).created_at,
   }))
 
+  const inviteRow = invite as
+    | { token: string; expires_at: string; max_uses: number; uses_count: number }
+    | null
+
   return NextResponse.json({
     hasPartner: partners.length > 0,
     partners,
-    pendingToken: invite?.token ?? null,
-    pendingExpiry: invite?.expires_at ?? null,
+    pendingToken: inviteRow?.token ?? null,
+    pendingExpiry: inviteRow?.expires_at ?? null,
+    // Remaining slots on the currently-active invite. UI shows this so
+    // the mother knows how many more people can still redeem the same link.
+    pendingUsesRemaining: inviteRow ? Math.max(0, inviteRow.max_uses - inviteRow.uses_count) : null,
+    pendingMaxUses: inviteRow?.max_uses ?? null,
   })
 }
 
@@ -183,11 +195,16 @@ export async function PUT(request: NextRequest) {
 
   const result = { data: parsed }
 
-  // Look up invite for basic checks (expiry, self-link, already used).
+  // Look up invite for basic checks (expiry, self-link, capacity used up).
   // Differentiate messages so users understand WHY it failed.
+  //
+  // Multi-use tokens (Migration 024): the same invite link can be used by
+  // up to `max_uses` different people (Papa, Oma, Opa, Bestie, ...). The
+  // UNIQUE (mother_id, partner_user_id) constraint on partner_links stops
+  // the SAME auth user from redeeming twice.
   const { data: invite } = await supabase
     .from('partner_invites')
-    .select('id, mother_id, expires_at, used_at')
+    .select('id, mother_id, expires_at, used_at, max_uses, uses_count')
     .eq('token', result.data.token)
     .single()
 
@@ -203,17 +220,18 @@ export async function PUT(request: NextRequest) {
       { status: 400 },
     )
   }
-  if (invite.used_at) {
+  const inviteRow = invite as { id: string; mother_id: string; expires_at: string; used_at: string | null; max_uses: number; uses_count: number }
+  if (inviteRow.uses_count >= inviteRow.max_uses) {
     return NextResponse.json(
       {
         error:
-          'Dieser Einladungslink wurde bereits verwendet. Falls du dich gerade eben angemeldet hast, sollte deine Verbindung bereits aktiv sein — check dein Dashboard.',
+          'Dieser Einladungslink hat sein Limit erreicht (5 Personen können teilnehmen). Die Mama kann in ihren Einstellungen einen neuen Link erstellen.',
       },
       { status: 400 },
     )
   }
   const isMock = !process.env.NEXT_PUBLIC_SUPABASE_URL
-  if (!isMock && invite.mother_id === user.id) {
+  if (!isMock && inviteRow.mother_id === user.id) {
     return NextResponse.json(
       {
         error:
@@ -223,23 +241,46 @@ export async function PUT(request: NextRequest) {
     )
   }
 
-  // ATOMIC consume: UPDATE with WHERE used_at IS NULL, RETURNING. If two
-  // concurrent PUTs race for the same token, only one gets a row back — the
-  // other sees empty and returns 400. This is the CAS guard that the previous
-  // read-then-write pattern lacked.
-  const { data: claimed } = await supabase
-    .from('partner_invites')
-    .update({ used_at: new Date().toISOString() })
-    .eq('id', invite.id)
-    .is('used_at', null)
-    .select('id')
-    .single()
+  // Idempotency: if this exact user already redeemed, skip the counter bump
+  // and just re-upsert the partner_link with the new role/name. This handles
+  // "user hits Accept twice quickly" without wasting a slot.
+  const { data: existingLink } = await supabase
+    .from('partner_links')
+    .select('mother_id')
+    .eq('mother_id', inviteRow.mother_id)
+    .eq('partner_user_id', user.id)
+    .limit(1)
+    .maybeSingle()
 
-  if (!claimed) {
-    return NextResponse.json(
-      { error: 'Einladung wurde gerade schon eingelöst' },
-      { status: 409 },
-    )
+  // ATOMIC consume: increment uses_count only if it's still below max_uses.
+  // If two concurrent PUTs race, only enough of them succeed to reach the
+  // cap. Set used_at when we reach max_uses so the historic UI ("used")
+  // still lights up when the link is fully consumed.
+  //
+  // Skip the counter bump if this user has already redeemed (idempotency).
+  const newCount = inviteRow.uses_count + 1
+  const shouldClaimSlot = !existingLink
+  if (shouldClaimSlot) {
+    const { data: claimed } = await supabase
+      .from('partner_invites')
+      .update({
+        uses_count: newCount,
+        used_at: newCount >= inviteRow.max_uses ? new Date().toISOString() : inviteRow.used_at,
+      })
+      .eq('id', inviteRow.id)
+      .lt('uses_count', inviteRow.max_uses)
+      .eq('uses_count', inviteRow.uses_count) // CAS: only proceed if nobody else bumped
+      .select('id')
+      .maybeSingle()
+
+    if (!claimed) {
+      // A concurrent PUT ate this slot. Ask user to retry — the invite
+      // may still have room after their retry (race resolves naturally).
+      return NextResponse.json(
+        { error: 'Einladung wurde gerade schon eingelöst — bitte einen Moment warten und erneut versuchen.' },
+        { status: 409 },
+      )
+    }
   }
 
   const { error } = await supabase.from('partner_links').upsert(

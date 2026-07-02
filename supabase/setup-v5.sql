@@ -92,6 +92,16 @@ CREATE POLICY "mother_manages_own_invites" ON partner_invites FOR ALL USING (aut
 -- den Invite via API nicht per Token lookup finden koennen.
 DROP POLICY IF EXISTS "public_reads_invite" ON partner_invites;
 CREATE POLICY "public_reads_invite" ON partner_invites FOR SELECT USING (true);
+-- Multi-Use Invites (Migration 024): 1 Token = bis zu 5 Accepts.
+ALTER TABLE partner_invites ADD COLUMN IF NOT EXISTS max_uses INTEGER NOT NULL DEFAULT 5;
+ALTER TABLE partner_invites ADD COLUMN IF NOT EXISTS uses_count INTEGER NOT NULL DEFAULT 0;
+UPDATE partner_invites SET uses_count = max_uses WHERE used_at IS NOT NULL AND uses_count = 0;
+ALTER TABLE partner_invites DROP CONSTRAINT IF EXISTS partner_invites_uses_bounds;
+ALTER TABLE partner_invites ADD CONSTRAINT partner_invites_uses_bounds
+  CHECK (uses_count >= 0 AND uses_count <= max_uses AND max_uses > 0 AND max_uses <= 20);
+CREATE INDEX IF NOT EXISTS idx_partner_invites_active
+  ON partner_invites(mother_id)
+  WHERE uses_count < max_uses AND expires_at > NOW();
 
 CREATE TABLE IF NOT EXISTS partner_links (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
