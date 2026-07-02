@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
+import { rateLimit, getClientIp } from '@/lib/rate-limit'
 import type { HelpSlot } from '@/lib/wochenbett-chef/types'
 
 const claimSchema = z.object({
@@ -13,6 +14,23 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ token: string }> },
 ) {
+  // Rate-Limit: 5 Claim-Versuche pro Minute pro IP.
+  // Öffentliche Route (keine Auth) → IP als Key.
+  const ip = getClientIp(request)
+  const rate = rateLimit(`helfen-claim:${ip}`, { window: 60_000, max: 5 })
+  if (!rate.allowed) {
+    return NextResponse.json(
+      {
+        error: 'Zu viele Anfragen — bitte kurz warten.',
+        retryAfter: rate.retryAfter,
+      },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(rate.retryAfter ?? 60) },
+      },
+    )
+  }
+
   const { token } = await params
   if (!token || typeof token !== 'string' || token.length < 16) {
     return NextResponse.json({ error: 'Invalid token' }, { status: 400 })

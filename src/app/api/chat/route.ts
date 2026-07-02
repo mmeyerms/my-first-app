@@ -4,16 +4,26 @@ import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 import { getActivePregnancy } from '@/lib/pregnancy/server'
 import { calculateSSW } from '@/lib/utils'
+import { rateLimit } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 
+// --- Cost-Cap Konstanten ---
+// Serverless-Instanzen halten diese Zähler unabhängig — für Production-Grade
+// (echter Cost-Cap über mehrere Requests + Instanzen) braucht es Persistierung
+// (Upstash Redis / Vercel KV / Supabase-Tabelle).
+const MAX_MESSAGES_PER_CHAT = 20
+const MAX_CHARS_PER_MESSAGE = 4000
+const MAX_CHATS_PER_USER_PER_DAY = 30
+const DAY_MS = 24 * 60 * 60 * 1000
+
 const messageSchema = z.object({
   role: z.enum(['user', 'assistant']),
-  content: z.string().min(1).max(8000),
+  content: z.string().min(1).max(MAX_CHARS_PER_MESSAGE),
 })
 
 const bodySchema = z.object({
-  messages: z.array(messageSchema).min(1).max(40),
+  messages: z.array(messageSchema).min(1).max(MAX_MESSAGES_PER_CHAT),
   locale: z.enum(['de', 'en']).optional(),
 })
 
@@ -129,6 +139,40 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Nicht eingeloggt' }, { status: 401 })
   }
 
+  // Rate-Limit: 10 Anfragen pro 60 Sekunden pro User.
+  const rate = rateLimit(`chat:${user.id}`, { window: 60_000, max: 10 })
+  if (!rate.allowed) {
+    return NextResponse.json(
+      {
+        error: 'Zu viele Anfragen — bitte kurz warten.',
+        retryAfter: rate.retryAfter,
+      },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(rate.retryAfter ?? 60) },
+      },
+    )
+  }
+
+  // Daily-Cap: max. 30 Chat-Anfragen pro User pro Tag.
+  // In-Memory-Counter — Anmerkung: für Production-Grade Persistierung nötig.
+  const daily = rateLimit(`chat-daily:${user.id}`, {
+    window: DAY_MS,
+    max: MAX_CHATS_PER_USER_PER_DAY,
+  })
+  if (!daily.allowed) {
+    return NextResponse.json(
+      {
+        error: 'Tages-Limit erreicht — bitte morgen erneut versuchen.',
+        retryAfter: daily.retryAfter,
+      },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(daily.retryAfter ?? 3600) },
+      },
+    )
+  }
+
   let body: unknown
   try {
     body = await request.json()
@@ -145,6 +189,22 @@ export async function POST(request: NextRequest) {
   }
 
   const messages: ChatMessage[] = parsed.data.messages
+
+  // Defensive: doppelt prüfen (schema garantiert es zwar, aber explizite Rejection
+  // mit klarer Fehlermeldung ist besser als eine generische Schema-Verletzung).
+  if (messages.length > MAX_MESSAGES_PER_CHAT) {
+    return NextResponse.json(
+      { error: `Zu viele Nachrichten — max. ${MAX_MESSAGES_PER_CHAT} pro Chat.` },
+      { status: 429 },
+    )
+  }
+  const oversized = messages.find((m) => m.content.length > MAX_CHARS_PER_MESSAGE)
+  if (oversized) {
+    return NextResponse.json(
+      { error: `Nachricht zu lang — max. ${MAX_CHARS_PER_MESSAGE} Zeichen.` },
+      { status: 429 },
+    )
+  }
 
   // Last message must be from the user — otherwise we have nothing to answer.
   const lastUser = [...messages].reverse().find((m) => m.role === 'user')

@@ -67,6 +67,11 @@ export interface NotificationsPreferences {
   weeklyEmail: boolean
 }
 
+export interface SecurityPreferences {
+  /** Auto-logout on idle. null = never (default). */
+  autoLogoutMinutes: number | null
+}
+
 export interface UserPreferences {
   // Design
   accentColor: AccentColor
@@ -107,6 +112,9 @@ export interface UserPreferences {
 
   // Notifications (Wochen-Mail etc.)
   notifications: NotificationsPreferences
+
+  // Security (auto-logout etc.)
+  security: SecurityPreferences
 }
 
 export const DEFAULT_PREFERENCES: UserPreferences = {
@@ -163,6 +171,10 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
   notifications: {
     weeklyEmail: false,
   },
+
+  security: {
+    autoLogoutMinutes: null,
+  },
 }
 
 /**
@@ -194,6 +206,10 @@ export function mergePreferences(
     notifications: {
       ...DEFAULT_PREFERENCES.notifications,
       ...(partial.notifications ?? {}),
+    },
+    security: {
+      ...DEFAULT_PREFERENCES.security,
+      ...(partial.security ?? {}),
     },
   }
 }

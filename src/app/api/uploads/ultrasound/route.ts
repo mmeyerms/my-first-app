@@ -1,14 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
+import { detectImageType, type ImageType } from '@/lib/file-magic'
 
 const MAX_SIZE = 5 * 1024 * 1024 // 5 MB
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp'])
+const ALLOWED_MAGIC = new Set<ImageType>(['jpg', 'png', 'webp'])
 const EXT_MAP: Record<string, string> = {
   'image/jpeg': 'jpg',
   'image/jpg': 'jpg',
   'image/png': 'png',
   'image/webp': 'webp',
+}
+const CONTENT_TYPE_BY_MAGIC: Record<ImageType, string> = {
+  jpg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+  heic: 'image/heic',
 }
 
 interface UltrasoundEntry {
@@ -31,6 +39,12 @@ const uuidSchema = z.string().uuid('Ungültige Pregnancy-ID')
  * Speichert in Bucket "ultrasounds" unter <user_id>/<pregnancyId>/<uuid>.<ext>.
  * Signed URL (24h) wird zurückgegeben; die persistente Referenz (path)
  * wird als Eintrag in pregnancies.ultrasound_urls (JSONB-Array) angehängt.
+ *
+ * Security-Fluss:
+ *   1) Content-Length prüfen BEVOR formData() (verhindert OOM-Angriffe)
+ *   2) File streamen und in Buffer packen
+ *   3) Magic-Byte-Check gegen ALLOWED_TYPES (MIME kann gelogen sein)
+ *   4) Speichern
  */
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -39,6 +53,18 @@ export async function POST(request: NextRequest) {
   } = await supabase.auth.getUser()
   if (!user) {
     return NextResponse.json({ error: 'Nicht eingeloggt' }, { status: 401 })
+  }
+
+  // Size-Check ZUERST via Content-Length header BEVOR formData() aufgerufen wird.
+  const contentLengthHeader = request.headers.get('content-length')
+  if (contentLengthHeader) {
+    const contentLength = Number(contentLengthHeader)
+    if (Number.isFinite(contentLength) && contentLength > MAX_SIZE + 8192) {
+      return NextResponse.json(
+        { error: 'Datei zu groß (max. 5 MB)' },
+        { status: 413 },
+      )
+    }
   }
 
   let formData: FormData
@@ -73,12 +99,22 @@ export async function POST(request: NextRequest) {
   if (!ALLOWED_TYPES.has(file.type)) {
     return NextResponse.json(
       { error: 'Ungültiger Dateityp — erlaubt: JPG, PNG, WebP' },
-      { status: 400 },
+      { status: 415 },
     )
   }
 
   if (file.size > MAX_SIZE) {
-    return NextResponse.json({ error: 'Datei zu groß (max. 5 MB)' }, { status: 400 })
+    return NextResponse.json({ error: 'Datei zu groß (max. 5 MB)' }, { status: 413 })
+  }
+
+  // File streamen und Magic-Byte-Check durchführen.
+  const arrayBuffer = await file.arrayBuffer()
+  const detected = await detectImageType(arrayBuffer)
+  if (!detected || !ALLOWED_MAGIC.has(detected)) {
+    return NextResponse.json(
+      { error: 'Dateiinhalt passt nicht zum erlaubten Bildformat (JPG, PNG, WebP)' },
+      { status: 415 },
+    )
   }
 
   // Verifiziere: Pregnancy gehört diesem User.
@@ -93,15 +129,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Schwangerschaft nicht gefunden' }, { status: 404 })
   }
 
-  const ext = EXT_MAP[file.type] ?? 'jpg'
+  const ext = detected === 'jpg' ? 'jpg' : (EXT_MAP[file.type] ?? detected)
   const uuid = crypto.randomUUID()
   const path = `${user.id}/${pregnancyId}/${uuid}.${ext}`
+  const safeContentType = CONTENT_TYPE_BY_MAGIC[detected]
 
-  const arrayBuffer = await file.arrayBuffer()
   const { error: uploadError } = await supabase.storage
     .from('ultrasounds')
     .upload(path, arrayBuffer, {
-      contentType: file.type,
+      contentType: safeContentType,
       upsert: false,
     })
 

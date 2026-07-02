@@ -296,7 +296,9 @@ export function PartnerDashboardClient({
     })
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
-      throw new Error(typeof err.error === 'string' ? err.error : 'Konnte nicht angelegt werden')
+      throw new Error(
+        typeof err.error === 'string' ? err.error : t.partner.preparation.adoptFallbackError,
+      )
     }
     const created = await res.json()
     setTodos((prev) => [
@@ -309,7 +311,7 @@ export function PartnerDashboardClient({
       },
       ...prev,
     ])
-  }, [])
+  }, [t.partner.preparation.adoptFallbackError])
 
   const existingTodoTitles = useMemo(
     () => new Set(todos.map((t) => t.title)),
@@ -321,6 +323,20 @@ export function PartnerDashboardClient({
     return Array.isArray(a) ? a.length > 0 : typeof a === 'string' && a.trim().length > 0
   })
 
+  const headerOf = t.partner.dashboard.sections.headerOf
+    .replace('{label}', partnerLabel)
+    .replace('{babyName}', babyName)
+  const headerAt = t.partner.dashboard.sections.headerAt.replace('{name}', motherName)
+  const motherThisWeek = t.partner.dashboard.sections.motherThisWeek.replace('{name}', motherName)
+  const motherThisWeekAria = t.partner.dashboard.sections.motherThisWeekAria.replace('{name}', motherName)
+  const weeksLeft = t.partner.dashboard.sections.weeksLeft.replace(
+    '{count}',
+    String(Math.max(0, 40 - ssw)),
+  )
+  const tasksFromMother = t.partner.dashboard.sections.tasksFromMother.replace('{name}', motherName)
+  const tasksEmpty = t.partner.dashboard.sections.tasksEmpty.replace('{name}', motherName)
+  const sswLabel = t.partner.sswCard.replace('{ssw}', String(ssw))
+
   return (
     <main className="min-h-screen bg-background">
       <div className="mx-auto max-w-sm space-y-6 px-4 py-8">
@@ -331,10 +347,10 @@ export function PartnerDashboardClient({
               {t.partner.dashboardTitle}
             </p>
             <h1 className="mt-1 font-display text-2xl font-medium leading-tight text-foreground">
-              {partnerLabel} von {babyName}
+              {headerOf}
             </h1>
             <p className="mt-0.5 font-display text-sm italic text-muted-foreground">
-              An der Seite von {motherName}
+              {headerAt}
             </p>
           </div>
           <RealtimeIndicator status={status} className="mt-1 shrink-0" />
@@ -343,13 +359,13 @@ export function PartnerDashboardClient({
         {/* ─────────────  1. HEUTE  ─────────────
             Hero-Impuls: prominent, groß, mit klarer CTA-Logik. */}
         <section
-          aria-label="Impuls für heute"
+          aria-label={t.partner.dashboard.sections.todaySection}
           className="card-elevated rounded-2xl bg-card p-6"
           style={{ backgroundImage: 'linear-gradient(180deg, hsl(var(--secondary)/0.55) 0%, hsl(var(--card)) 100%)' }}
         >
           <div className="mb-3 flex items-center justify-between">
             <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">
-              Heute
+              {t.partner.dashboard.sections.todayLabel}
             </span>
             <Badge variant="secondary" className="text-[10px] uppercase tracking-wider">
               {getPartnerTipLabel(tip.type, locale)}
@@ -360,24 +376,24 @@ export function PartnerDashboardClient({
             {getPartnerTipText(tip, locale)}
           </p>
           <p className="mt-4 text-[10px] italic text-muted-foreground">
-            Ein Impuls pro Tag. Kein Muss — nur ein Anstupser.
+            {t.partner.dashboard.sections.todayFooter}
           </p>
         </section>
 
         {/* ─────────────  2. DEINE MAMA DIESE WOCHE  ─────────────
             SSW-Kontext + Baby-Update, gated by visibility.woche. */}
         {visibility.woche && (
-          <section aria-label={motherName + ' diese Woche'}>
+          <section aria-label={motherThisWeekAria}>
             <h2 className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-              {motherName} diese Woche
+              {motherThisWeek}
             </h2>
             <div className="card-elevated rounded-2xl bg-card p-5">
               <div className="flex items-baseline gap-3">
                 <span className="font-display text-4xl font-medium text-primary">
-                  SSW {ssw}
+                  {sswLabel}
                 </span>
                 <span className="font-display text-sm italic text-muted-foreground">
-                  · noch {Math.max(0, 40 - ssw)} Wochen
+                  {weeksLeft}
                 </span>
               </div>
               <p className="mt-2 text-sm leading-relaxed text-foreground">
@@ -390,9 +406,9 @@ export function PartnerDashboardClient({
         {/* ─────────────  3. DEINE AUFGABEN  ─────────────
             Konkrete Aufgaben von {motherName} (live-synced) + Kurator-Bibliothek
             zum Selbstübernehmen, sortiert nach Fälligkeit. */}
-        <section aria-label="Deine Aufgaben" className="space-y-4">
+        <section aria-label={t.partner.dashboard.sections.tasksSection} className="space-y-4">
           <h2 className="px-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            Deine Aufgaben
+            {t.partner.dashboard.sections.tasksHeading}
           </h2>
 
           {visibility.partnerTodos && (
@@ -400,8 +416,8 @@ export function PartnerDashboardClient({
               initialTodos={initialTodos}
               externalTodos={todos}
               onLocalToggle={handleLocalToggle}
-              heading={`Von ${motherName} für dich`}
-              emptyText={`${motherName} hat dir noch keine Aufgaben zugewiesen. Übernimm gerne selbst welche aus der Vorbereitungs-Liste unten.`}
+              heading={tasksFromMother}
+              emptyText={tasksEmpty}
             />
           )}
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { getActivePregnancy } from '@/lib/pregnancy/server'
+import { apiError } from '@/lib/apiError'
 
 const ISLANDS = ['koerper', 'team', 'aengste', 'vorfreude', 'manifest', 'arzt'] as const
 type Island = (typeof ISLANDS)[number]
@@ -99,7 +100,7 @@ export async function PUT(
     .single()
 
   if (lookupError && (lookupError as { code?: string }).code !== 'PGRST116') {
-    return NextResponse.json({ error: lookupError.message }, { status: 500 })
+    return apiError(lookupError, `kinderwunsch/${island}/lookup`)
   }
 
   if (existing) {
@@ -108,7 +109,7 @@ export async function PUT(
       .update({ [island]: parsed.data.state })
       .eq('id', (existing as { id: string }).id)
       .eq('user_id', user.id)
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return apiError(error, `kinderwunsch/${island}/update`)
     return NextResponse.json({ ok: true })
   }
 
@@ -121,6 +122,6 @@ export async function PUT(
   }
 
   const { error } = await supabase.from('kinderwunsch_state').insert(insertRow)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return apiError(error, `kinderwunsch/${island}/insert`)
   return NextResponse.json({ ok: true })
 }

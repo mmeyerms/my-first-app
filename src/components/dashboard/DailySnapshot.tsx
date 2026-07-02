@@ -161,11 +161,11 @@ export function DailySnapshot({
       <SnapshotCard
         key="ssw"
         onClick={() => router.push('/woche')}
-        ariaLabel="Aktuelle Woche"
+        ariaLabel={t.dashboard.snapshot.weekAria}
         icon={isClassic ? <span className="text-sm">🤰</span> : <Baby className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden="true" />}
-        eyebrow="Diese Woche"
-        title={ssw !== null ? `SSW ${ssw}` : '—'}
-        body={ssw !== null ? 'Baby-Update ansehen' : 'Trage dein ET im Profil ein'}
+        eyebrow={t.dashboard.snapshot.weekEyebrow}
+        title={ssw !== null ? t.dashboard.sswCard.replace('{ssw}', String(ssw)) : '—'}
+        body={ssw !== null ? t.dashboard.snapshot.weekBodyView : t.dashboard.snapshot.weekBodyEnterEt}
         isClassic={isClassic}
         compact={compact}
       />

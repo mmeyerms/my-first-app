@@ -119,8 +119,19 @@ const displayNameSchema = z
       .regex(/^[\p{L}\p{N} .\-'’]+$/u, 'Nur Buchstaben, Ziffern, Leerzeichen, „.", „-" und „’" erlaubt'),
   )
 
+// Two accept schemas: the modern client passes the token in the body (so it
+// never appears in the URL path, which would leak via Referer to any embedded
+// third-party resource before we can scrub the location bar). We ALSO accept
+// requests without a body-token for backwards compat with any old-style
+// clients that still POST to the [token] URL — for them the caller can pass
+// the token as a `?token=...` search param.
 const acceptSchema = z.object({
   token: z.string().uuid(),
+  role: z.enum(['papa', 'mama', 'oma', 'opa', 'bestie', 'andere']),
+  displayName: displayNameSchema,
+})
+
+const acceptBodyWithoutTokenSchema = z.object({
   role: z.enum(['papa', 'mama', 'oma', 'opa', 'bestie', 'andere']),
   displayName: displayNameSchema,
 })
@@ -135,10 +146,42 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: 'Ungültiges JSON' }, { status: 400 })
   }
 
-  const result = acceptSchema.safeParse(body)
-  if (!result.success) {
-    return NextResponse.json({ error: result.error.flatten() }, { status: 400 })
+  // Preferred: token in body. Fallback: token in URL search param (legacy).
+  // We deliberately do NOT accept it via URL path anymore — the referrer
+  // leak is exactly what we are hardening against.
+  const bodyIsObject = body !== null && typeof body === 'object'
+  const bodyRecord = bodyIsObject ? (body as Record<string, unknown>) : {}
+  const bodyHasToken = typeof bodyRecord.token === 'string'
+
+  let parsed: { token: string; role: 'papa' | 'mama' | 'oma' | 'opa' | 'bestie' | 'andere'; displayName: string }
+
+  if (bodyHasToken) {
+    const result = acceptSchema.safeParse(body)
+    if (!result.success) {
+      return NextResponse.json({ error: result.error.flatten() }, { status: 400 })
+    }
+    parsed = result.data
+  } else {
+    const url = new URL(request.url)
+    const tokenParam = url.searchParams.get('token')
+    if (!tokenParam) {
+      return NextResponse.json(
+        { error: 'Token fehlt (weder im Body noch als Query-Parameter)' },
+        { status: 400 },
+      )
+    }
+    const bodyResult = acceptBodyWithoutTokenSchema.safeParse(body)
+    if (!bodyResult.success) {
+      return NextResponse.json({ error: bodyResult.error.flatten() }, { status: 400 })
+    }
+    const tokenResult = z.string().uuid().safeParse(tokenParam)
+    if (!tokenResult.success) {
+      return NextResponse.json({ error: 'Ungültiger Token' }, { status: 400 })
+    }
+    parsed = { token: tokenResult.data, ...bodyResult.data }
   }
+
+  const result = { data: parsed }
 
   // Look up invite for basic checks (expiry, self-link, already used).
   // Differentiate messages so users understand WHY it failed.

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
+import { apiError } from '@/lib/apiError'
 
 const TERMIN_TYPE_IDS = [
   'erstgespraech',
@@ -80,7 +81,7 @@ export async function PATCH(
     .eq('id', id)
     .eq('user_id', user.id)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return apiError(error, 'termine/patch')
   return NextResponse.json({ ok: true })
 }
 

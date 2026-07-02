@@ -5,12 +5,15 @@ import { ChevronDown, ChevronUp, Plus, Check, Clock } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   PREPARATION_TASKS,
-  PREP_CATEGORY_LABELS,
   PREP_CATEGORY_COLORS,
   activeTasks,
+  getPreparationCategoryLabel,
+  getPreparationDescription,
+  getPreparationTitle,
   sortByRelevance,
   type PreparationTask,
 } from '@/lib/partnerPreparation'
+import { useLocale, useT } from '@/lib/i18n/client'
 
 interface Props {
   ssw: number
@@ -33,6 +36,8 @@ interface Props {
  * wird ein partner_todos-Row angelegt, das dann von der Mama gesehen wird.
  */
 export function PartnerPreparationBlock({ ssw, existingTodoTitles, onAdopt }: Props) {
+  const t = useT()
+  const { locale } = useLocale()
   const [expanded, setExpanded] = useState(false)
   const [pending, setPending] = useState<Set<string>>(new Set())
 
@@ -48,9 +53,11 @@ export function PartnerPreparationBlock({ ssw, existingTodoTitles, onAdopt }: Pr
     setPending((prev) => new Set(prev).add(task.id))
     try {
       await onAdopt(task)
-      toast.success(`„${task.title}" ist jetzt auf deiner Liste.`)
+      toast.success(
+        t.partner.preparation.adoptSuccess.replace('{title}', getPreparationTitle(task.id, locale)),
+      )
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Konnte nicht übernommen werden')
+      toast.error(err instanceof Error ? err.message : t.partner.preparation.adoptError)
     } finally {
       setPending((prev) => {
         const next = new Set(prev)
@@ -67,10 +74,10 @@ export function PartnerPreparationBlock({ ssw, existingTodoTitles, onAdopt }: Pr
       <div className="mb-3 flex items-baseline justify-between">
         <div>
           <h2 className="font-display text-lg font-medium text-foreground">
-            Deine Vorbereitungen
+            {t.partner.preparation.title}
           </h2>
           <p className="mt-0.5 font-display text-xs italic text-muted-foreground">
-            Sortiert nach was gerade dran ist
+            {t.partner.preparation.subtitle}
           </p>
         </div>
         {tasks.length > 4 && (
@@ -81,11 +88,12 @@ export function PartnerPreparationBlock({ ssw, existingTodoTitles, onAdopt }: Pr
           >
             {expanded ? (
               <>
-                <ChevronUp className="h-3 w-3" /> Weniger
+                <ChevronUp className="h-3 w-3" /> {t.partner.preparation.less}
               </>
             ) : (
               <>
-                <ChevronDown className="h-3 w-3" /> Alle {tasks.length}
+                <ChevronDown className="h-3 w-3" />{' '}
+                {t.partner.preparation.showAllCount.replace('{count}', String(tasks.length))}
               </>
             )}
           </button>
@@ -98,6 +106,9 @@ export function PartnerPreparationBlock({ ssw, existingTodoTitles, onAdopt }: Pr
           const isPending = pending.has(task.id)
           const isOverdue = task.deadlineSsw < ssw
           const weeksUntil = task.deadlineSsw - ssw
+          const localizedTitle = getPreparationTitle(task.id, locale)
+          const localizedDescription = getPreparationDescription(task.id, locale)
+          const localizedCategory = getPreparationCategoryLabel(task.category, locale)
 
           return (
             <li
@@ -115,11 +126,11 @@ export function PartnerPreparationBlock({ ssw, existingTodoTitles, onAdopt }: Pr
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline gap-2">
                   <p className="text-sm font-semibold leading-snug text-foreground">
-                    {task.title}
+                    {localizedTitle}
                   </p>
                 </div>
                 <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-                  {task.description}
+                  {localizedDescription}
                 </p>
                 <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                   <span
@@ -129,21 +140,21 @@ export function PartnerPreparationBlock({ ssw, existingTodoTitles, onAdopt }: Pr
                       color: PREP_CATEGORY_COLORS[task.category],
                     }}
                   >
-                    {PREP_CATEGORY_LABELS[task.category]}
+                    {localizedCategory}
                   </span>
                   {isOverdue ? (
                     <span className="inline-flex items-center gap-0.5 text-[10px] text-destructive">
                       <Clock className="h-3 w-3" strokeWidth={2} />
-                      Überfällig · SSW {task.deadlineSsw}
+                      {t.partner.preparation.overdue.replace('{ssw}', String(task.deadlineSsw))}
                     </span>
                   ) : weeksUntil <= 2 ? (
                     <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-primary">
                       <Clock className="h-3 w-3" strokeWidth={2} />
-                      Bald · SSW {task.deadlineSsw}
+                      {t.partner.preparation.soon.replace('{ssw}', String(task.deadlineSsw))}
                     </span>
                   ) : (
                     <span className="text-[10px] text-muted-foreground">
-                      bis SSW {task.deadlineSsw}
+                      {t.partner.preparation.until.replace('{ssw}', String(task.deadlineSsw))}
                     </span>
                   )}
                 </div>
@@ -153,8 +164,16 @@ export function PartnerPreparationBlock({ ssw, existingTodoTitles, onAdopt }: Pr
                 type="button"
                 onClick={() => adopt(task)}
                 disabled={alreadyAdded || isPending}
-                aria-label={alreadyAdded ? 'Bereits übernommen' : 'Als eigene Aufgabe übernehmen'}
-                title={alreadyAdded ? 'Bereits übernommen' : 'Übernehmen'}
+                aria-label={
+                  alreadyAdded
+                    ? t.partner.preparation.alreadyAdoptedAria
+                    : t.partner.preparation.adoptAria
+                }
+                title={
+                  alreadyAdded
+                    ? t.partner.preparation.alreadyAdopted
+                    : t.partner.preparation.adopt
+                }
                 className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-primary transition-colors hover:bg-secondary disabled:opacity-40"
               >
                 {alreadyAdded ? (
@@ -174,17 +193,12 @@ export function PartnerPreparationBlock({ ssw, existingTodoTitles, onAdopt }: Pr
           onClick={() => setExpanded(true)}
           className="mt-3 w-full rounded-xl border border-dashed border-border py-2 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
         >
-          + {remaining} weitere Aufgaben
+          {t.partner.preparation.moreCount.replace('{count}', String(remaining))}
         </button>
       )}
 
       <p className="mt-3 text-[10px] italic text-muted-foreground">
-        Aus{' '}
-        <span className="font-medium not-italic text-foreground">
-          {PREPARATION_TASKS.length}
-        </span>{' '}
-        kuratierten Aufgaben. Übernommene erscheinen bei dir und werden von {' '}
-        {`der Mama`} gesehen.
+        {t.partner.preparation.footer.replace('{count}', String(PREPARATION_TASKS.length))}
       </p>
     </section>
   )

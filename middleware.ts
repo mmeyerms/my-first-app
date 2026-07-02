@@ -39,7 +39,43 @@ function withNoIndex(response: NextResponse): NextResponse {
   return response
 }
 
+// Content Security Policy — conservative baseline that still permits the
+// bits we actually use (inline styles from Tailwind, Google Fonts, Supabase
+// storage/realtime, Anthropic API, Resend, Vercel Live for preview banners).
+// NOT applied to /api/* — those are JSON and CSP is irrelevant there.
+const CSP_DIRECTIVES = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "img-src 'self' data: blob: https://*.supabase.co",
+  "connect-src 'self' https://*.supabase.co https://api.resend.com wss://*.supabase.co https://api.anthropic.com",
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+].join('; ')
+
+function applySecurityHeaders(response: NextResponse, pathname: string): NextResponse {
+  // Always apply headers that are cheap and universally safe.
+  response.headers.set('X-Frame-Options', 'DENY')
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  response.headers.set(
+    'Strict-Transport-Security',
+    'max-age=31536000; includeSubDomains',
+  )
+  // CSP only on HTML responses (page routes). API routes return JSON where
+  // script-src etc. are irrelevant and setting CSP just adds noise / risks
+  // breaking JSON tooling.
+  if (!pathname.startsWith('/api/')) {
+    response.headers.set('Content-Security-Policy', CSP_DIRECTIVES)
+  }
+  return response
+}
+
 export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname
+
   // 1. Site-wide password gate (only active when SITE_PASSWORD env is set, e.g. on Vercel)
   const gate = checkSiteGate(request)
   if (gate) return gate
@@ -47,7 +83,9 @@ export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
   // 2. Mock mode: skip Supabase auth entirely
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) return withNoIndex(supabaseResponse)
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    return applySecurityHeaders(withNoIndex(supabaseResponse), pathname)
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -70,7 +108,6 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  const pathname = request.nextUrl.pathname
   const isProtected =
     pathname.startsWith('/dashboard') ||
     pathname.startsWith('/profil') ||
@@ -85,14 +122,20 @@ export async function middleware(request: NextRequest) {
   const isAuthPage = ['/login', '/register', '/passwort-vergessen'].includes(pathname)
 
   if (!user && isProtected) {
-    return withNoIndex(NextResponse.redirect(new URL('/login', request.url)))
+    return applySecurityHeaders(
+      withNoIndex(NextResponse.redirect(new URL('/login', request.url))),
+      pathname,
+    )
   }
 
   if (user && isAuthPage) {
-    return withNoIndex(NextResponse.redirect(new URL('/dashboard', request.url)))
+    return applySecurityHeaders(
+      withNoIndex(NextResponse.redirect(new URL('/dashboard', request.url))),
+      pathname,
+    )
   }
 
-  return withNoIndex(supabaseResponse)
+  return applySecurityHeaders(withNoIndex(supabaseResponse), pathname)
 }
 
 export const config = {

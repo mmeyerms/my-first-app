@@ -46,6 +46,18 @@ export function LoginForm() {
     setLoading(true)
     setError(null)
     try {
+      // Server-side rate check BEFORE we hit Supabase directly.
+      // Prevents brute-force attempts against the client-side auth call.
+      const rateRes = await fetch('/api/auth/rate-check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bucket: 'login' }),
+      })
+      if (rateRes.status === 429) {
+        setError('Zu viele Login-Versuche — bitte später erneut versuchen.')
+        return
+      }
+
       const supabase = createClient()
       const { data: result, error: authError } = await supabase.auth.signInWithPassword({
         email: data.email,

@@ -13,6 +13,7 @@ import { getPreferences } from "@/lib/preferences/server";
 import { PreferencesProvider } from "@/lib/preferences/client";
 import { DEFAULT_PREFERENCES } from "@/lib/preferences/types";
 import { PreferencesEffects } from "@/components/preferences/PreferencesEffects";
+import { AutoLogoutEffect } from "@/components/security/AutoLogoutEffect";
 
 const fontDisplay = Cormorant_Garamond({
   subsets: ["latin"],
@@ -68,6 +69,7 @@ export default async function RootLayout({
           <LocaleProvider initialLocale={locale}>
             <PreferencesProvider initialPrefs={prefs}>
               <PreferencesEffects />
+              <AutoLogoutEffect />
               {children}
               <BottomNav />
               <HebammenChat />

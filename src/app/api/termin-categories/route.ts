@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
+import { apiError } from '@/lib/apiError'
 
 const schema = z.object({
   slug: z.string().min(1).max(60).regex(/^[a-z0-9_-]+$/, 'nur a-z, 0-9, _-'),
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
     .upsert({ ...parsed.data, user_id: user.id, is_builtin: false }, { onConflict: 'user_id,slug' })
     .select()
     .single()
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return apiError(error, 'termin-categories')
   return NextResponse.json(data)
 }
 
@@ -60,6 +61,6 @@ export async function DELETE(request: NextRequest) {
     .delete()
     .eq('user_id', user.id)
     .eq('slug', slug)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return apiError(error, 'termin-categories')
   return NextResponse.json({ success: true })
 }

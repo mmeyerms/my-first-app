@@ -241,3 +241,225 @@ export const PREP_CATEGORY_COLORS: Record<PreparationCategory, string> = {
   wochenbett: 'hsl(280 40% 50%)',
   emotional: 'hsl(50 55% 45%)',
 }
+
+/**
+ * Locale-aware category labels. Consumers (client or server) should call
+ * `getPreparationCategoryLabel(cat, locale)` instead of reading the raw
+ * `PREP_CATEGORY_LABELS` record when i18n matters.
+ */
+export const PREP_CATEGORY_TRANSLATIONS: Record<
+  PreparationCategory,
+  Record<'de' | 'en', string>
+> = {
+  behoerdlich: { de: 'Behördlich', en: 'Administrative' },
+  gesundheit: { de: 'Gesundheit', en: 'Health' },
+  wohnen: { de: 'Wohnen', en: 'Housing' },
+  geburt: { de: 'Geburt', en: 'Birth' },
+  wochenbett: { de: 'Wochenbett', en: 'Postpartum' },
+  emotional: { de: 'Emotional', en: 'Emotional' },
+}
+
+export function getPreparationCategoryLabel(
+  category: PreparationCategory,
+  locale: 'de' | 'en',
+): string {
+  const entry = PREP_CATEGORY_TRANSLATIONS[category]
+  return entry?.[locale] ?? PREP_CATEGORY_LABELS[category]
+}
+
+/**
+ * Locale-aware title / description overrides for every preparation task.
+ * The German original in PREPARATION_TASKS remains the fallback if a key is
+ * missing here. Consumers should use `getPreparationTitle(id, locale)` and
+ * `getPreparationDescription(id, locale)` instead of reading `task.title` /
+ * `task.description` directly.
+ */
+export const PREP_TRANSLATIONS: Record<
+  string,
+  { title: Record<'de' | 'en', string>; description: Record<'de' | 'en', string> }
+> = {
+  'gyn-termin-mit': {
+    title: {
+      de: 'Beim ersten Frauenarzt-Termin dabei sein',
+      en: 'Come to the first OB-GYN appointment',
+    },
+    description: {
+      de: 'Der erste Termin ist emotional groß. Nur dein Da-Sein zählt — Fragen kannst du auch später schriftlich nachreichen.',
+      en: 'The first appointment carries a lot of emotion. Simply being there is what matters — you can send in questions later in writing.',
+    },
+  },
+  'ersttrimester-info': {
+    title: {
+      de: 'Über Ersttrimester-Screening informieren',
+      en: 'Learn about first-trimester screening',
+    },
+    description: {
+      de: 'Zwischen SSW 11 und 14. Optional. Sprecht gemeinsam ob ihr das machen wollt — die Entscheidung sollte nicht bei ihr allein liegen.',
+      en: 'Between week 11 and 14. Optional. Talk it through together — the decision shouldn\'t rest on her alone.',
+    },
+  },
+  'krankenversicherung': {
+    title: {
+      de: 'Krankenversicherung informieren',
+      en: 'Notify your health insurance',
+    },
+    description: {
+      de: 'Sag deiner KV Bescheid, dass ihr ein Baby erwartet. Bei manchen KVs gibt es zusätzliche Vorsorge-Leistungen, die Extra beantragt werden müssen.',
+      en: 'Let your insurer know you are expecting. Some plans offer extra prenatal benefits that need to be requested explicitly.',
+    },
+  },
+  'geburtsvorbereitung': {
+    title: {
+      de: 'Geburtsvorbereitungskurs anmelden',
+      en: 'Sign up for a childbirth prep class',
+    },
+    description: {
+      de: 'Kurse sind oft ab SSW 24-28 und schnell voll. Melde jetzt an. Frag ob es einen Partner-Tag gibt oder ob ihr das komplett zu zweit macht.',
+      en: 'Classes start around week 24-28 and fill up fast. Sign up now. Ask whether there is a partner day or if you go together.',
+    },
+  },
+  'kita-voranmeldung': {
+    title: {
+      de: 'Kita-Voranmeldung',
+      en: 'Pre-register for daycare',
+    },
+    description: {
+      de: 'In vielen Städten ist die Warteliste 1-2 Jahre. Erkundige dich in eurer Stadt was üblich ist und melde vorsorglich in 2-3 Kitas an.',
+      en: 'In many cities the waiting list runs 1-2 years. Find out what is standard in your town and register in 2-3 daycares just in case.',
+    },
+  },
+  'namensgespraech': {
+    title: {
+      de: 'Namensgespräch führen',
+      en: 'Have the name conversation',
+    },
+    description: {
+      de: 'Auch wenn ihr denkt "haben wir schon geklärt" — führt ein bewusstes Gespräch. Welche Namen sind für dich Herzensnamen, welche Nogos, warum?',
+      en: 'Even if you think "we already agreed" — have a proper talk. Which names are dear to you, which are no-gos, and why?',
+    },
+  },
+  'babyzimmer': {
+    title: {
+      de: 'Babyzimmer / Schlafplatz vorbereiten',
+      en: 'Prepare the nursery / sleeping spot',
+    },
+    description: {
+      de: 'Wickeltisch, Beistellbett, Schrank. Sie soll in den letzten Wochen NICHT Möbel schleppen — das ist deine Aufgabe.',
+      en: 'Changing table, bedside crib, wardrobe. She should NOT be hauling furniture in the last weeks — that\'s your job.',
+    },
+  },
+  'elternzeit-arbeitgeber': {
+    title: {
+      de: 'Elternzeit beim Arbeitgeber anmelden',
+      en: 'Request parental leave from your employer',
+    },
+    description: {
+      de: 'Muss spätestens 7 Wochen vor Beginn schriftlich beim AG sein. Bei 2 Monaten ab Geburt = SSW 33. Formuliere klar wie lange du willst.',
+      en: 'Must be filed in writing at least 7 weeks before it starts. For 2 months from birth that means week 33. Be clear about how long you want.',
+    },
+  },
+  'krankenhaus-anmeldung': {
+    title: {
+      de: 'Krankenhaus zur Geburt anmelden',
+      en: 'Register at the hospital for the birth',
+    },
+    description: {
+      de: 'Voranmeldung meist in SSW 30-34. Oft mit Vorstellungsabend. Frag ob du bei allem dabei sein darfst — auch bei Kaiserschnitt.',
+      en: 'Pre-registration usually happens in week 30-34, often with an info evening. Ask whether you can be present for everything — including a C-section.',
+    },
+  },
+  'autositz': {
+    title: {
+      de: 'Baby-Autositz kaufen + einbauen',
+      en: 'Buy and install the baby car seat',
+    },
+    description: {
+      de: 'ADAC-Testsieger checken. Wichtig: Einbau vorher üben. Bei der Entlassung braucht ihr den — ohne Sitz keine Heimfahrt.',
+      en: 'Check consumer safety winners. Important: practice the install first. You need it at discharge — no seat, no ride home.',
+    },
+  },
+  'krankenhaustasche-partner': {
+    title: {
+      de: 'Deine eigene Tasche packen',
+      en: 'Pack your own hospital bag',
+    },
+    description: {
+      de: 'Bequeme Klamotten, Snacks, Ladekabel, Kopfhörer, Wechselwäsche. Du bleibst evtl. 12+ Stunden — sei vorbereitet.',
+      en: 'Comfortable clothes, snacks, charging cable, headphones, spare underwear. You may stay 12+ hours — be prepared.',
+    },
+  },
+  'wichtige-nummern': {
+    title: {
+      de: 'Wichtige Nummern speichern',
+      en: 'Save the important phone numbers',
+    },
+    description: {
+      de: 'Kreißsaal-Direktleitung, Hebamme, Kinderarzt, Nachbetreuung. Auch fest im Auto lassen. Screenshot geht bei Aufregung schnell verloren.',
+      en: 'Direct line to labor & delivery, midwife, pediatrician, aftercare. Keep them in the car too. A screenshot gets lost easily in the rush.',
+    },
+  },
+  'meldeamt-baby': {
+    title: {
+      de: 'Über Baby-Anmeldung informieren',
+      en: 'Learn how to register the baby',
+    },
+    description: {
+      de: 'Nach Geburt hast du 7 Tage. Standesamt (Geburtsurkunde), Krankenkasse (Familienversicherung), Elterngeld, Kindergeld — plane die Woche danach schon jetzt.',
+      en: 'You have 7 days after birth. Registry office (birth certificate), insurer (family coverage), parental allowance, child benefit — plan the week ahead now.',
+    },
+  },
+  'wochenbett-helfer': {
+    title: {
+      de: 'Wochenbett-Helfer:innen organisieren',
+      en: 'Organize postpartum helpers',
+    },
+    description: {
+      de: 'Wer bringt Essen? Wer kauft ein? Wer putzt? Nutzt den Wochenbett-Chef in MamaMap — organisiert das JETZT, nicht wenn ihr schon erschöpft seid.',
+      en: 'Who brings food? Who does groceries? Who cleans? Use the postpartum captain in MamaMap — organize this NOW, not when you\'re already exhausted.',
+    },
+  },
+  'wochenbett-plan': {
+    title: {
+      de: 'Wochenbett-Plan besprechen',
+      en: 'Talk through your postpartum plan',
+    },
+    description: {
+      de: 'Wer schläft wo? Wer trägt Baby wann? Wer kocht? Es hilft riesig, wenn du weißt was in Woche 1-2 auf dich zukommt und einen groben Plan hast.',
+      en: 'Who sleeps where? Who carries the baby when? Who cooks? It helps enormously to know what week 1-2 will look like and have a rough plan.',
+    },
+  },
+  'elterngeld': {
+    title: {
+      de: 'Elterngeld-Antrag vorbereiten',
+      en: 'Prepare the parental allowance application',
+    },
+    description: {
+      de: 'Formulare sind lang. Verdienstbescheinigungen, Lohnabrechnungen, Bankdaten. Sammle jetzt schon alles zusammen — antrag geht direkt nach Geburt.',
+      en: 'The forms are long. Income statements, pay slips, banking details. Gather everything now — the application goes in right after birth.',
+    },
+  },
+  'schild-fuer-tuer': {
+    title: {
+      de: 'Ruhe-Schild für die Wohnungstür',
+      en: 'Quiet sign for the front door',
+    },
+    description: {
+      de: '"Bitte nicht klingeln — wir schlafen". Klingt banal, wirkt Wunder. Auch für den Nachbarn ein Hinweis dass ihr jetzt Wochenbett habt.',
+      en: '"Please don\'t ring — we\'re sleeping." Sounds trivial, works wonders. Also signals to neighbors that you\'re in postpartum mode.',
+    },
+  },
+}
+
+export function getPreparationTitle(id: string, locale: 'de' | 'en'): string {
+  const entry = PREP_TRANSLATIONS[id]
+  if (entry) return entry.title[locale] ?? entry.title.de
+  const fallback = PREPARATION_TASKS.find((t) => t.id === id)
+  return fallback?.title ?? id
+}
+
+export function getPreparationDescription(id: string, locale: 'de' | 'en'): string {
+  const entry = PREP_TRANSLATIONS[id]
+  if (entry) return entry.description[locale] ?? entry.description.de
+  const fallback = PREPARATION_TASKS.find((t) => t.id === id)
+  return fallback?.description ?? ''
+}

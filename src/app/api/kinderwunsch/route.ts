@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getActivePregnancy } from '@/lib/pregnancy/server'
+import { apiError } from '@/lib/apiError'
 
 const DEFAULTS = {
   koerper: [] as string[],
@@ -48,7 +49,7 @@ export async function GET() {
     .single()
 
   if (error && (error as { code?: string }).code !== 'PGRST116') {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return apiError(error, 'kinderwunsch/get')
   }
 
   if (!data) return NextResponse.json(DEFAULTS)

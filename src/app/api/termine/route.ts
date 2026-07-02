@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getActivePregnancy } from '@/lib/pregnancy/server'
 import { generateGroupId, generateOccurrenceDates } from '@/lib/termine/recurrence'
 import type { Termin } from '@/lib/termine/types'
+import { apiError } from '@/lib/apiError'
 
 const TERMIN_TYPE_IDS = [
   'erstgespraech',
@@ -106,7 +107,7 @@ export async function GET() {
     .order('date', { ascending: true })
     .limit(500)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return apiError(error, 'termine/list')
 
   const rows = (data ?? []) as DbTermin[]
   return NextResponse.json(rows.map(rowToTermin))
@@ -158,7 +159,7 @@ export async function POST(request: NextRequest) {
     }))
 
     const { data, error } = await supabase.from('termine').insert(rows).select()
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return apiError(error, 'termine/series-insert')
 
     const created = ((data ?? []) as DbTermin[]).map(rowToTermin)
     return NextResponse.json({ created }, { status: 201 })
@@ -172,7 +173,7 @@ export async function POST(request: NextRequest) {
   }
 
   const { data, error } = await supabase.from('termine').insert(row).select().single()
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return apiError(error, 'termine/insert')
 
   const created = data ? [rowToTermin(data as DbTermin)] : []
   return NextResponse.json({ created }, { status: 201 })

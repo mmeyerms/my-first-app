@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { DEFAULT_PREFERENCES, mergePreferences, type UserPreferences } from '@/lib/preferences/types'
+import { apiError } from '@/lib/apiError'
 
 const accentColor = z.enum(['burgundy', 'rose', 'sage', 'blue'])
 const fontSize = z.enum(['sm', 'md', 'lg'])
@@ -137,6 +138,6 @@ export async function PUT(request: NextRequest) {
       { onConflict: 'user_id' },
     )
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return apiError(error, 'preferences/upsert')
   return NextResponse.json(merged)
 }

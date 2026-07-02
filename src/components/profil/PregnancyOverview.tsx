@@ -66,6 +66,86 @@ function StatusBadge({ status }: { status: PregnancyStatus }) {
   )
 }
 
+/**
+ * Renders a single ultrasound thumbnail whose `src` is a signed URL that
+ * we (re-)fetch on mount from `/api/uploads/ultrasound/refresh`. The signed
+ * URL persisted in the database is intentionally ignored: it may already
+ * have expired (24h TTL) which was the source of the "images silently
+ * turn into 403 broken images" bug. The refresh endpoint returns a fresh
+ * 1h URL that is enough for the current page visit.
+ */
+function UltrasoundThumb({
+  entry,
+  busy,
+  onDelete,
+}: {
+  entry: UltrasoundEntry
+  busy: boolean
+  onDelete: (path: string) => void
+}) {
+  const [freshUrl, setFreshUrl] = useState<string | null>(null)
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    async function refresh() {
+      try {
+        const res = await fetch(
+          `/api/uploads/ultrasound/refresh?path=${encodeURIComponent(entry.path)}`,
+          { cache: 'no-store' },
+        )
+        if (!res.ok) {
+          if (!cancelled) setFailed(true)
+          return
+        }
+        const data = (await res.json()) as { url?: string }
+        if (!cancelled && typeof data.url === 'string') {
+          setFreshUrl(data.url)
+        }
+      } catch {
+        if (!cancelled) setFailed(true)
+      }
+    }
+    void refresh()
+    return () => {
+      cancelled = true
+    }
+  }, [entry.path])
+
+  return (
+    <li className="group relative aspect-square overflow-hidden rounded-lg bg-muted">
+      {freshUrl && !failed ? (
+        <Image
+          src={freshUrl}
+          alt={entry.ssw !== null ? `Ultraschall SSW ${entry.ssw}` : 'Ultraschall-Bild'}
+          fill
+          sizes="120px"
+          className="object-cover"
+          unoptimized
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground">
+          {failed ? '⚠ Bild' : '…'}
+        </div>
+      )}
+      {entry.ssw !== null && (
+        <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white">
+          SSW {entry.ssw}
+        </span>
+      )}
+      <button
+        type="button"
+        onClick={() => onDelete(entry.path)}
+        disabled={busy}
+        aria-label="Bild entfernen"
+        className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white opacity-0 transition-opacity hover:bg-destructive group-hover:opacity-100 focus:opacity-100"
+      >
+        <Trash2 className="h-3 w-3" strokeWidth={1.5} aria-hidden="true" />
+      </button>
+    </li>
+  )
+}
+
 function UltrasoundGallery({
   pregnancyId,
   initialEntries,
@@ -156,34 +236,12 @@ function UltrasoundGallery({
       ) : (
         <ul className="grid grid-cols-3 gap-2">
           {entries.map((entry) => (
-            <li key={entry.path} className="group relative aspect-square overflow-hidden rounded-lg bg-muted">
-              <Image
-                src={entry.url}
-                alt={
-                  entry.ssw !== null
-                    ? `Ultraschall SSW ${entry.ssw}`
-                    : 'Ultraschall-Bild'
-                }
-                fill
-                sizes="120px"
-                className="object-cover"
-                unoptimized
-              />
-              {entry.ssw !== null && (
-                <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white">
-                  SSW {entry.ssw}
-                </span>
-              )}
-              <button
-                type="button"
-                onClick={() => handleDelete(entry.path)}
-                disabled={busy}
-                aria-label="Bild entfernen"
-                className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white opacity-0 transition-opacity hover:bg-destructive group-hover:opacity-100 focus:opacity-100"
-              >
-                <Trash2 className="h-3 w-3" strokeWidth={1.5} aria-hidden="true" />
-              </button>
-            </li>
+            <UltrasoundThumb
+              key={entry.path}
+              entry={entry}
+              busy={busy}
+              onDelete={handleDelete}
+            />
           ))}
         </ul>
       )}

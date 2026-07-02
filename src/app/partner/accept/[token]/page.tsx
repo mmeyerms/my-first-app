@@ -1,6 +1,15 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { PartnerAcceptForm } from '@/components/partner/PartnerAcceptForm'
+import { PartnerAcceptPageWrapper } from '@/components/partner/PartnerAcceptPageWrapper'
+
+// Belt-and-braces companion to the client-side URL scrubbing in
+// PartnerAcceptPageWrapper: instruct the browser to send NO Referer at all
+// from this page, so even during the tiny window before the URL is cleaned
+// no third-party resource can leak the invite token.
+export const metadata = {
+  referrer: 'no-referrer' as const,
+  robots: { index: false, follow: false },
+}
 
 export default async function PartnerAcceptPage({
   params,
@@ -109,7 +118,7 @@ export default async function PartnerAcceptPage({
               Du bist angemeldet als <strong className="text-foreground">{user.email}</strong>.
               Falls du eine andere Person bist, öffne den Link am besten in einem privaten Tab.
             </div>
-            <PartnerAcceptForm token={token} />
+            <PartnerAcceptPageWrapper token={token} />
           </>
         )}
       </div>

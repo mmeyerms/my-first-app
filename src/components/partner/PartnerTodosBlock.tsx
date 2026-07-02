@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { CheckCircle2, Circle } from 'lucide-react'
+import { useT } from '@/lib/i18n/client'
 
 export interface PartnerTodoItem {
   id: string
@@ -44,6 +45,7 @@ export function PartnerTodosBlock({
   externalTodos,
   onLocalToggle,
 }: PartnerTodosBlockProps) {
+  const t = useT()
   const [todos, setTodos] = useState<PartnerTodoItem[]>(initialTodos)
   const [pending, setPending] = useState<Record<string, boolean>>({})
 
@@ -57,7 +59,7 @@ export function PartnerTodosBlock({
   async function toggle(id: string, done: boolean) {
     setPending((p) => ({ ...p, [id]: true }))
     // optimistic
-    setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, done } : t)))
+    setTodos((prev) => prev.map((td) => (td.id === id ? { ...td, done } : td)))
     onLocalToggle?.(id, done)
     try {
       const res = await fetch('/api/partner-todos', {
@@ -68,7 +70,7 @@ export function PartnerTodosBlock({
       if (!res.ok) throw new Error('failed')
     } catch {
       // revert
-      setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, done: !done } : t)))
+      setTodos((prev) => prev.map((td) => (td.id === id ? { ...td, done: !done } : td)))
       onLocalToggle?.(id, !done)
     } finally {
       setPending((p) => {
@@ -86,20 +88,20 @@ export function PartnerTodosBlock({
         <p className="text-sm text-muted-foreground">{emptyText}</p>
       ) : (
         <ul className="space-y-2">
-          {todos.map((t) => (
+          {todos.map((td) => (
             <li
-              key={t.id}
+              key={td.id}
               className="flex items-start gap-3 rounded-xl border border-border p-3"
             >
               <button
                 type="button"
-                onClick={() => toggle(t.id, !t.done)}
-                disabled={!!pending[t.id]}
-                aria-label={t.done ? 'Als offen markieren' : 'Als erledigt markieren'}
-                aria-pressed={t.done}
+                onClick={() => toggle(td.id, !td.done)}
+                disabled={!!pending[td.id]}
+                aria-label={td.done ? t.partner.todos.markOpen : t.partner.todos.markDone}
+                aria-pressed={td.done}
                 className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-primary hover:opacity-80 disabled:opacity-50"
               >
-                {t.done ? (
+                {td.done ? (
                   <CheckCircle2 className="h-5 w-5" />
                 ) : (
                   <Circle className="h-5 w-5" />
@@ -108,18 +110,20 @@ export function PartnerTodosBlock({
               <div className="min-w-0 flex-1">
                 <p
                   className={
-                    t.done
+                    td.done
                       ? 'text-sm font-medium text-muted-foreground line-through'
                       : 'text-sm font-medium text-foreground'
                   }
                 >
-                  {t.title}
+                  {td.title}
                 </p>
-                {t.description && (
-                  <p className="mt-0.5 text-xs text-muted-foreground">{t.description}</p>
+                {td.description && (
+                  <p className="mt-0.5 text-xs text-muted-foreground">{td.description}</p>
                 )}
-                {t.dueDate && (
-                  <p className="mt-0.5 text-xs text-muted-foreground">Fällig: {t.dueDate}</p>
+                {td.dueDate && (
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {t.partner.todos.dueLabel.replace('{date}', td.dueDate)}
+                  </p>
                 )}
               </div>
             </li>
