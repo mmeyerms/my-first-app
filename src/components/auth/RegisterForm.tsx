@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { translateAuthError } from '@/lib/utils'
 import { useT } from '@/lib/i18n/client'
@@ -12,8 +13,21 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 
+/**
+ * Only permit relative "next" paths that stay on our own site — prevents
+ * open-redirect attacks via ?next=https://evil.example.com.
+ */
+function safeNext(raw: string | null | undefined): string {
+  if (!raw) return '/onboarding'
+  if (!raw.startsWith('/')) return '/onboarding'
+  if (raw.startsWith('//')) return '/onboarding'
+  return raw
+}
+
 export function RegisterForm() {
   const t = useT()
+  const searchParams = useSearchParams()
+  const nextUrl = safeNext(searchParams.get('next'))
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -38,13 +52,13 @@ export function RegisterForm() {
       const { data: result, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
-        options: { emailRedirectTo: `${window.location.origin}/onboarding` },
+        options: { emailRedirectTo: `${window.location.origin}${nextUrl}` },
       })
       if (authError) throw authError
       if (result.user && !result.session) {
         setSuccess(true)
       } else if (result.session) {
-        window.location.href = '/onboarding'
+        window.location.href = nextUrl
       }
     } catch (err: unknown) {
       setError(translateAuthError(err instanceof Error ? err.message : ''))
@@ -105,7 +119,10 @@ export function RegisterForm() {
         </Button>
         <p className="text-center text-sm text-muted-foreground">
           {t.auth.register.hasAccount}{' '}
-          <Link href="/login" className="font-medium text-primary hover:underline">
+          <Link
+            href={nextUrl === '/onboarding' ? '/login' : `/login?next=${encodeURIComponent(nextUrl)}`}
+            className="font-medium text-primary hover:underline"
+          >
             {t.auth.register.loginCta}
           </Link>
         </p>

@@ -641,6 +641,20 @@ ALTER TABLE diary_entries REPLICA IDENTITY FULL;
 ALTER TABLE partner_links REPLICA IDENTITY FULL;
 ALTER TABLE user_preferences REPLICA IDENTITY FULL;
 
+-- ------------------------------------------------------------
+-- 20) PARTNER ROLLE + DISPLAY NAME
+--     Erweitert partner_links um role + display_name, damit der
+--     Partner beim Accept-Flow angeben kann, wer er ist (Papa/Mama/
+--     Oma/Opa/Bestie/Andere) und mit welchem Namen er der Mama
+--     angezeigt wird.
+-- ------------------------------------------------------------
+ALTER TABLE partner_links ADD COLUMN IF NOT EXISTS role TEXT;
+ALTER TABLE partner_links ADD COLUMN IF NOT EXISTS display_name TEXT;
+
+ALTER TABLE partner_links DROP CONSTRAINT IF EXISTS partner_links_role_check;
+ALTER TABLE partner_links ADD CONSTRAINT partner_links_role_check
+  CHECK (role IS NULL OR role IN ('papa', 'mama', 'oma', 'opa', 'bestie', 'andere'));
+
 -- ============================================================
 -- FERTIG. Alle Tabellen + RLS + Trigger sind idempotent angelegt.
 -- ============================================================

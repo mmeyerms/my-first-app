@@ -27,12 +27,15 @@ export default async function PartnerDashboardPage() {
 
   const { data: link } = await supabase
     .from('partner_links')
-    .select('mother_id')
+    .select('mother_id, role, display_name')
     .eq('partner_user_id', user.id)
     .eq('active', true)
     .single()
 
   if (!link) redirect('/dashboard')
+
+  const partnerRole = (link as { role: string | null }).role
+  const partnerDisplayName = (link as { display_name: string | null }).display_name
 
   const { data: profile } = (await supabase
     .from('profiles')
@@ -57,8 +60,17 @@ export default async function PartnerDashboardPage() {
 
   // Read mother's personalization to respect visibility settings.
   const motherPrefs = await getPreferences(supabase, link.mother_id)
-  const partnerLabel = motherPrefs.partnerLabel || 'Partner:in'
   const visibility = motherPrefs.partnerVisibility
+
+  // Prefer the display_name the partner chose during accept-flow.
+  // Fall back to mother's global partnerLabel (legacy) or a neutral default.
+  const ROLE_LABEL_DE: Record<string, string> = {
+    papa: 'Papa', mama: 'Mama', oma: 'Oma', opa: 'Opa', bestie: 'Bestie', andere: 'Partner:in',
+  }
+  const roleLabel = partnerRole ? ROLE_LABEL_DE[partnerRole] ?? 'Partner:in' : (motherPrefs.partnerLabel || 'Partner:in')
+  const partnerLabel = partnerDisplayName?.trim()
+    ? `${roleLabel} ${partnerDisplayName.trim()}`
+    : roleLabel
 
   const { data: birthPlan } = await supabase
     .from('birth_plans')

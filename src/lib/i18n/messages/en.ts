@@ -361,7 +361,7 @@ export const en = {
         name: 'Name is required',
         babyName: 'Working name is required',
         testDate: 'Date is required',
-        dueDate: 'Due date is required',
+        dueDate: 'Due date must be after positive test date',
       },
     },
     babyGender: "Baby's gender",

@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { translateAuthError } from '@/lib/utils'
 import { useT } from '@/lib/i18n/client'
@@ -12,8 +13,17 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 
+function safeNext(raw: string | null | undefined): string {
+  if (!raw) return '/dashboard'
+  if (!raw.startsWith('/')) return '/dashboard'
+  if (raw.startsWith('//')) return '/dashboard'
+  return raw
+}
+
 export function LoginForm() {
   const t = useT()
+  const searchParams = useSearchParams()
+  const nextUrl = safeNext(searchParams.get('next'))
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -40,8 +50,7 @@ export function LoginForm() {
       })
       if (authError) throw authError
       if (result.session) {
-        const params = new URLSearchParams(window.location.search)
-        window.location.href = params.get('next') ?? '/dashboard'
+        window.location.href = nextUrl
       }
     } catch (err: unknown) {
       setError(translateAuthError(err instanceof Error ? err.message : ''))
@@ -92,7 +101,10 @@ export function LoginForm() {
         </Button>
         <p className="text-center text-sm text-muted-foreground">
           {t.auth.login.noAccount}{' '}
-          <Link href="/register" className="font-medium text-primary hover:underline">
+          <Link
+            href={nextUrl === '/dashboard' ? '/register' : `/register?next=${encodeURIComponent(nextUrl)}`}
+            className="font-medium text-primary hover:underline"
+          >
             {t.auth.login.registerCta}
           </Link>
         </p>

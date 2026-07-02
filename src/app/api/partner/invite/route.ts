@@ -28,17 +28,27 @@ export async function POST() {
   return NextResponse.json({ token, expiresAt })
 }
 
-export async function DELETE() {
+export async function DELETE(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Nicht eingeloggt' }, { status: 401 })
 
-  await supabase.from('partner_links').update({ active: false }).eq('mother_id', user.id)
-  await supabase
-    .from('partner_invites')
-    .update({ used_at: new Date().toISOString() })
-    .eq('mother_id', user.id)
-    .is('used_at', null)
+  // Optional query param ?partnerId=... to deactivate a specific link.
+  // Without it, deactivate ALL of the mother's links (legacy behaviour).
+  const url = new URL(request.url)
+  const partnerId = url.searchParams.get('partnerId')
+
+  let q = supabase.from('partner_links').update({ active: false }).eq('mother_id', user.id)
+  if (partnerId) q = q.eq('partner_user_id', partnerId)
+  await q
+
+  if (!partnerId) {
+    await supabase
+      .from('partner_invites')
+      .update({ used_at: new Date().toISOString() })
+      .eq('mother_id', user.id)
+      .is('used_at', null)
+  }
 
   return NextResponse.json({ success: true })
 }
@@ -48,12 +58,13 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Nicht eingeloggt' }, { status: 401 })
 
-  const { data: link } = await supabase
+  // ALL active links + all pending invites
+  const { data: links } = await supabase
     .from('partner_links')
-    .select('partner_user_id, active')
+    .select('partner_user_id, role, display_name, active, created_at')
     .eq('mother_id', user.id)
     .eq('active', true)
-    .single()
+    .order('created_at', { ascending: false })
 
   const { data: invite } = await supabase
     .from('partner_invites')
@@ -65,14 +76,26 @@ export async function GET() {
     .limit(1)
     .single()
 
+  const partners = (links ?? []).map((l) => ({
+    partnerUserId: (l as { partner_user_id: string }).partner_user_id,
+    role: (l as { role: string | null }).role,
+    displayName: (l as { display_name: string | null }).display_name,
+    createdAt: (l as { created_at: string }).created_at,
+  }))
+
   return NextResponse.json({
-    hasPartner: !!link,
+    hasPartner: partners.length > 0,
+    partners,
     pendingToken: invite?.token ?? null,
     pendingExpiry: invite?.expires_at ?? null,
   })
 }
 
-const acceptSchema = z.object({ token: z.string().uuid() })
+const acceptSchema = z.object({
+  token: z.string().uuid(),
+  role: z.enum(['papa', 'mama', 'oma', 'opa', 'bestie', 'andere']),
+  displayName: z.string().min(1).max(50),
+})
 
 export async function PUT(request: NextRequest) {
   const supabase = await createClient()
@@ -85,7 +108,9 @@ export async function PUT(request: NextRequest) {
   }
 
   const result = acceptSchema.safeParse(body)
-  if (!result.success) return NextResponse.json({ error: 'Token fehlt' }, { status: 400 })
+  if (!result.success) {
+    return NextResponse.json({ error: result.error.flatten() }, { status: 400 })
+  }
 
   const { data: invite } = await supabase
     .from('partner_invites')
@@ -103,13 +128,18 @@ export async function PUT(request: NextRequest) {
   }
 
   await supabase.from('partner_invites').update({ used_at: new Date().toISOString() }).eq('id', invite.id)
-  const { error } = await supabase.from('partner_links').upsert({
-    mother_id: invite.mother_id,
-    partner_user_id: user.id,
-    active: true,
-  })
+  const { error } = await supabase.from('partner_links').upsert(
+    {
+      mother_id: invite.mother_id,
+      partner_user_id: user.id,
+      active: true,
+      role: result.data.role,
+      display_name: result.data.displayName.trim(),
+    },
+    { onConflict: 'mother_id,partner_user_id' },
+  )
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  return NextResponse.json({ success: true })
+  return NextResponse.json({ success: true, motherId: invite.mother_id })
 }

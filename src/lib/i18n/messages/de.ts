@@ -361,7 +361,7 @@ export const de = {
         name: 'Name ist erforderlich',
         babyName: 'Arbeitsname ist erforderlich',
         testDate: 'Datum ist erforderlich',
-        dueDate: 'Geburtstermin ist erforderlich',
+        dueDate: 'Geburtstermin muss nach dem positiven Test liegen',
       },
     },
     babyGender: 'Geschlecht des Babys',

@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { LoginForm } from '@/components/auth/LoginForm'
 import { LocaleSelector } from '@/components/i18n/LocaleSelector'
 import { Logo } from '@/components/brand/Logo'
@@ -22,7 +23,9 @@ export default async function LoginPage() {
           <h2 className="mb-6 font-display text-2xl font-medium text-foreground">
             {t.auth.login.title}
           </h2>
-          <LoginForm />
+          <Suspense fallback={null}>
+            <LoginForm />
+          </Suspense>
         </div>
       </div>
     </main>

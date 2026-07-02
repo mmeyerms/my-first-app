@@ -14,12 +14,12 @@ export default async function PartnerPage() {
   if (!user) redirect('/login')
   const t = getMessages(await getServerLocale())
 
-  const { data: link } = await supabase
+  const { data: links } = await supabase
     .from('partner_links')
-    .select('partner_user_id')
+    .select('partner_user_id, role, display_name, created_at')
     .eq('mother_id', user.id)
     .eq('active', true)
-    .single()
+    .order('created_at', { ascending: false })
 
   const { data: invite } = await supabase
     .from('partner_invites')
@@ -31,8 +31,16 @@ export default async function PartnerPage() {
     .limit(1)
     .single()
 
+  const partners = (links ?? []).map((l) => ({
+    partnerUserId: (l as { partner_user_id: string }).partner_user_id,
+    role: (l as { role: 'papa' | 'mama' | 'oma' | 'opa' | 'bestie' | 'andere' | null }).role,
+    displayName: (l as { display_name: string | null }).display_name,
+    createdAt: (l as { created_at: string }).created_at,
+  }))
+
   const initialStatus = {
-    hasPartner: !!link,
+    hasPartner: partners.length > 0,
+    partners,
     pendingToken: invite?.token ?? null,
     pendingExpiry: invite?.expires_at ?? null,
   }

@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { RegisterForm } from '@/components/auth/RegisterForm'
 import { LocaleSelector } from '@/components/i18n/LocaleSelector'
 import { Logo } from '@/components/brand/Logo'
@@ -25,7 +26,9 @@ export default async function RegisterPage() {
           <p className="mb-6 text-sm text-muted-foreground">
             {t.auth.register.subtitle}
           </p>
-          <RegisterForm />
+          <Suspense fallback={null}>
+            <RegisterForm />
+          </Suspense>
         </div>
       </div>
     </main>

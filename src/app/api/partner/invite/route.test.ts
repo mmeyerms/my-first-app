@@ -52,13 +52,15 @@ describe('POST /api/partner/invite', () => {
 describe('DELETE /api/partner/invite', () => {
   it('returns 401 when not authenticated', async () => {
     vi.mocked(createClient).mockResolvedValue(makeMock(null) as never)
-    const res = await DELETE()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const res = await DELETE(new Request('http://localhost/api/partner/invite') as any)
     expect(res.status).toBe(401)
   })
 
   it('returns success for authenticated mother', async () => {
     vi.mocked(createClient).mockResolvedValue(makeMock() as never)
-    const res = await DELETE()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const res = await DELETE(new Request('http://localhost/api/partner/invite') as any)
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.success).toBe(true)
