@@ -3,29 +3,31 @@
 import { usePreferences } from '@/lib/preferences/client'
 import type { QuestionSetMode } from '@/lib/preferences/types'
 import { cn } from '@/lib/utils'
-
-const QUESTION_SETS: Array<{ key: QuestionSetMode; label: string; hint: string }> = [
-  { key: 'short', label: 'Kurzform', hint: 'Ca. 5 Kernfragen, in 5 Min beantwortet' },
-  { key: 'full', label: 'Ausführlich', hint: 'Alle Fragen, 20+ Minuten' },
-]
-
-const CLINIC_PRESETS = [
-  { key: '', label: 'Kein Preset', hint: 'Neutrale Formulierung' },
-  { key: 'klinik', label: 'Klinikgeburt', hint: 'Formulierungen für Klinik-Team' },
-  { key: 'hausgeburt', label: 'Hausgeburt', hint: 'Vertrauter, Fokus auf Hebamme' },
-  { key: 'geburtshaus', label: 'Geburtshaus', hint: 'Zwischen Klinik und Hausgeburt' },
-  { key: 'ambulant', label: 'Ambulante Geburt', hint: 'Baldige Entlassung' },
-]
+import { useT } from '@/lib/i18n/client'
 
 export function GeburtsplanSection() {
   const { prefs, update } = usePreferences()
+  const t = useT()
+
+  const QUESTION_SETS: Array<{ key: QuestionSetMode; label: string; hint: string }> = [
+    { key: 'short', label: t.settings.geburtsplan.questionSet.short, hint: 'Ca. 5 Kernfragen, in 5 Min beantwortet' },
+    { key: 'full', label: t.settings.geburtsplan.questionSet.full, hint: 'Alle Fragen, 20+ Minuten' },
+  ]
+
+  const CLINIC_PRESETS = [
+    { key: '', label: t.settings.geburtsplan.clinicPreset.none, hint: 'Neutrale Formulierung' },
+    { key: 'klinik', label: t.settings.geburtsplan.clinicPreset.clinic, hint: 'Formulierungen für Klinik-Team' },
+    { key: 'hausgeburt', label: t.settings.geburtsplan.clinicPreset.homebirth, hint: 'Vertrauter, Fokus auf Hebamme' },
+    { key: 'geburtshaus', label: 'Geburtshaus', hint: 'Zwischen Klinik und Hausgeburt' },
+    { key: 'ambulant', label: t.settings.geburtsplan.clinicPreset.ambulatory, hint: 'Baldige Entlassung' },
+  ]
 
   return (
     <div className="space-y-6">
       <section>
-        <h2 className="mb-1 text-sm font-semibold text-foreground">Fragen-Set</h2>
+        <h2 className="mb-1 text-sm font-semibold text-foreground">{t.settings.geburtsplan.questionSet.title}</h2>
         <p className="mb-3 text-xs text-muted-foreground">
-          Wie ausführlich der Geburtsplan sein soll.
+          {t.settings.geburtsplan.questionSet.description}
         </p>
         <div className="grid grid-cols-2 gap-2">
           {QUESTION_SETS.map((s) => (
@@ -49,7 +51,7 @@ export function GeburtsplanSection() {
       </section>
 
       <section>
-        <h2 className="mb-1 text-sm font-semibold text-foreground">Klinik-Preset</h2>
+        <h2 className="mb-1 text-sm font-semibold text-foreground">{t.settings.geburtsplan.clinicPreset.title}</h2>
         <p className="mb-3 text-xs text-muted-foreground">
           Wähle ein Setting — die Antwort-Vorschläge im Wizard werden entsprechend zugeschnitten.
         </p>

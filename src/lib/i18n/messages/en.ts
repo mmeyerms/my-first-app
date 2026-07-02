@@ -697,6 +697,26 @@ export const en = {
     customBadge: 'Custom',
   },
   partner: {
+    realtime: {
+      live: 'Live',
+      connecting: 'Connecting...',
+      offline: 'Offline',
+    },
+    preparation: {
+      title: 'Your Preparations',
+    },
+    accept: {
+      title: 'Accept Invitation',
+    },
+    prep: {
+      category: {
+        behordlich: 'Administrative',
+        gesundheit: 'Health',
+        wohnen: 'Housing',
+        geburt: 'Birth',
+        wochenbett: 'Postpartum',
+      },
+    },
     title: 'Partner area',
     intro: 'Connect with your partner and share the journey.',
     pageIntro: "Give your partner access to your MamaMap. They can see the current week, phase-specific tips, and your birth plan — but can't edit anything.",
@@ -709,6 +729,11 @@ export const en = {
     birthPlanHeading: '📋 Birth plan',
     birthPlanEmpty: 'The birth plan will appear here once {name} fills it in.',
     invite: {
+      title: 'Invite Partner',
+      createLink: 'Create invitation link',
+      connected: {
+        title: 'Partner connected',
+      },
       create: 'Create invite',
       share: 'Share invite',
       copyLink: 'Copy link',
@@ -1217,6 +1242,213 @@ export const en = {
     slide7: {
       title: 'Ready?',
       body: "This journey is yours. We're here whenever you need us. 💛",
+    },
+  },
+  settings: {
+    woche: {
+      blocks: {
+        title: 'Blocks on the Week Page',
+        description: "Hide what doesn't interest you.",
+        development: 'Development',
+        comparisons: 'Size Comparisons',
+        momBody: "Mom's Body",
+        funFact: 'Did you know?',
+        partnerTip: 'For Partner',
+        nextWeek: 'Next Week',
+      },
+      comparisonCategories: {
+        title: 'Comparison Categories',
+        fruits: 'Fruits',
+        candies: 'Candies',
+        toys: 'Toys',
+        animals: 'Animals',
+        everyday: 'Everyday',
+      },
+      progressStyle: {
+        title: 'Progress Style',
+        bar: 'Bar',
+        percent: 'Percent',
+        weeksLeft: 'Weeks until EDD',
+      },
+    },
+    geburtsplan: {
+      questionSet: {
+        title: 'Question Set',
+        description: 'How detailed the birth plan should be.',
+        short: 'Short Form',
+        full: 'Detailed',
+      },
+      clinicPreset: {
+        title: 'Clinic Preset',
+        none: 'No Preset',
+        clinic: 'Clinic Birth',
+        homebirth: 'Home Birth',
+        ambulatory: 'Ambulatory Birth',
+      },
+    },
+    snapshot: {
+      cards: {
+        title: 'Home Tiles',
+        description: 'Choose & sort the tiles on your home screen. Drag to reorder.',
+        nextTermin: 'Next Appointment',
+        ssw: 'Current Week of Pregnancy',
+        tip: 'Tip of the Day',
+        lastDiary: 'Last Diary Entry',
+        countdown: 'Countdown to EDD',
+        wochenbettChef: 'Postpartum Requests',
+        zodiac: 'Baby Zodiac',
+        remove: 'Remove',
+        available: 'Available',
+        add: 'Add',
+      },
+      display: {
+        title: 'Display',
+        compact: 'Compact',
+        expanded: 'Expanded',
+      },
+      countdownWidget: {
+        title: 'Countdown Widget',
+      },
+    },
+    kinderwunsch: {
+      cycleLength: {
+        title: 'Cycle Length',
+        unit: 'Days',
+      },
+      tracking: {
+        temperature: 'Basal Temperature',
+        lhTest: 'LH Test',
+        symptothermal: 'Symptothermal',
+        sexualIntercourse: 'Sexual Intercourse',
+        menstruation: 'Menstruation',
+      },
+      trackingElements: {
+        title: 'Tracking Elements',
+      },
+      reminders: {
+        title: 'Reminders',
+        ovuTestActive: 'Ovulation test active',
+      },
+    },
+    tagebuch: {
+      customPrompts: {
+        title: 'Custom Impulse Questions',
+      },
+      suggestedPrompts: {
+        mostBeautiful: 'What was most beautiful today?',
+        grateful: 'What am I grateful for today?',
+        belly: 'How did my belly feel today?',
+        baby: 'What do I want to tell my baby later?',
+        surprised: 'What surprised me about myself today?',
+      },
+      promptRotation: {
+        title: 'Prompt Rotation',
+      },
+      showRueckblick: {
+        title: 'Show Retrospective',
+      },
+    },
+    partner: {
+      todos: {
+        title: 'Custom To-Dos for Partner',
+        description:
+          'Concrete tasks like "Parental leave application by week 30" or "Register for course". Partner sees them in partner dashboard and can check them off.',
+        titlePlaceholder: 'Title e.g. Submit parental leave application',
+        empty: 'No to-dos yet. Create the first task for your partner.',
+      },
+      role: {
+        title: 'Role',
+        partner: 'Partner',
+        grandparent: 'Grandparent',
+        friend: 'Friend',
+        other: 'Other',
+      },
+      label: {
+        title: 'Name',
+      },
+      visibility: {
+        title: 'Visibility',
+        termine: 'Appointments',
+        tagebuch: 'Diary',
+        geburtsplan: 'Birth Plan',
+        woche: 'Week',
+        wochenbett: 'Postpartum',
+        partnerTodos: 'To-Dos',
+      },
+    },
+    design: {
+      theme: {
+        title: 'Theme',
+        description: 'Choose the overall mood.',
+        editorial: 'Editorial',
+        editorialDescription: 'Elegant, with serif and calm tones.',
+        classic: 'Classic',
+        classicDescription: 'Playful, colorful, emoji-friendly.',
+      },
+      accentColor: {
+        title: 'Accent Color',
+        burgundy: 'Burgundy',
+        rose: 'Rose',
+        sage: 'Sage',
+        blue: 'Blue',
+      },
+      fontSize: {
+        title: 'Font Size',
+        small: 'Small',
+        medium: 'Normal',
+        large: 'Large',
+      },
+    },
+    greeting: {
+      tone: {
+        title: 'Greeting Tone',
+        warm: 'Warm',
+        neutral: 'Neutral',
+        casual: 'Casual',
+        affectionate: 'Affectionate',
+      },
+    },
+    notifications: {
+      weeklyEmail: {
+        title: 'Weekly Summary',
+      },
+    },
+    checklists: {
+      presets: {
+        title: 'List Templates',
+        location: {
+          title: 'Birth Place',
+          clinic: 'Clinic',
+          homebirth: 'Home Birth',
+          birthCenter: 'Birth Center',
+        },
+        season: {
+          title: 'Season',
+          summer: 'Summer',
+          winter: 'Winter',
+        },
+        setup: {
+          title: 'Accompaniment',
+          solo: 'Solo',
+          duo: 'As a couple',
+        },
+      },
+    },
+    termine: {
+      customCategories: {
+        title: 'Custom Appointment Categories',
+        emoji: 'Emoji',
+        name: 'Name',
+        color: 'Color',
+        defaultLocation: 'Default Location',
+        defaultReminder: 'Default Reminder',
+        reminderNone: 'None',
+        reminder1Hour: '1 Hour',
+        reminder3Hours: '3 Hours',
+        reminder1Day: '1 Day',
+        reminder3Days: '3 Days',
+        notesTemplate: 'Notes Template',
+      },
     },
   },
 } as const

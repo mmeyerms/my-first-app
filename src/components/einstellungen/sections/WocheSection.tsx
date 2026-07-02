@@ -4,36 +4,48 @@ import { usePreferences } from '@/lib/preferences/client'
 import type { WocheBlockKey, WocheComparisonCategory, WocheProgressStyle } from '@/lib/preferences/types'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
+import { useT } from '@/lib/i18n/client'
 
-const BLOCKS: Array<{ key: WocheBlockKey; label: string; hint: string }> = [
-  { key: 'development', label: 'Entwicklung', hint: 'Was passiert diese Woche' },
-  { key: 'comparisons', label: 'Größenvergleiche', hint: 'Frucht, Süßigkeit, Spielzeug…' },
-  { key: 'momBody', label: 'Mama-Körper', hint: 'Was passiert in dir' },
-  { key: 'funFact', label: 'Wusstest du?', hint: 'Fun-Fact der Woche' },
-  { key: 'partnerTip', label: 'Für Partner', hint: 'Tipp fürs Team' },
-  { key: 'nextWeek', label: 'Nächste Woche', hint: 'Vorschau am Ende' },
-]
-
-const COMPARISON_META: Record<WocheComparisonCategory, { label: string; emoji: string }> = {
-  frucht: { label: 'Früchte', emoji: '🍓' },
-  suessigkeit: { label: 'Süßigkeiten', emoji: '🍬' },
-  spielzeug: { label: 'Spielzeug', emoji: '🧸' },
-  tier: { label: 'Tiere', emoji: '🐣' },
-  alltag: { label: 'Alltag', emoji: '🖇️' },
-  sport: { label: 'Sport', emoji: '⚽' },
-  beauty: { label: 'Beauty', emoji: '💄' },
+const COMPARISON_EMOJIS: Record<WocheComparisonCategory, string> = {
+  frucht: '🍓',
+  suessigkeit: '🍬',
+  spielzeug: '🧸',
+  tier: '🐣',
+  alltag: '🖇️',
+  sport: '⚽',
+  beauty: '💄',
 }
 const ALL_CATS: WocheComparisonCategory[] = ['frucht', 'suessigkeit', 'spielzeug', 'tier', 'alltag', 'sport', 'beauty']
 
-const PROGRESS_STYLES: Array<{ key: WocheProgressStyle; label: string; hint: string }> = [
-  { key: 'bar', label: 'Balken', hint: 'Fortschritt als Bar' },
-  { key: 'percent', label: 'Prozent', hint: '„42 %"' },
-  { key: 'weeksLeft', label: 'Wochen bis ET', hint: '„noch 12 Wochen"' },
-  { key: 'none', label: 'Aus', hint: 'Keine Progress-Anzeige' },
-]
-
 export function WocheSection() {
   const { prefs, update } = usePreferences()
+  const t = useT()
+
+  const BLOCKS: Array<{ key: WocheBlockKey; label: string; hint: string }> = [
+    { key: 'development', label: t.settings.woche.blocks.development, hint: 'Was passiert diese Woche' },
+    { key: 'comparisons', label: t.settings.woche.blocks.comparisons, hint: 'Frucht, Süßigkeit, Spielzeug…' },
+    { key: 'momBody', label: t.settings.woche.blocks.momBody, hint: 'Was passiert in dir' },
+    { key: 'funFact', label: t.settings.woche.blocks.funFact, hint: 'Fun-Fact der Woche' },
+    { key: 'partnerTip', label: t.settings.woche.blocks.partnerTip, hint: 'Tipp fürs Team' },
+    { key: 'nextWeek', label: t.settings.woche.blocks.nextWeek, hint: 'Vorschau am Ende' },
+  ]
+
+  const COMPARISON_LABELS: Record<WocheComparisonCategory, string> = {
+    frucht: t.settings.woche.comparisonCategories.fruits,
+    suessigkeit: t.settings.woche.comparisonCategories.candies,
+    spielzeug: t.settings.woche.comparisonCategories.toys,
+    tier: t.settings.woche.comparisonCategories.animals,
+    alltag: t.settings.woche.comparisonCategories.everyday,
+    sport: 'Sport',
+    beauty: 'Beauty',
+  }
+
+  const PROGRESS_STYLES: Array<{ key: WocheProgressStyle; label: string; hint: string }> = [
+    { key: 'bar', label: t.settings.woche.progressStyle.bar, hint: 'Fortschritt als Bar' },
+    { key: 'percent', label: t.settings.woche.progressStyle.percent, hint: '„42 %"' },
+    { key: 'weeksLeft', label: t.settings.woche.progressStyle.weeksLeft, hint: '„noch 12 Wochen"' },
+    { key: 'none', label: 'Aus', hint: 'Keine Progress-Anzeige' },
+  ]
 
   function toggleBlock(key: WocheBlockKey) {
     const next = prefs.wocheBlocks.includes(key)
@@ -51,8 +63,8 @@ export function WocheSection() {
   return (
     <div className="space-y-6">
       <section>
-        <h2 className="mb-1 text-sm font-semibold text-foreground">Blöcke auf der Wochen-Seite</h2>
-        <p className="mb-3 text-xs text-muted-foreground">Blende aus, was dich nicht interessiert.</p>
+        <h2 className="mb-1 text-sm font-semibold text-foreground">{t.settings.woche.blocks.title}</h2>
+        <p className="mb-3 text-xs text-muted-foreground">{t.settings.woche.blocks.description}</p>
         <ul className="space-y-2">
           {BLOCKS.map((b) => (
             <li key={b.key} className="flex items-center gap-3 rounded-xl border border-border bg-card p-3">
@@ -70,12 +82,11 @@ export function WocheSection() {
       </section>
 
       <section>
-        <h2 className="mb-1 text-sm font-semibold text-foreground">Vergleichs-Kategorien</h2>
+        <h2 className="mb-1 text-sm font-semibold text-foreground">{t.settings.woche.comparisonCategories.title}</h2>
         <p className="mb-3 text-xs text-muted-foreground">Welche Vergleiche sollen erscheinen?</p>
         <div className="flex flex-wrap gap-2">
           {ALL_CATS.map((c) => {
             const on = prefs.wocheComparisonCategories.includes(c)
-            const meta = COMPARISON_META[c]
             return (
               <button
                 key={c}
@@ -87,8 +98,8 @@ export function WocheSection() {
                   on ? 'border-primary bg-secondary text-primary' : 'border-border bg-card text-muted-foreground hover:border-primary/40',
                 )}
               >
-                <span>{meta.emoji}</span>
-                <span>{meta.label}</span>
+                <span>{COMPARISON_EMOJIS[c]}</span>
+                <span>{COMPARISON_LABELS[c]}</span>
               </button>
             )
           })}
@@ -96,7 +107,7 @@ export function WocheSection() {
       </section>
 
       <section>
-        <h2 className="mb-1 text-sm font-semibold text-foreground">Progress-Stil</h2>
+        <h2 className="mb-1 text-sm font-semibold text-foreground">{t.settings.woche.progressStyle.title}</h2>
         <p className="mb-3 text-xs text-muted-foreground">Wie SSW-Fortschritt angezeigt wird.</p>
         <div className="grid grid-cols-2 gap-2">
           {PROGRESS_STYLES.map((s) => (

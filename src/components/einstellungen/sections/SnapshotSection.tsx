@@ -6,21 +6,24 @@ import type { SnapshotCardKey, SnapshotDensity } from '@/lib/preferences/types'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 
-const CARD_META: Record<SnapshotCardKey, { label: string; hint: string; emoji: string }> = {
-  nextTermin: { label: 'Nächster Termin', hint: 'Datum + Uhrzeit', emoji: '📅' },
-  ssw: { label: 'Aktuelle SSW', hint: 'Woche + Baby-Vergleich', emoji: '👶' },
-  tipp: { label: 'Tipp des Tages', hint: 'Impuls für heute', emoji: '💡' },
-  tagebuch: { label: 'Letzter Tagebuch-Eintrag', hint: 'Rückblick', emoji: '📝' },
-  countdown: { label: 'Countdown zum ET', hint: 'Verbleibende Tage', emoji: '⏳' },
-  wochenbettChef: { label: 'Wochenbett-Anfragen', hint: 'Wer will helfen?', emoji: '🤝' },
-  sternzeichen: { label: 'Baby-Sternzeichen', hint: 'Basierend auf dem ET', emoji: '✨' },
-}
 const ALL_KEYS: SnapshotCardKey[] = ['nextTermin', 'ssw', 'tipp', 'tagebuch', 'countdown', 'wochenbettChef', 'sternzeichen']
 
 export function SnapshotSection() {
   const { prefs, update } = usePreferences()
+  const t = useT()
   const [dragIndex, setDragIndex] = useState<number | null>(null)
+
+  const CARD_META: Record<SnapshotCardKey, { label: string; hint: string; emoji: string }> = {
+    nextTermin: { label: t.settings.snapshot.cards.nextTermin, hint: 'Datum + Uhrzeit', emoji: '📅' },
+    ssw: { label: t.settings.snapshot.cards.ssw, hint: 'Woche + Baby-Vergleich', emoji: '👶' },
+    tipp: { label: t.settings.snapshot.cards.tip, hint: 'Impuls für heute', emoji: '💡' },
+    tagebuch: { label: t.settings.snapshot.cards.lastDiary, hint: 'Rückblick', emoji: '📝' },
+    countdown: { label: t.settings.snapshot.cards.countdown, hint: 'Verbleibende Tage', emoji: '⏳' },
+    wochenbettChef: { label: t.settings.snapshot.cards.wochenbettChef, hint: 'Wer will helfen?', emoji: '🤝' },
+    sternzeichen: { label: t.settings.snapshot.cards.zodiac, hint: 'Basierend auf dem ET', emoji: '✨' },
+  }
   const active = prefs.snapshotCards
   const inactive = ALL_KEYS.filter((k) => !active.includes(k))
 
