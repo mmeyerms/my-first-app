@@ -19,6 +19,7 @@ import {
 } from '@/lib/sswEntwicklung'
 import { localized } from '@/lib/i18n/localized'
 import { BabyIllustration } from '@/components/ssw/BabyIllustration'
+import { NeedsDueDateNotice } from '@/components/shared/NeedsDueDateNotice'
 
 interface Profile {
   name: string
@@ -53,7 +54,9 @@ export default async function WochePage() {
   // Active pregnancy is source of truth (profile.due_date is legacy).
   const active = await getActivePregnancy(supabase, user.id)
   const dueDate = active?.due_date ?? null
-  if (!dueDate) redirect('/profil')
+  if (!dueDate) {
+    return <NeedsDueDateNotice sectionKey="woche" status={active?.status ?? null} />
+  }
 
   const ssw = calculateSSW(dueDate)
   const info = getSswInfo(ssw)

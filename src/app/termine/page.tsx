@@ -6,6 +6,7 @@ import { getServerLocale } from '@/lib/i18n/server'
 import { getMessages } from '@/lib/i18n/messages'
 import { getActivePregnancy } from '@/lib/pregnancy/server'
 import { TermineView } from '@/components/termine/TermineView'
+import { NeedsDueDateNotice } from '@/components/shared/NeedsDueDateNotice'
 
 export default async function TerminePage() {
   const supabase = await createClient()
@@ -24,7 +25,9 @@ export default async function TerminePage() {
   // Use active pregnancy as source of truth (profile.due_date is legacy).
   const active = await getActivePregnancy(supabase, user.id)
   const dueDate = active?.due_date ?? null
-  if (!dueDate) redirect('/profil')
+  if (!dueDate) {
+    return <NeedsDueDateNotice sectionKey="termine" status={active?.status ?? null} />
+  }
 
   const ssw = calculateSSW(dueDate)
   const locale = await getServerLocale()

@@ -1,28 +1,13 @@
 'use client'
 
 import { usePreferences } from '@/lib/preferences/client'
+import { useT } from '@/lib/i18n/client'
 import type {
   ChecklistLocation,
   ChecklistSeason,
   ChecklistSetup,
 } from '@/lib/preferences/types'
 import { cn } from '@/lib/utils'
-
-const LOCATIONS: Array<{ key: ChecklistLocation; label: string; hint: string }> = [
-  { key: 'klinik', label: 'Klinik', hint: 'Krankenhaus-Geburt mit Voranmeldung' },
-  { key: 'hausgeburt', label: 'Hausgeburt', hint: 'Zuhause — keine Klinik-Utensilien nötig' },
-  { key: 'geburtshaus', label: 'Geburtshaus', hint: 'Ambulant im Geburtshaus' },
-]
-
-const SEASONS: Array<{ key: ChecklistSeason; label: string; hint: string }> = [
-  { key: 'sommer', label: 'Sommer', hint: 'Warme Socken raus, dünne Kleidung' },
-  { key: 'winter', label: 'Winter', hint: 'Alles Warme bleibt an Bord' },
-]
-
-const SETUPS: Array<{ key: ChecklistSetup; label: string; hint: string }> = [
-  { key: 'solo', label: 'Solo', hint: 'Ich gehe alleine — Partner-Items ausblenden' },
-  { key: 'duo', label: 'Zu zweit', hint: 'Partner:in ist dabei — komplette Liste' },
-]
 
 interface OptionButtonProps<T extends string> {
   value: T
@@ -53,7 +38,25 @@ function OptionButton<T extends string>({ value, label, hint, active, onSelect }
 
 export function ChecklistPresetsSection() {
   const { prefs, update } = usePreferences()
+  const t = useT()
+  const ts = t.settings.checklists.presets
   const presets = prefs.listPresets
+
+  const locations: Array<{ key: ChecklistLocation; label: string; hint: string }> = [
+    { key: 'klinik', label: ts.location.clinic, hint: ts.location.clinicHint },
+    { key: 'hausgeburt', label: ts.location.homebirth, hint: ts.location.homebirthHint },
+    { key: 'geburtshaus', label: ts.location.birthCenter, hint: ts.location.birthCenterHint },
+  ]
+
+  const seasons: Array<{ key: ChecklistSeason; label: string; hint: string }> = [
+    { key: 'sommer', label: ts.season.summer, hint: ts.season.summerHint },
+    { key: 'winter', label: ts.season.winter, hint: ts.season.winterHint },
+  ]
+
+  const setups: Array<{ key: ChecklistSetup; label: string; hint: string }> = [
+    { key: 'solo', label: ts.setup.solo, hint: ts.setup.soloHint },
+    { key: 'duo', label: ts.setup.duo, hint: ts.setup.duoHint },
+  ]
 
   function setLocation(value: ChecklistLocation | null) {
     update({ listPresets: { ...presets, location: value } })
@@ -74,19 +77,16 @@ export function ChecklistPresetsSection() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="mb-1 text-sm font-semibold text-foreground">Listen-Vorlagen</h2>
-        <p className="text-xs text-muted-foreground">
-          Wähle Vorlagen aus — nicht benötigte Items werden aus deiner Packliste ausgeblendet.
-          Einkaufsliste und Wochenbett zeigen die aktive Vorlage als Hinweis.
-        </p>
+        <h2 className="mb-1 text-sm font-semibold text-foreground">{ts.title}</h2>
+        <p className="text-xs text-muted-foreground">{ts.description}</p>
       </div>
 
-      <section aria-label="Geburtsort" className="space-y-2">
+      <section aria-label={ts.location.title} className="space-y-2">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Geburtsort
+          {ts.location.title}
         </h3>
         <div className="grid gap-2 sm:grid-cols-3">
-          {LOCATIONS.map((opt) => (
+          {locations.map((opt) => (
             <OptionButton
               key={opt.key}
               value={opt.key}
@@ -99,12 +99,12 @@ export function ChecklistPresetsSection() {
         </div>
       </section>
 
-      <section aria-label="Jahreszeit" className="space-y-2">
+      <section aria-label={ts.season.title} className="space-y-2">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Jahreszeit
+          {ts.season.title}
         </h3>
         <div className="grid gap-2 sm:grid-cols-2">
-          {SEASONS.map((opt) => (
+          {seasons.map((opt) => (
             <OptionButton
               key={opt.key}
               value={opt.key}
@@ -117,12 +117,12 @@ export function ChecklistPresetsSection() {
         </div>
       </section>
 
-      <section aria-label="Begleitung" className="space-y-2">
+      <section aria-label={ts.setup.title} className="space-y-2">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Begleitung
+          {ts.setup.title}
         </h3>
         <div className="grid gap-2 sm:grid-cols-2">
-          {SETUPS.map((opt) => (
+          {setups.map((opt) => (
             <OptionButton
               key={opt.key}
               value={opt.key}
@@ -142,13 +142,13 @@ export function ChecklistPresetsSection() {
             onClick={resetAll}
             className="text-xs font-medium text-primary transition-colors hover:text-primary/80"
           >
-            Alle Vorlagen zurücksetzen
+            {ts.resetAll}
           </button>
         </div>
       )}
 
       <p className="rounded-xl border border-dashed border-border bg-secondary/30 p-3 text-xs text-muted-foreground">
-        Tipp: Ausgeblendete Items kannst du in der jeweiligen Liste jederzeit wieder einblenden.
+        {ts.tip}
       </p>
     </div>
   )

@@ -2,6 +2,7 @@
 
 import type { UserPreferences } from '@/lib/preferences/types'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useT } from '@/lib/i18n/client'
 import { DesignSection } from './sections/DesignSection'
 import { SnapshotSection } from './sections/SnapshotSection'
 import { GreetingSection } from './sections/GreetingSection'
@@ -27,24 +28,26 @@ interface Props {
 
 export function EinstellungenTabs({ initialPrefs: _initialPrefs, pregnancyMode }: Props) {
   void _initialPrefs
+  const t = useT()
+  const tabs = t.settings.tabs
   const isPlanning = pregnancyMode === 'planning'
   return (
     <>
       <Tabs defaultValue="design" className="w-full">
         <div className="mb-6 -mx-4 overflow-x-auto px-4">
           <TabsList className="flex w-max gap-1">
-            <TabsTrigger value="design">Design</TabsTrigger>
-            <TabsTrigger value="snapshot">Home</TabsTrigger>
-            <TabsTrigger value="greeting">Anrede</TabsTrigger>
-            <TabsTrigger value="woche">Woche</TabsTrigger>
-            <TabsTrigger value="termine">Termine</TabsTrigger>
-            <TabsTrigger value="tagebuch">Tagebuch</TabsTrigger>
-            <TabsTrigger value="geburtsplan">Geburtsplan</TabsTrigger>
-            <TabsTrigger value="checklists">Listen</TabsTrigger>
-            <TabsTrigger value="partner">Partner</TabsTrigger>
-            {isPlanning && <TabsTrigger value="kinderwunsch">Kinderwunsch</TabsTrigger>}
-            <TabsTrigger value="wochenbett">Wochenbett</TabsTrigger>
-            <TabsTrigger value="notifications">Mails</TabsTrigger>
+            <TabsTrigger value="design">{tabs.design}</TabsTrigger>
+            <TabsTrigger value="snapshot">{tabs.snapshot}</TabsTrigger>
+            <TabsTrigger value="greeting">{tabs.greeting}</TabsTrigger>
+            <TabsTrigger value="woche">{tabs.woche}</TabsTrigger>
+            <TabsTrigger value="termine">{tabs.termine}</TabsTrigger>
+            <TabsTrigger value="tagebuch">{tabs.tagebuch}</TabsTrigger>
+            <TabsTrigger value="geburtsplan">{tabs.geburtsplan}</TabsTrigger>
+            <TabsTrigger value="checklists">{tabs.checklists}</TabsTrigger>
+            <TabsTrigger value="partner">{tabs.partner}</TabsTrigger>
+            {isPlanning && <TabsTrigger value="kinderwunsch">{tabs.kinderwunsch}</TabsTrigger>}
+            <TabsTrigger value="wochenbett">{tabs.wochenbett}</TabsTrigger>
+            <TabsTrigger value="notifications">{tabs.notifications}</TabsTrigger>
           </TabsList>
         </div>
 

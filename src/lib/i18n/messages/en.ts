@@ -1560,26 +1560,42 @@ export const en = {
     kinderwunsch: {
       cycleLength: {
         title: 'Cycle Length',
+        description: 'Your typical cycle length (in days). Default: 28.',
         unit: 'Days',
       },
       tracking: {
         temperature: 'Basal Temperature',
+        temperatureHint: 'In the morning before getting up',
         lhTest: 'LH Test',
+        lhTestHint: 'Ovulation test',
         symptothermal: 'Symptothermal',
+        symptothermalHint: 'Cervical mucus + temperature',
         sexualIntercourse: 'Sexual Intercourse',
+        sexualIntercourseHint: 'Focus on fertile days',
         menstruation: 'Menstruation',
+        menstruationHint: 'Keep an eye on cycle length',
       },
       trackingElements: {
         title: 'Tracking Elements',
+        description: 'Only what really matters to you.',
       },
       reminders: {
         title: 'Reminders',
+        description: 'Small anchors in daily life.',
+        vitaminsTime: 'Vitamins — time',
         ovuTestActive: 'Ovulation test active',
+        ovuTestActiveHint: 'Push reminder on fertile days',
+        wunschEt: 'Target due date',
       },
     },
     tagebuch: {
       customPrompts: {
         title: 'Custom Impulse Questions',
+        description: 'Your own questions appear as suggestions in the diary entry.',
+        placeholder: 'e.g. What am I grateful for today?',
+        addAria: 'Add',
+        removeAria: 'Remove',
+        suggestionsLabel: 'Suggestions',
       },
       suggestedPrompts: {
         mostBeautiful: 'What was most beautiful today?',
@@ -1590,9 +1606,11 @@ export const en = {
       },
       promptRotation: {
         title: 'Prompt Rotation',
+        description: 'A different question each time you open',
       },
       showRueckblick: {
         title: 'Show Retrospective',
+        description: '"4 weeks ago you felt…"',
       },
     },
     partner: {
@@ -1665,6 +1683,7 @@ export const en = {
       },
       accentColor: {
         title: 'Accent Color',
+        description: 'Applied to buttons, links and highlights.',
         burgundy: 'Burgundy',
         rose: 'Rose',
         sage: 'Sage',
@@ -1672,53 +1691,95 @@ export const en = {
       },
       fontSize: {
         title: 'Font Size',
+        description: 'For easier readability.',
         small: 'Small',
+        smallHint: 'compact, more on screen',
         medium: 'Normal',
+        mediumHint: 'Standard',
         large: 'Large',
+        largeHint: 'easier to read',
       },
     },
     greeting: {
       tone: {
         title: 'Greeting Tone',
+        description: 'How MamaMap greets you — on the home screen and in tips.',
         warm: 'Warm',
+        warmExample: "Glad you're here, {name}.",
         neutral: 'Neutral',
+        neutralExample: 'Hi {name}.',
         casual: 'Casual',
+        casualExample: 'Hey {name} 👋',
         affectionate: 'Affectionate',
+        affectionateExample: 'Good morning dear {name} 💛',
       },
+      footer: 'The time of day (morning / day / evening) is added automatically.',
     },
     notifications: {
       weeklyEmail: {
         title: 'Weekly Summary',
+        description:
+          'Every Sunday morning you receive a short email with your current week of pregnancy, your next appointment and a mood recap of the past week.',
+        switchAria: 'Enable weekly summary via email',
       },
+      setupInfoLabel: 'Setup Info',
+      setupInfoText:
+        'The cron runs every Sunday at 9am UTC. For emails to actually go out, RESEND_API_KEY must be set as an environment variable in Vercel (free at resend.com/api-keys). Without a key, the route runs in no-op mode and only logs "would send to X".',
     },
     checklists: {
+      info: {
+        intro:
+          'In each list (Packing list, Shopping list, Postpartum) you can personalize directly inside the list:',
+        item1Title: 'Choose templates',
+        item1Hint: 'Clinic / home birth · summer / winter · solo / duo',
+        item2Title: 'Add your own items',
+        item2Hint: 'At the end of each category via "+ Own item"',
+        item3Title: 'Quantity · brand · note',
+        item3Hint: 'Tap an item to add details',
+      },
       presets: {
         title: 'List Templates',
+        description:
+          "Choose templates — items you don't need get hidden from your packing list. Shopping list and postpartum show the active template as a hint.",
         location: {
           title: 'Birth Place',
           clinic: 'Clinic',
+          clinicHint: 'Hospital birth with pre-registration',
           homebirth: 'Home Birth',
+          homebirthHint: 'At home — no clinic items needed',
           birthCenter: 'Birth Center',
+          birthCenterHint: 'Ambulatory at the birth center',
         },
         season: {
           title: 'Season',
           summer: 'Summer',
+          summerHint: 'Warm socks out, thin clothes',
           winter: 'Winter',
+          winterHint: 'Keep all the warm stuff on board',
         },
         setup: {
           title: 'Accompaniment',
           solo: 'Solo',
+          soloHint: 'I go alone — hide partner items',
           duo: 'As a couple',
+          duoHint: 'Partner is there — full list',
         },
+        resetAll: 'Reset all templates',
+        tip: 'Tip: hidden items can be re-shown at any time in the respective list.',
       },
     },
     termine: {
       customCategories: {
         title: 'Custom Appointment Categories',
+        description:
+          'Define your own categories like "Acupuncture" or "Yoga" — including default location, reminder and notes template.',
         emoji: 'Emoji',
         name: 'Name',
+        namePlaceholder: 'e.g. Acupuncture',
         color: 'Color',
+        colorAria: 'Color {color}',
         defaultLocation: 'Default Location',
+        locationPlaceholder: "e.g. Dr. Smith's practice",
         defaultReminder: 'Default Reminder',
         reminderNone: 'None',
         reminder1Hour: '1 Hour',
@@ -1726,7 +1787,41 @@ export const en = {
         reminder1Day: '1 Day',
         reminder3Days: '3 Days',
         notesTemplate: 'Notes Template',
+        notesPlaceholder: 'e.g.\nQuestions for the doctor:\n- \n- \nResults:\n',
+        save: 'Save category',
+        saving: 'Saving…',
+        deleteConfirm: 'Delete category?',
+        noReminder: 'no reminder',
+        reminderXBefore: '{hours}h before',
+        deleteAria: 'Delete',
       },
+    },
+    wochenbett: {
+      info:
+        'Thank-you messages for the postpartum helper you find directly with each request — one-click pre-written for cooking, groceries, cleaning and more.',
+      item1Title: 'One-click thanks per task',
+      item1Hint: 'Pre-written, warm messages depending on task type',
+      item2Title: 'Editable',
+      item2Hint: 'Text is a template — change before you send',
+    },
+    tabs: {
+      design: 'Design',
+      snapshot: 'Home',
+      greeting: 'Greeting',
+      woche: 'Week',
+      termine: 'Appointments',
+      tagebuch: 'Diary',
+      geburtsplan: 'Birth Plan',
+      checklists: 'Lists',
+      partner: 'Partner',
+      kinderwunsch: 'Planning',
+      wochenbett: 'Postpartum',
+      notifications: 'Emails',
+    },
+    page: {
+      back: 'Back',
+      title: 'Settings',
+      subtitle: 'Every mom is unique — adjust MamaMap just for you.',
     },
   },
 } as const

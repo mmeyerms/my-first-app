@@ -4,29 +4,30 @@ import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
 import { usePreferences } from '@/lib/preferences/client'
-
-const TRACKING_KEYS = [
-  { key: 'temperature', label: 'Basaltemperatur', hint: 'Morgens vor dem Aufstehen' },
-  { key: 'lh', label: 'LH-Test', hint: 'Ovulationstest' },
-  { key: 'symptothermal', label: 'Symptothermal', hint: 'Zervixschleim + Temperatur' },
-  { key: 'gv', label: 'Geschlechtsverkehr', hint: 'Fruchtbare Tage im Fokus' },
-  { key: 'mens', label: 'Menstruation', hint: 'Zykluslänge im Blick' },
-] as const
+import { useT } from '@/lib/i18n/client'
 
 export function KinderwunschSection() {
   const { prefs, update } = usePreferences()
+  const t = useT()
+  const ts = t.settings.kinderwunsch
+
+  const trackingKeys = [
+    { key: 'temperature' as const, label: ts.tracking.temperature, hint: ts.tracking.temperatureHint },
+    { key: 'lh' as const, label: ts.tracking.lhTest, hint: ts.tracking.lhTestHint },
+    { key: 'symptothermal' as const, label: ts.tracking.symptothermal, hint: ts.tracking.symptothermalHint },
+    { key: 'gv' as const, label: ts.tracking.sexualIntercourse, hint: ts.tracking.sexualIntercourseHint },
+    { key: 'mens' as const, label: ts.tracking.menstruation, hint: ts.tracking.menstruationHint },
+  ]
 
   return (
     <div className="space-y-6">
       <section>
-        <h2 className="mb-1 text-sm font-semibold text-foreground">Zyklus-Länge</h2>
-        <p className="mb-3 text-xs text-muted-foreground">
-          Deine typische Zykluslänge (in Tagen). Standardwert: 28.
-        </p>
+        <h2 className="mb-1 text-sm font-semibold text-foreground">{ts.cycleLength.title}</h2>
+        <p className="mb-3 text-xs text-muted-foreground">{ts.cycleLength.description}</p>
         <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-4">
           <div className="w-16 text-center">
             <div className="font-display text-3xl font-medium text-primary">{prefs.kinderwunschCycleLength}</div>
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Tage</div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{ts.cycleLength.unit}</div>
           </div>
           <Slider
             value={[prefs.kinderwunschCycleLength]}
@@ -40,10 +41,10 @@ export function KinderwunschSection() {
       </section>
 
       <section>
-        <h2 className="mb-1 text-sm font-semibold text-foreground">Tracking-Elemente</h2>
-        <p className="mb-3 text-xs text-muted-foreground">Nur das, was dich wirklich interessiert.</p>
+        <h2 className="mb-1 text-sm font-semibold text-foreground">{ts.trackingElements.title}</h2>
+        <p className="mb-3 text-xs text-muted-foreground">{ts.trackingElements.description}</p>
         <ul className="space-y-2">
-          {TRACKING_KEYS.map((k) => (
+          {trackingKeys.map((k) => (
             <li key={k.key} className="flex items-center gap-3 rounded-xl border border-border bg-card p-3">
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-semibold">{k.label}</div>
@@ -61,11 +62,11 @@ export function KinderwunschSection() {
       </section>
 
       <section>
-        <h2 className="mb-1 text-sm font-semibold text-foreground">Erinnerungen</h2>
-        <p className="mb-3 text-xs text-muted-foreground">Kleine Anker im Alltag.</p>
+        <h2 className="mb-1 text-sm font-semibold text-foreground">{ts.reminders.title}</h2>
+        <p className="mb-3 text-xs text-muted-foreground">{ts.reminders.description}</p>
         <div className="space-y-3 rounded-xl border border-border bg-card p-4">
           <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">Vitamine — Uhrzeit</label>
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">{ts.reminders.vitaminsTime}</label>
             <Input
               type="time"
               value={prefs.kinderwunschReminders.vitaminsTime ?? ''}
@@ -81,8 +82,8 @@ export function KinderwunschSection() {
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-sm font-semibold">Ovulationstest aktiv</div>
-              <div className="text-xs text-muted-foreground">Push-Erinnerung an fruchtbaren Tagen</div>
+              <div className="text-sm font-semibold">{ts.reminders.ovuTestActive}</div>
+              <div className="text-xs text-muted-foreground">{ts.reminders.ovuTestActiveHint}</div>
             </div>
             <Switch
               checked={prefs.kinderwunschReminders.ovuTestActive}
@@ -94,7 +95,7 @@ export function KinderwunschSection() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">Wunsch-ET (Ziel-Datum)</label>
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">{ts.reminders.wunschEt}</label>
             <Input
               type="date"
               value={prefs.kinderwunschReminders.wunschEt ?? ''}

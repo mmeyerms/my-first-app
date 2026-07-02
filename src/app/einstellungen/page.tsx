@@ -4,6 +4,8 @@ import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getPreferences } from '@/lib/preferences/server'
 import { getActivePregnancy } from '@/lib/pregnancy/server'
+import { getServerLocale } from '@/lib/i18n/server'
+import { getMessages } from '@/lib/i18n/messages'
 import { EinstellungenTabs } from '@/components/einstellungen/EinstellungenTabs'
 
 export default async function EinstellungenPage() {
@@ -18,6 +20,10 @@ export default async function EinstellungenPage() {
     getActivePregnancy(supabase, user.id),
   ])
 
+  const locale = await getServerLocale()
+  const t = getMessages(locale)
+  const p = t.settings.page
+
   return (
     <main className="min-h-screen bg-background">
       <div className="mx-auto max-w-2xl px-4 py-8">
@@ -26,14 +32,14 @@ export default async function EinstellungenPage() {
           className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-primary"
         >
           <ArrowLeft className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
-          <span>Zurück</span>
+          <span>{p.back}</span>
         </Link>
         <header className="mb-6">
           <h1 className="font-display text-3xl font-medium text-foreground">
-            Einstellungen
+            {p.title}
           </h1>
           <p className="mt-2 font-display text-sm italic text-muted-foreground">
-            Jede Mama ist einzigartig — passe MamaMap ganz für dich an.
+            {p.subtitle}
           </p>
         </header>
         <EinstellungenTabs initialPrefs={prefs} pregnancyMode={active?.status ?? null} />

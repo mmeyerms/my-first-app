@@ -4,47 +4,50 @@ import { Check } from 'lucide-react'
 import { useTheme } from '@/lib/theme/client'
 import { THEMES, type Theme } from '@/lib/theme/types'
 import { usePreferences } from '@/lib/preferences/client'
+import { useT } from '@/lib/i18n/client'
 import type { AccentColor, FontSize } from '@/lib/preferences/types'
 import { cn } from '@/lib/utils'
-
-const ACCENTS: Array<{ key: AccentColor; label: string; swatch: string }> = [
-  { key: 'burgundy', label: 'Burgunder', swatch: 'hsl(354 26% 30%)' },
-  { key: 'rose', label: 'Rosé', swatch: 'hsl(340 65% 45%)' },
-  { key: 'sage', label: 'Sage', swatch: 'hsl(145 25% 35%)' },
-  { key: 'blue', label: 'Blau', swatch: 'hsl(210 55% 40%)' },
-]
-
-const FONT_SIZES: Array<{ key: FontSize; label: string; hint: string }> = [
-  { key: 'sm', label: 'Klein', hint: 'kompakter, mehr auf dem Screen' },
-  { key: 'md', label: 'Normal', hint: 'Standard' },
-  { key: 'lg', label: 'Groß', hint: 'leichter lesbar' },
-]
-
-const THEME_META: Record<Theme, { title: string; description: string; swatches: string[] }> = {
-  editorial: {
-    title: 'Editorial',
-    description: 'Elegant, mit Serif und ruhigen Tönen.',
-    swatches: ['hsl(354 26% 30%)', 'hsl(38 47% 62%)', 'hsl(33 33% 96%)'],
-  },
-  classic: {
-    title: 'Classic',
-    description: 'Verspielt, bunt, emoji-freundlich.',
-    swatches: ['hsl(350 89% 60%)', 'hsl(316 60% 88%)', 'hsl(0 0% 100%)'],
-  },
-}
 
 export function DesignSection() {
   const { theme, setTheme } = useTheme()
   const { prefs, update } = usePreferences()
+  const t = useT()
+  const ts = t.settings.design
+
+  const accents: Array<{ key: AccentColor; label: string; swatch: string }> = [
+    { key: 'burgundy', label: ts.accentColor.burgundy, swatch: 'hsl(354 26% 30%)' },
+    { key: 'rose', label: ts.accentColor.rose, swatch: 'hsl(340 65% 45%)' },
+    { key: 'sage', label: ts.accentColor.sage, swatch: 'hsl(145 25% 35%)' },
+    { key: 'blue', label: ts.accentColor.blue, swatch: 'hsl(210 55% 40%)' },
+  ]
+
+  const fontSizes: Array<{ key: FontSize; label: string; hint: string }> = [
+    { key: 'sm', label: ts.fontSize.small, hint: ts.fontSize.smallHint },
+    { key: 'md', label: ts.fontSize.medium, hint: ts.fontSize.mediumHint },
+    { key: 'lg', label: ts.fontSize.large, hint: ts.fontSize.largeHint },
+  ]
+
+  const themeMeta: Record<Theme, { title: string; description: string; swatches: string[] }> = {
+    editorial: {
+      title: ts.theme.editorial,
+      description: ts.theme.editorialDescription,
+      swatches: ['hsl(354 26% 30%)', 'hsl(38 47% 62%)', 'hsl(33 33% 96%)'],
+    },
+    classic: {
+      title: ts.theme.classic,
+      description: ts.theme.classicDescription,
+      swatches: ['hsl(350 89% 60%)', 'hsl(316 60% 88%)', 'hsl(0 0% 100%)'],
+    },
+  }
 
   return (
     <div className="space-y-8">
       <section>
-        <h2 className="mb-1 text-sm font-semibold text-foreground">Theme</h2>
-        <p className="mb-3 text-xs text-muted-foreground">Wähle die Gesamt-Stimmung.</p>
+        <h2 className="mb-1 text-sm font-semibold text-foreground">{ts.theme.title}</h2>
+        <p className="mb-3 text-xs text-muted-foreground">{ts.theme.description}</p>
         <div className="grid grid-cols-2 gap-3">
           {THEMES.map((option) => {
-            const meta = THEME_META[option]
+            const meta = themeMeta[option]
             const isActive = theme === option
             return (
               <button
@@ -76,10 +79,10 @@ export function DesignSection() {
       </section>
 
       <section>
-        <h2 className="mb-1 text-sm font-semibold text-foreground">Akzent-Farbe</h2>
-        <p className="mb-3 text-xs text-muted-foreground">Wirkt auf Buttons, Links und Highlights.</p>
+        <h2 className="mb-1 text-sm font-semibold text-foreground">{ts.accentColor.title}</h2>
+        <p className="mb-3 text-xs text-muted-foreground">{ts.accentColor.description}</p>
         <div className="grid grid-cols-4 gap-2">
-          {ACCENTS.map((a) => {
+          {accents.map((a) => {
             const isActive = prefs.accentColor === a.key
             return (
               <button
@@ -101,10 +104,10 @@ export function DesignSection() {
       </section>
 
       <section>
-        <h2 className="mb-1 text-sm font-semibold text-foreground">Schriftgröße</h2>
-        <p className="mb-3 text-xs text-muted-foreground">Für einfachere Lesbarkeit.</p>
+        <h2 className="mb-1 text-sm font-semibold text-foreground">{ts.fontSize.title}</h2>
+        <p className="mb-3 text-xs text-muted-foreground">{ts.fontSize.description}</p>
         <div className="grid grid-cols-3 gap-2">
-          {FONT_SIZES.map((f) => {
+          {fontSizes.map((f) => {
             const isActive = prefs.fontSize === f.key
             return (
               <button

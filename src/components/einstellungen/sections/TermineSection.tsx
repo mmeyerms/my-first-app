@@ -5,6 +5,7 @@ import { Plus, Trash2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
+import { useT } from '@/lib/i18n/client'
 import { cn } from '@/lib/utils'
 
 interface TerminCategory {
@@ -20,15 +21,10 @@ interface TerminCategory {
 }
 
 const COLORS = ['#a05a5a', '#a07a55', '#8a8f5c', '#5f8a7a', '#5570a5', '#7a5aa0', '#a05a80']
-const REMINDER_OPTIONS = [
-  { value: 0, label: 'Keine' },
-  { value: 1, label: '1 Stunde' },
-  { value: 3, label: '3 Stunden' },
-  { value: 24, label: '1 Tag' },
-  { value: 72, label: '3 Tage' },
-]
 
 export function TermineSection() {
+  const t = useT()
+  const ts = t.settings.termine.customCategories
   const [categories, setCategories] = useState<TerminCategory[]>([])
   const [label, setLabel] = useState('')
   const [emoji, setEmoji] = useState('📅')
@@ -37,6 +33,14 @@ export function TermineSection() {
   const [reminderHours, setReminderHours] = useState<number>(24)
   const [notesTemplate, setNotesTemplate] = useState('')
   const [saving, setSaving] = useState(false)
+
+  const reminderOptions = [
+    { value: 0, label: ts.reminderNone },
+    { value: 1, label: ts.reminder1Hour },
+    { value: 3, label: ts.reminder3Hours },
+    { value: 24, label: ts.reminder1Day },
+    { value: 72, label: ts.reminder3Days },
+  ]
 
   useEffect(() => {
     fetch('/api/termin-categories')
@@ -84,7 +88,7 @@ export function TermineSection() {
   }
 
   async function remove(slug: string) {
-    if (!confirm('Kategorie löschen?')) return
+    if (!confirm(ts.deleteConfirm)) return
     const res = await fetch(`/api/termin-categories?slug=${encodeURIComponent(slug)}`, { method: 'DELETE' })
     if (res.ok) setCategories((prev) => prev.filter((c) => c.slug !== slug))
   }
@@ -92,24 +96,22 @@ export function TermineSection() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="mb-1 text-sm font-semibold text-foreground">Eigene Termin-Kategorien</h2>
-        <p className="mb-4 text-xs text-muted-foreground">
-          Definiere eigene Kategorien wie „Akupunktur" oder „Yoga" — inklusive Standardort, Erinnerung und Notiz-Template.
-        </p>
+        <h2 className="mb-1 text-sm font-semibold text-foreground">{ts.title}</h2>
+        <p className="mb-4 text-xs text-muted-foreground">{ts.description}</p>
 
         <div className="mb-4 space-y-3 rounded-xl border border-border bg-card p-4">
           <div className="grid grid-cols-[80px_1fr] gap-3">
             <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">Emoji</label>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">{ts.emoji}</label>
               <Input value={emoji} onChange={(e) => setEmoji(e.target.value.slice(0, 3))} maxLength={3} />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">Name</label>
-              <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="z.B. Akupunktur" />
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">{ts.name}</label>
+              <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder={ts.namePlaceholder} />
             </div>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">Farbe</label>
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">{ts.color}</label>
             <div className="flex gap-2">
               {COLORS.map((c) => (
                 <button
@@ -117,7 +119,7 @@ export function TermineSection() {
                   type="button"
                   onClick={() => setColor(c)}
                   aria-pressed={color === c}
-                  aria-label={`Farbe ${c}`}
+                  aria-label={ts.colorAria.replace('{color}', c)}
                   className={cn('h-8 w-8 rounded-full ring-offset-2 transition-all', color === c && 'ring-2 ring-primary')}
                   style={{ backgroundColor: c }}
                 />
@@ -125,13 +127,13 @@ export function TermineSection() {
             </div>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">Standard-Ort</label>
-            <Input value={defaultLocation} onChange={(e) => setDefaultLocation(e.target.value)} placeholder="z.B. Praxis Dr. Müller" />
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">{ts.defaultLocation}</label>
+            <Input value={defaultLocation} onChange={(e) => setDefaultLocation(e.target.value)} placeholder={ts.locationPlaceholder} />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">Standard-Erinnerung</label>
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">{ts.defaultReminder}</label>
             <div className="flex flex-wrap gap-2">
-              {REMINDER_OPTIONS.map((o) => (
+              {reminderOptions.map((o) => (
                 <button
                   key={o.value}
                   type="button"
@@ -148,17 +150,17 @@ export function TermineSection() {
             </div>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">Notiz-Template</label>
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">{ts.notesTemplate}</label>
             <Textarea
               value={notesTemplate}
               onChange={(e) => setNotesTemplate(e.target.value)}
-              placeholder={'z.B.\nFragen an die Ärztin:\n- \n- \nErgebnisse:\n'}
+              placeholder={ts.notesPlaceholder}
               className="min-h-[100px] text-sm"
             />
           </div>
           <Button onClick={save} disabled={saving || !label.trim()} className="w-full">
             <Plus className="mr-2 h-4 w-4" />
-            {saving ? 'Speichere…' : 'Kategorie speichern'}
+            {saving ? ts.saving : ts.save}
           </Button>
         </div>
 
@@ -172,15 +174,15 @@ export function TermineSection() {
                   <div className="text-xs text-muted-foreground">
                     {c.default_location ? `${c.default_location} · ` : ''}
                     {c.default_reminder_hours != null && c.default_reminder_hours > 0
-                      ? `${c.default_reminder_hours}h vorher`
-                      : 'keine Erinnerung'}
+                      ? ts.reminderXBefore.replace('{hours}', String(c.default_reminder_hours))
+                      : ts.noReminder}
                   </div>
                 </div>
                 {c.color && <span className="h-4 w-4 rounded-full" style={{ backgroundColor: c.color }} />}
                 <button
                   type="button"
                   onClick={() => remove(c.slug)}
-                  aria-label="Löschen"
+                  aria-label={ts.deleteAria}
                   className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-destructive hover:bg-destructive/10"
                 >
                   <Trash2 className="h-4 w-4" />

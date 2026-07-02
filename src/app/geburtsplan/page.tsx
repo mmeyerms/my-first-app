@@ -6,6 +6,7 @@ import { GeburtsplanView } from '@/components/geburtsplan/GeburtsplanView'
 import { getServerLocale } from '@/lib/i18n/server'
 import { getMessages } from '@/lib/i18n/messages'
 import { getActivePregnancy } from '@/lib/pregnancy/server'
+import { NeedsDueDateNotice } from '@/components/shared/NeedsDueDateNotice'
 
 export default async function GeburtsplanPage() {
   const supabase = await createClient()
@@ -26,7 +27,9 @@ export default async function GeburtsplanPage() {
   // Active pregnancy is source of truth (profile.due_date is legacy).
   const active = await getActivePregnancy(supabase, user.id)
   const dueDate = active?.due_date ?? null
-  if (!dueDate) redirect('/profil')
+  if (!dueDate) {
+    return <NeedsDueDateNotice sectionKey="geburtsplan" status={active?.status ?? null} />
+  }
 
   // Prefer pregnancy-scoped plan; fall back to legacy user-scoped row.
   let planQuery = supabase.from('birth_plans').select('answers').eq('user_id', user.id)

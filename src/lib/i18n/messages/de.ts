@@ -1560,26 +1560,42 @@ export const de = {
     kinderwunsch: {
       cycleLength: {
         title: 'Zyklus-Länge',
+        description: 'Deine typische Zykluslänge (in Tagen). Standardwert: 28.',
         unit: 'Tage',
       },
       tracking: {
         temperature: 'Basaltemperatur',
+        temperatureHint: 'Morgens vor dem Aufstehen',
         lhTest: 'LH-Test',
+        lhTestHint: 'Ovulationstest',
         symptothermal: 'Symptothermal',
+        symptothermalHint: 'Zervixschleim + Temperatur',
         sexualIntercourse: 'Geschlechtsverkehr',
+        sexualIntercourseHint: 'Fruchtbare Tage im Fokus',
         menstruation: 'Menstruation',
+        menstruationHint: 'Zykluslänge im Blick',
       },
       trackingElements: {
         title: 'Tracking-Elemente',
+        description: 'Nur das, was dich wirklich interessiert.',
       },
       reminders: {
         title: 'Erinnerungen',
+        description: 'Kleine Anker im Alltag.',
+        vitaminsTime: 'Vitamine — Uhrzeit',
         ovuTestActive: 'Ovulationstest aktiv',
+        ovuTestActiveHint: 'Push-Erinnerung an fruchtbaren Tagen',
+        wunschEt: 'Wunsch-ET (Ziel-Datum)',
       },
     },
     tagebuch: {
       customPrompts: {
         title: 'Eigene Impuls-Fragen',
+        description: 'Deine eigenen Fragen erscheinen als Vorschläge im Tagebuch-Eintrag.',
+        placeholder: 'z.B. Wofür bin ich heute dankbar?',
+        addAria: 'Hinzufügen',
+        removeAria: 'Entfernen',
+        suggestionsLabel: 'Vorschläge',
       },
       suggestedPrompts: {
         mostBeautiful: 'Was war heute das Schönste?',
@@ -1590,9 +1606,11 @@ export const de = {
       },
       promptRotation: {
         title: 'Prompt-Rotation',
+        description: 'Wechselnde Frage bei jedem Öffnen',
       },
       showRueckblick: {
         title: 'Rückblick anzeigen',
+        description: '„Vor 4 Wochen fühltest du dich…"',
       },
     },
     partner: {
@@ -1665,6 +1683,7 @@ export const de = {
       },
       accentColor: {
         title: 'Akzent-Farbe',
+        description: 'Wirkt auf Buttons, Links und Highlights.',
         burgundy: 'Burgunder',
         rose: 'Rosé',
         sage: 'Sage',
@@ -1672,53 +1691,95 @@ export const de = {
       },
       fontSize: {
         title: 'Schriftgröße',
+        description: 'Für einfachere Lesbarkeit.',
         small: 'Klein',
+        smallHint: 'kompakter, mehr auf dem Screen',
         medium: 'Normal',
+        mediumHint: 'Standard',
         large: 'Groß',
+        largeHint: 'leichter lesbar',
       },
     },
     greeting: {
       tone: {
         title: 'Anrede-Ton',
+        description: 'Wie MamaMap dich begrüßt — auf dem Home-Screen und in Tipps.',
         warm: 'Warm',
+        warmExample: 'Schön dass du da bist, {name}.',
         neutral: 'Sachlich',
+        neutralExample: 'Hallo {name}.',
         casual: 'Locker',
+        casualExample: 'Hey {name} 👋',
         affectionate: 'Liebevoll',
+        affectionateExample: 'Guten Morgen liebe {name} 💛',
       },
+      footer: 'Die Tageszeit (Morgen / Tag / Abend) fließt automatisch mit ein.',
     },
     notifications: {
       weeklyEmail: {
         title: 'Wöchentliche Zusammenfassung',
+        description:
+          'Jeden Sonntagmorgen bekommst du eine kurze E-Mail mit deiner aktuellen SSW, deinem nächsten Termin und einer Stimmungs-Rückschau der letzten Woche.',
+        switchAria: 'Wöchentliche Zusammenfassung per E-Mail aktivieren',
       },
+      setupInfoLabel: 'Setup-Info',
+      setupInfoText:
+        'Der Cron läuft jeden Sonntag um 9 Uhr UTC. Damit die Mails tatsächlich rausgehen, muss RESEND_API_KEY als Environment Variable in Vercel gesetzt sein (kostenlos unter resend.com/api-keys). Ohne Key läuft die Route im No-Op-Modus und loggt nur „would send to X".',
     },
     checklists: {
+      info: {
+        intro:
+          'In den einzelnen Listen (Packliste, Einkaufsliste, Wochenbett) findest du die Personalisierung direkt in der Liste:',
+        item1Title: 'Vorlagen wählen',
+        item1Hint: 'Klinik / Hausgeburt · Sommer / Winter · Solo / Duo',
+        item2Title: 'Eigene Items hinzufügen',
+        item2Hint: 'Am Ende jeder Kategorie via „+ Eigenes Item"',
+        item3Title: 'Menge · Marke · Notiz',
+        item3Hint: 'Tippe auf ein Item, um Details zu hinterlegen',
+      },
       presets: {
         title: 'Listen-Vorlagen',
+        description:
+          'Wähle Vorlagen aus — nicht benötigte Items werden aus deiner Packliste ausgeblendet. Einkaufsliste und Wochenbett zeigen die aktive Vorlage als Hinweis.',
         location: {
           title: 'Geburtsort',
           clinic: 'Klinik',
+          clinicHint: 'Krankenhaus-Geburt mit Voranmeldung',
           homebirth: 'Hausgeburt',
+          homebirthHint: 'Zuhause — keine Klinik-Utensilien nötig',
           birthCenter: 'Geburtshaus',
+          birthCenterHint: 'Ambulant im Geburtshaus',
         },
         season: {
           title: 'Jahreszeit',
           summer: 'Sommer',
+          summerHint: 'Warme Socken raus, dünne Kleidung',
           winter: 'Winter',
+          winterHint: 'Alles Warme bleibt an Bord',
         },
         setup: {
           title: 'Begleitung',
           solo: 'Solo',
+          soloHint: 'Ich gehe alleine — Partner-Items ausblenden',
           duo: 'Zu zweit',
+          duoHint: 'Partner:in ist dabei — komplette Liste',
         },
+        resetAll: 'Alle Vorlagen zurücksetzen',
+        tip: 'Tipp: Ausgeblendete Items kannst du in der jeweiligen Liste jederzeit wieder einblenden.',
       },
     },
     termine: {
       customCategories: {
         title: 'Eigene Termin-Kategorien',
+        description:
+          'Definiere eigene Kategorien wie „Akupunktur" oder „Yoga" — inklusive Standardort, Erinnerung und Notiz-Template.',
         emoji: 'Emoji',
         name: 'Name',
+        namePlaceholder: 'z.B. Akupunktur',
         color: 'Farbe',
+        colorAria: 'Farbe {color}',
         defaultLocation: 'Standard-Ort',
+        locationPlaceholder: 'z.B. Praxis Dr. Müller',
         defaultReminder: 'Standard-Erinnerung',
         reminderNone: 'Keine',
         reminder1Hour: '1 Stunde',
@@ -1726,7 +1787,41 @@ export const de = {
         reminder1Day: '1 Tag',
         reminder3Days: '3 Tage',
         notesTemplate: 'Notiz-Template',
+        notesPlaceholder: 'z.B.\nFragen an die Ärztin:\n- \n- \nErgebnisse:\n',
+        save: 'Kategorie speichern',
+        saving: 'Speichere…',
+        deleteConfirm: 'Kategorie löschen?',
+        noReminder: 'keine Erinnerung',
+        reminderXBefore: '{hours}h vorher',
+        deleteAria: 'Löschen',
       },
+    },
+    wochenbett: {
+      info:
+        'Danke-Nachrichten für den Wochenbett-Chef findest du direkt bei jeder Anfrage — mit einem Klick vorformuliert für kochen, einkaufen, putzen und mehr.',
+      item1Title: '1-Klick-Danke pro Aufgabe',
+      item1Hint: 'Vorformulierte, warme Nachrichten je nach Aufgaben-Typ',
+      item2Title: 'Anpassbar',
+      item2Hint: 'Text ist Vorlage — änderbar bevor du versendest',
+    },
+    tabs: {
+      design: 'Design',
+      snapshot: 'Home',
+      greeting: 'Anrede',
+      woche: 'Woche',
+      termine: 'Termine',
+      tagebuch: 'Tagebuch',
+      geburtsplan: 'Geburtsplan',
+      checklists: 'Listen',
+      partner: 'Partner',
+      kinderwunsch: 'Kinderwunsch',
+      wochenbett: 'Wochenbett',
+      notifications: 'Mails',
+    },
+    page: {
+      back: 'Zurück',
+      title: 'Einstellungen',
+      subtitle: 'Jede Mama ist einzigartig — passe MamaMap ganz für dich an.',
     },
   },
 } as const

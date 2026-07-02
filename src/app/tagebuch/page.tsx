@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { getServerLocale } from '@/lib/i18n/server'
 import { getMessages } from '@/lib/i18n/messages'
 import { getActivePregnancy } from '@/lib/pregnancy/server'
+import { NeedsDueDateNotice } from '@/components/shared/NeedsDueDateNotice'
 
 export default async function TagebuchPage() {
   const supabase = await createClient()
@@ -24,7 +25,9 @@ export default async function TagebuchPage() {
   // Active pregnancy is source of truth (profile.due_date is legacy).
   const active = await getActivePregnancy(supabase, user.id)
   const dueDate = active?.due_date ?? null
-  if (!dueDate) redirect('/profil')
+  if (!dueDate) {
+    return <NeedsDueDateNotice sectionKey="tagebuch" status={active?.status ?? null} />
+  }
 
   const ssw = calculateSSW(dueDate)
   const babyName = active?.baby_name ?? profile.baby_name ?? t.partner.fallbackBabyName

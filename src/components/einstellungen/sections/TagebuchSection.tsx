@@ -5,18 +5,16 @@ import { Plus, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { usePreferences } from '@/lib/preferences/client'
-
-const SUGGESTED = [
-  'Was war heute das Schönste?',
-  'Wofür bin ich heute dankbar?',
-  'Wie hat sich mein Bauch heute angefühlt?',
-  'Was möchte ich meinem Baby später erzählen?',
-  'Womit habe ich mich heute überrascht?',
-]
+import { useT } from '@/lib/i18n/client'
 
 export function TagebuchSection() {
   const { prefs, update } = usePreferences()
+  const t = useT()
+  const ts = t.settings.tagebuch
+  const sp = ts.suggestedPrompts
   const [draft, setDraft] = useState('')
+
+  const suggested = [sp.mostBeautiful, sp.grateful, sp.belly, sp.baby, sp.surprised]
 
   function add(prompt: string) {
     const trimmed = prompt.trim()
@@ -33,16 +31,14 @@ export function TagebuchSection() {
   return (
     <div className="space-y-6">
       <section>
-        <h2 className="mb-1 text-sm font-semibold text-foreground">Eigene Impuls-Fragen</h2>
-        <p className="mb-3 text-xs text-muted-foreground">
-          Deine eigenen Fragen erscheinen als Vorschläge im Tagebuch-Eintrag.
-        </p>
+        <h2 className="mb-1 text-sm font-semibold text-foreground">{ts.customPrompts.title}</h2>
+        <p className="mb-3 text-xs text-muted-foreground">{ts.customPrompts.description}</p>
 
         <div className="mb-3 flex gap-2">
           <Input
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="z.B. Wofür bin ich heute dankbar?"
+            placeholder={ts.customPrompts.placeholder}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault()
@@ -53,7 +49,7 @@ export function TagebuchSection() {
           <button
             type="button"
             onClick={() => add(draft)}
-            aria-label="Hinzufügen"
+            aria-label={ts.customPrompts.addAria}
             className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
             disabled={!draft.trim()}
           >
@@ -69,7 +65,7 @@ export function TagebuchSection() {
                 <button
                   type="button"
                   onClick={() => remove(p)}
-                  aria-label="Entfernen"
+                  aria-label={ts.customPrompts.removeAria}
                   className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-destructive"
                 >
                   <X className="h-3.5 w-3.5" />
@@ -79,9 +75,9 @@ export function TagebuchSection() {
           </ul>
         )}
 
-        <p className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Vorschläge</p>
+        <p className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">{ts.customPrompts.suggestionsLabel}</p>
         <div className="flex flex-wrap gap-2">
-          {SUGGESTED.filter((s) => !prefs.tagebuchCustomPrompts.includes(s)).map((s) => (
+          {suggested.filter((s) => !prefs.tagebuchCustomPrompts.includes(s)).map((s) => (
             <button
               key={s}
               type="button"
@@ -96,8 +92,8 @@ export function TagebuchSection() {
 
       <section className="flex items-center justify-between rounded-xl border border-border bg-card p-3">
         <div>
-          <div className="text-sm font-semibold">Prompt-Rotation</div>
-          <div className="text-xs text-muted-foreground">Wechselnde Frage bei jedem Öffnen</div>
+          <div className="text-sm font-semibold">{ts.promptRotation.title}</div>
+          <div className="text-xs text-muted-foreground">{ts.promptRotation.description}</div>
         </div>
         <Switch
           checked={prefs.tagebuchPromptRotation}
@@ -107,8 +103,8 @@ export function TagebuchSection() {
 
       <section className="flex items-center justify-between rounded-xl border border-border bg-card p-3">
         <div>
-          <div className="text-sm font-semibold">Rückblick anzeigen</div>
-          <div className="text-xs text-muted-foreground">„Vor 4 Wochen fühltest du dich…"</div>
+          <div className="text-sm font-semibold">{ts.showRueckblick.title}</div>
+          <div className="text-xs text-muted-foreground">{ts.showRueckblick.description}</div>
         </div>
         <Switch
           checked={prefs.tagebuchShowRueckblick}
