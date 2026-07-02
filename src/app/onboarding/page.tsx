@@ -5,21 +5,30 @@ import { Logo } from '@/components/brand/Logo'
 import { createClient } from '@/lib/supabase/server'
 
 export default async function OnboardingPage() {
-  // If the caller is already linked as a partner (signed up via
-  // /partner/accept/[token]), skip Mama-onboarding entirely and send them
-  // to their partner dashboard. Prevents creating a stray profiles-row
-  // for someone who is not the mother.
+  // If the caller ALREADY has a profile-row (i.e. she is a mother mid-onboarding
+  // or already onboarded), let her continue Mama-onboarding — even if she is
+  // ALSO a partner elsewhere. Only redirect to /partner/dashboard when this
+  // user has NO profile of her own but IS an active partner (i.e. someone who
+  // signed up via /partner/accept/[token] and never was a mother).
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (user) {
-    const { data: link } = await supabase
-      .from('partner_links')
-      .select('id')
-      .eq('partner_user_id', user.id)
-      .eq('active', true)
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('user_id')
+      .eq('user_id', user.id)
       .limit(1)
       .single()
-    if (link) redirect('/partner/dashboard')
+    if (!existingProfile) {
+      const { data: link } = await supabase
+        .from('partner_links')
+        .select('id')
+        .eq('partner_user_id', user.id)
+        .eq('active', true)
+        .limit(1)
+        .single()
+      if (link) redirect('/partner/dashboard')
+    }
   }
 
   return (

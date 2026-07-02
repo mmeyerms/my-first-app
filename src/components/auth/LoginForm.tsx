@@ -14,10 +14,13 @@ import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 
 function safeNext(raw: string | null | undefined): string {
-  if (!raw) return '/dashboard'
-  if (!raw.startsWith('/')) return '/dashboard'
-  if (raw.startsWith('//')) return '/dashboard'
-  return raw
+  if (typeof raw !== 'string') return '/dashboard'
+  const cleaned = raw.replace(/[\s -]/g, '')
+  if (!cleaned) return '/dashboard'
+  if (!cleaned.startsWith('/')) return '/dashboard'
+  if (cleaned.startsWith('//')) return '/dashboard'
+  if (cleaned.includes('\\')) return '/dashboard'
+  return cleaned
 }
 
 export function LoginForm() {
