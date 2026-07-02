@@ -62,9 +62,20 @@ export interface ChecklistPresets {
   setup: ChecklistSetup | null
 }
 
+export interface PushNotificationsPreferences {
+  /** Push at the transition into a new SSW. Dispatched by /api/cron/push-week-change (daily 08:00 UTC). */
+  weekChange: boolean
+  /** Push reminder before an appointment, honoring per-termin reminder_hours. Dispatched by /api/cron/push-termin-reminder (hourly). */
+  terminReminder: boolean
+  /** Push when a Wochenbett-Chef help slot is claimed by a helper. Sent inline from /api/helfen/[token]/claim. */
+  helpSlotClaimed: boolean
+}
+
 export interface NotificationsPreferences {
   /** When true, this user receives the weekly Sunday summary email dispatched by /api/cron/weekly-summary. */
   weeklyEmail: boolean
+  /** Per-type push flags. Only respected when the user also has an active push_subscriptions row. */
+  push: PushNotificationsPreferences
 }
 
 export interface SecurityPreferences {
@@ -170,6 +181,11 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
 
   notifications: {
     weeklyEmail: false,
+    push: {
+      weekChange: true,
+      terminReminder: true,
+      helpSlotClaimed: true,
+    },
   },
 
   security: {
@@ -206,6 +222,10 @@ export function mergePreferences(
     notifications: {
       ...DEFAULT_PREFERENCES.notifications,
       ...(partial.notifications ?? {}),
+      push: {
+        ...DEFAULT_PREFERENCES.notifications.push,
+        ...(partial.notifications?.push ?? {}),
+      },
     },
     security: {
       ...DEFAULT_PREFERENCES.security,

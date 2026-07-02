@@ -23,7 +23,9 @@
 | PROJ-7 | Baby-Ausstattung/Einkaufsliste | In Progress | — | 2026-05-07 |
 | PROJ-8 | Kinderwunsch-Garten | In Progress | — | 2026-05-07 |
 | PROJ-9 | Wochenbett-Checkliste | In Progress | — | 2026-05-08 |
+| PROJ-10 | Push-Notifications | In Progress | [PROJ-10-push-notifications.md](PROJ-10-push-notifications.md) | 2026-07-02 |
+| PROJ-11 | Wochenbett-Chef+ (iCal, Wunschzettel, Danke) | In Progress | [PROJ-11-wochenbett-chef-plus.md](PROJ-11-wochenbett-chef-plus.md) | 2026-07-02 |
 
 <!-- Add features above this line -->
 
-## Next Available ID: PROJ-10
+## Next Available ID: PROJ-12
