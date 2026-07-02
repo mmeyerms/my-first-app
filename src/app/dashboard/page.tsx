@@ -26,20 +26,41 @@ interface Profile {
   mode: 'planning' | 'pregnant' | null
 }
 
-function pickGreeting(tone: 'warm' | 'sachlich' | 'locker' | 'liebevoll', name: string, timeOfDay: 'morning' | 'day' | 'evening') {
-  const first = name.split(' ')[0]
-  const timeMap = { morning: 'Guten Morgen', day: 'Hallo', evening: 'Guten Abend' } as const
-  const timeCasual = { morning: 'Morgen', day: 'Hey', evening: 'Abend' } as const
-  switch (tone) {
-    case 'warm':
-      return `${timeMap[timeOfDay]}, ${first} — schön, dass du da bist.`
-    case 'sachlich':
-      return `${timeMap[timeOfDay]}, ${first}.`
-    case 'locker':
-      return `${timeCasual[timeOfDay]}, ${first} 👋`
-    case 'liebevoll':
-      return `${timeMap[timeOfDay]}, liebe ${first} 💛`
+type GreetingsShape = {
+  timeOfDay: {
+    morningFormal: string
+    dayFormal: string
+    eveningFormal: string
+    morningCasual: string
+    dayCasual: string
+    eveningCasual: string
   }
+  warm: string
+  sachlich: string
+  locker: string
+  liebevoll: string
+}
+
+function pickGreeting(
+  tone: 'warm' | 'sachlich' | 'locker' | 'liebevoll',
+  name: string,
+  timeOfDay: 'morning' | 'day' | 'evening',
+  greetings: GreetingsShape,
+) {
+  const first = name.split(' ')[0]
+  const formal = {
+    morning: greetings.timeOfDay.morningFormal,
+    day: greetings.timeOfDay.dayFormal,
+    evening: greetings.timeOfDay.eveningFormal,
+  }
+  const casual = {
+    morning: greetings.timeOfDay.morningCasual,
+    day: greetings.timeOfDay.dayCasual,
+    evening: greetings.timeOfDay.eveningCasual,
+  }
+  const time = tone === 'locker' ? casual[timeOfDay] : formal[timeOfDay]
+  const template = greetings[tone]
+  return template.replace('{time}', time).replace('{name}', first)
 }
 
 function currentTimeOfDay(): 'morning' | 'day' | 'evening' {
@@ -105,7 +126,7 @@ export default async function DashboardPage() {
   const locale = await getServerLocale()
   const t = getMessages(locale)
   const prefs = await getPreferences(supabase, user.id)
-  const greeting = pickGreeting(prefs.greetingTone, profile.name, currentTimeOfDay())
+  const greeting = pickGreeting(prefs.greetingTone, profile.name, currentTimeOfDay(), t.dashboard.greetings)
 
   // -------- Snapshot data (only meaningful in pregnant mode) --------
   let nextTermin: { title: string; date: string; time?: string | null } | null = null

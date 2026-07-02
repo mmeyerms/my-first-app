@@ -166,6 +166,20 @@ export const en = {
   dashboard: {
     title: '🌸 MamaMap',
     greeting: 'Hi, {name}.',
+    greetings: {
+      timeOfDay: {
+        morningFormal: 'Good morning',
+        dayFormal: 'Hello',
+        eveningFormal: 'Good evening',
+        morningCasual: 'Morning',
+        dayCasual: 'Hey',
+        eveningCasual: 'Evening',
+      },
+      warm: "{time}, {name} — glad you're here.",
+      sachlich: '{time}, {name}.',
+      locker: '{time}, {name} 👋',
+      liebevoll: '{time}, dear {name} 💛',
+    },
     sswCaption: 'Pregnancy week',
     sswCard: 'Week {ssw}',
     babyOnWay: '{babyName} is on the way.',
@@ -1614,6 +1628,37 @@ export const en = {
       },
     },
     partner: {
+      list: {
+        title: 'Active access',
+        description: 'Who currently has access to your partner area. You can revoke each access individually at any time.',
+        empty: 'Nobody has access yet. Invite a partner below.',
+        emptyCta: 'To partner area',
+        roleLabel: {
+          papa: 'Dad',
+          mama: 'Mom',
+          oma: 'Grandma',
+          opa: 'Grandpa',
+          bestie: 'Bestie',
+          andere: 'Other',
+          unknown: 'Unknown',
+        },
+        joinedOn: 'Joined on {date}',
+        removeAria: 'Revoke access',
+        removeConfirm: 'Really revoke access for {name}? They will lose access to your partner area immediately.',
+        removing: 'Revoking…',
+        loading: 'Loading access list…',
+        errorLoad: 'Failed to load access list',
+        errorRemove: 'Failed to revoke',
+      },
+      inviteLink: {
+        title: 'Invite a new partner',
+        description: 'You can invite more people via a 7-day link.',
+        cta: 'To invitation link',
+      },
+      defaults: {
+        title: 'Defaults for new access',
+        description: "Used when a new partner doesn't specify anything on joining.",
+      },
       todos: {
         title: 'Custom To-Dos for Partner',
         description:

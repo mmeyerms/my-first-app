@@ -166,6 +166,20 @@ export const de = {
   dashboard: {
     title: '🌸 MamaMap',
     greeting: 'Hallo, {name}.',
+    greetings: {
+      timeOfDay: {
+        morningFormal: 'Guten Morgen',
+        dayFormal: 'Hallo',
+        eveningFormal: 'Guten Abend',
+        morningCasual: 'Morgen',
+        dayCasual: 'Hey',
+        eveningCasual: 'Abend',
+      },
+      warm: '{time}, {name} — schön, dass du da bist.',
+      sachlich: '{time}, {name}.',
+      locker: '{time}, {name} 👋',
+      liebevoll: '{time}, liebe {name} 💛',
+    },
     sswCaption: 'Schwangerschaftswoche',
     sswCard: 'SSW {ssw}',
     babyOnWay: '{babyName} ist auf dem Weg.',
@@ -1614,6 +1628,37 @@ export const de = {
       },
     },
     partner: {
+      list: {
+        title: 'Aktive Zugänge',
+        description: 'Wer aktuell in deinem Partner-Bereich mitlesen darf. Du kannst jeden einzelnen Zugang jederzeit widerrufen.',
+        empty: 'Noch niemand mit Zugang. Lade eine:n Partner:in unten ein.',
+        emptyCta: 'Zum Partner-Bereich',
+        roleLabel: {
+          papa: 'Papa',
+          mama: 'Mama',
+          oma: 'Oma',
+          opa: 'Opa',
+          bestie: 'Bestie',
+          andere: 'Andere:r',
+          unknown: 'Unbekannt',
+        },
+        joinedOn: 'Beigetreten am {date}',
+        removeAria: 'Zugang widerrufen',
+        removeConfirm: 'Zugang für {name} wirklich widerrufen? Die Person verliert sofort den Zugriff auf deinen Partner-Bereich.',
+        removing: 'Widerrufe…',
+        loading: 'Lade Zugänge…',
+        errorLoad: 'Zugänge konnten nicht geladen werden',
+        errorRemove: 'Widerruf fehlgeschlagen',
+      },
+      inviteLink: {
+        title: 'Neue:n Partner:in einladen',
+        description: 'Über einen 7-Tage-Link kannst du weitere Personen einladen.',
+        cta: 'Zum Einladungs-Link',
+      },
+      defaults: {
+        title: 'Standardwerte für neue Zugänge',
+        description: 'Werden verwendet, wenn ein neuer Partner beim Beitritt selbst nichts angibt.',
+      },
       todos: {
         title: 'Eigene To-Dos für Partner:in',
         description:

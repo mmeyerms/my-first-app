@@ -74,7 +74,7 @@ export function SnapshotSection() {
                 <button
                   type="button"
                   onClick={() => toggle(key)}
-                  aria-label="Entfernen"
+                  aria-label={t.settings.snapshot.cards.remove}
                   className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground hover:opacity-90"
                 >
                   <Check className="h-4 w-4" />
@@ -86,7 +86,7 @@ export function SnapshotSection() {
 
         {inactive.length > 0 && (
           <>
-            <p className="mb-2 mt-4 text-xs uppercase tracking-wider text-muted-foreground">Verfügbar</p>
+            <p className="mb-2 mt-4 text-xs uppercase tracking-wider text-muted-foreground">{t.settings.snapshot.cards.available}</p>
             <ul className="space-y-2">
               {inactive.map((key) => {
                 const meta = CARD_META[key]
@@ -100,7 +100,7 @@ export function SnapshotSection() {
                     <button
                       type="button"
                       onClick={() => toggle(key)}
-                      aria-label="Hinzufügen"
+                      aria-label={t.settings.snapshot.cards.add}
                       className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-primary/40 text-primary hover:bg-secondary"
                     >
                       <Plus className="h-4 w-4" />
