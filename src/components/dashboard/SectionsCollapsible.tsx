@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
   ChevronDown,
   ChevronRight,
+  Map as MapIcon,
   Sprout,
   ScrollText,
   Sparkle,
@@ -67,6 +68,8 @@ interface Props {
  * it open by default (defaultOpen = true). On mobile we collapse to keep the
  * home surface calm; the header itself is tappable.
  */
+const STORAGE_KEY = 'mamamap:dashboard:showAllSections'
+
 export function SectionsCollapsible({
   sections,
   isPlanning,
@@ -75,7 +78,29 @@ export function SectionsCollapsible({
   const t = useT()
   const { theme } = useTheme()
   const isClassic = theme === 'classic'
-  const [open, setOpen] = useState<boolean>(defaultOpen)
+  const [open, setOpenState] = useState<boolean>(defaultOpen)
+
+  // Restore persisted preference on mount. Kept in localStorage so a user
+  // who prefers the "all sections" view doesn't have to re-open it every
+  // session — while the default (closed) still respects the Timeline focus.
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      if (stored === 'true') setOpenState(true)
+      else if (stored === 'false') setOpenState(false)
+    } catch {
+      // localStorage may throw in private mode — silently ignore
+    }
+  }, [])
+
+  function setOpen(next: boolean) {
+    setOpenState(next)
+    try {
+      localStorage.setItem(STORAGE_KEY, next ? 'true' : 'false')
+    } catch {
+      // ignore
+    }
+  }
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
@@ -84,18 +109,26 @@ export function SectionsCollapsible({
           type="button"
           aria-expanded={open}
           className={cn(
-            'flex w-full items-center justify-between rounded-xl border border-border/60 bg-card px-4 py-3',
+            'flex w-full items-center justify-between gap-3 rounded-xl border border-border/60 bg-card px-4 py-3.5',
             'text-left outline-none transition-colors hover:bg-secondary/50',
             'focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
           )}
         >
-          <span
-            className={cn(
-              'text-xs font-semibold uppercase tracking-[0.18em] text-primary',
-              isClassic ? '' : 'tracking-[0.22em]',
-            )}
-          >
-            {t.dashboard.allSections}
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary/60 text-primary">
+            <MapIcon className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+          </span>
+          <span className="flex-1 min-w-0">
+            <span
+              className={cn(
+                'block text-xs font-semibold uppercase tracking-[0.18em] text-primary',
+                isClassic ? '' : 'tracking-[0.22em]',
+              )}
+            >
+              {open ? t.dashboard.allSectionsHide : t.dashboard.allSections}
+            </span>
+            <span className="mt-0.5 block text-[11px] font-normal text-muted-foreground">
+              {open ? t.dashboard.allSectionsHideHint : t.dashboard.allSectionsHint}
+            </span>
           </span>
           <ChevronDown
             className={cn(

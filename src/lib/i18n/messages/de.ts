@@ -193,7 +193,10 @@ export const de = {
     },
     lockedNote: 'Sichtbar sobald der Test positiv ist',
     soonBadge: 'Bald',
-    allSections: 'Alle Bereiche',
+    allSections: 'Alle Bereiche anzeigen',
+    allSectionsHide: 'Bereiche wieder ausblenden',
+    allSectionsHint: 'Alle Funktionen auf einen Blick',
+    allSectionsHideHint: 'Zurück zum Reise-Fokus',
     snapshot: {
       today: 'Heute',
       tipTitle: 'Impuls für heute',

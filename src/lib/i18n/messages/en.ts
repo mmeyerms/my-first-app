@@ -193,7 +193,10 @@ export const en = {
     },
     lockedNote: 'Visible once the test is positive',
     soonBadge: 'Soon',
-    allSections: 'All areas',
+    allSections: 'Show all areas',
+    allSectionsHide: 'Hide areas again',
+    allSectionsHint: 'All features at a glance',
+    allSectionsHideHint: 'Back to journey focus',
     snapshot: {
       today: 'Today',
       tipTitle: 'Prompt for today',

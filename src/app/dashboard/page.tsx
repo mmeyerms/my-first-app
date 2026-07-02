@@ -9,6 +9,7 @@ import { LocaleSelector } from '@/components/i18n/LocaleSelector'
 import { Logo } from '@/components/brand/Logo'
 import { CompactWelcome } from '@/components/dashboard/CompactWelcome'
 import { DailySnapshot } from '@/components/dashboard/DailySnapshot'
+import { JourneyRoute } from '@/components/dashboard/JourneyRoute'
 import {
   SectionsCollapsible,
   type SectionsCollapsibleItem,
@@ -326,6 +327,10 @@ export default async function DashboardPage() {
           mode={mode}
           customGreeting={greeting}
         />
+
+        {/* JourneyRoute — Stufe 2 des Route-Konzepts. Zeigt die Reise als
+            Landkarte mit "DU"-Position, klickbar zu Bereichen. */}
+        <JourneyRoute ssw={ssw} mode={mode} />
 
         {/* Daily snapshot: tip · next termin · latest diary · ki-hebamme */}
         {showSnapshot && (

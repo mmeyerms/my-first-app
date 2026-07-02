@@ -222,3 +222,31 @@
   font-size: 18px;
 }
 
+/* ============================================================
+   Route-Design (Stufe 1): Papier-Punkte-Hintergrund.
+   Sehr subtile Punkt-Textur wie feines Aquarellpapier — trägt die
+   "Landkarte"-Metapher, ohne den Text zu stören.
+   Wird nur auf editorial-Theme angewendet, damit classic seinen
+   verspielten Charakter behält.
+   ============================================================ */
+[data-theme='editorial'] body,
+:root:not([data-theme]) body {
+  background-image:
+    radial-gradient(
+      circle at 6px 6px,
+      hsl(var(--border) / 0.55) 0.7px,
+      transparent 0.7px
+    );
+  background-size: 16px 16px;
+  background-attachment: fixed;
+}
+
+/* Prefers-reduced-transparency: skip the dot pattern for users who ask for
+   plainer surfaces (kernel via prefers-contrast:more). */
+@media (prefers-contrast: more) {
+  [data-theme='editorial'] body,
+  :root:not([data-theme]) body {
+    background-image: none;
+  }
+}
+
