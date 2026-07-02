@@ -87,6 +87,11 @@ CREATE INDEX IF NOT EXISTS idx_partner_invites_token ON partner_invites(token);
 ALTER TABLE partner_invites ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "mother_manages_own_invites" ON partner_invites;
 CREATE POLICY "mother_manages_own_invites" ON partner_invites FOR ALL USING (auth.uid() = mother_id);
+-- Public-Read auf partner_invites: der Token (UUID) ist der Zugriffsschutz.
+-- Ohne diese Policy scheitert der Partner-Accept-Flow, weil nicht-mother-User
+-- den Invite via API nicht per Token lookup finden koennen.
+DROP POLICY IF EXISTS "public_reads_invite" ON partner_invites;
+CREATE POLICY "public_reads_invite" ON partner_invites FOR SELECT USING (true);
 
 CREATE TABLE IF NOT EXISTS partner_links (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
