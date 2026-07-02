@@ -36,8 +36,19 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'path erforderlich' }, { status: 400 })
   }
 
-  // Only allow paths in the caller's own folder. All storage paths follow
-  // `<user_id>/<pregnancyId>/<uuid>.<ext>` per upload endpoint.
+  // Reject path traversal + protocol-relative segments before ANY startsWith
+  // check. Otherwise `<user.id>/../otheruser/xxx` passes the prefix filter and
+  // Supabase Storage may normalize the traversal server-side, leaking files
+  // from other users.
+  if (path.includes('..') || path.includes('//') || path.includes('\\')) {
+    return NextResponse.json({ error: 'Ungültiger Pfad' }, { status: 400 })
+  }
+  // Strict shape check: <uuid>/<uuid>/<uuid>.<ext>
+  // where uuid = 8-4-4-4-12 hex groups and ext = jpg|jpeg|png|webp|heic.
+  const STRICT_PATH = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|jpeg|png|webp|heic)$/i
+  if (!STRICT_PATH.test(path)) {
+    return NextResponse.json({ error: 'Ungültiger Pfad' }, { status: 400 })
+  }
   if (!path.startsWith(`${user.id}/`)) {
     return NextResponse.json({ error: 'Kein Zugriff auf diesen Pfad' }, { status: 403 })
   }

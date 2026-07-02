@@ -201,7 +201,17 @@ export async function DELETE(request: NextRequest) {
   }
   const pregnancyId = pregnancyIdResult.data
 
-  // Schutz: path muss mit user.id/ starten (Ordner-Präfix).
+  // Reject path traversal + protocol-relative segments BEFORE the prefix
+  // check. Otherwise `<user.id>/../otheruser/xxx` matches startsWith() and
+  // Supabase Storage normalizes the traversal server-side → cross-tenant
+  // DoS by deleting other users' files.
+  if (pathParam.includes('..') || pathParam.includes('//') || pathParam.includes('\\')) {
+    return NextResponse.json({ error: 'Ungültiger Pfad' }, { status: 400 })
+  }
+  const STRICT_PATH = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|jpeg|png|webp|heic)$/i
+  if (!STRICT_PATH.test(pathParam)) {
+    return NextResponse.json({ error: 'Ungültiger Pfad' }, { status: 400 })
+  }
   if (!pathParam.startsWith(`${user.id}/`)) {
     return NextResponse.json({ error: 'Kein Zugriff auf diesen Pfad' }, { status: 403 })
   }
