@@ -29,9 +29,12 @@ ALTER TABLE partner_invites ADD CONSTRAINT partner_invites_uses_bounds
   CHECK (uses_count >= 0 AND uses_count <= max_uses AND max_uses > 0 AND max_uses <= 20);
 
 -- Optional: schmaler Index fuer "noch nutzbare invites"-Queries.
+-- NOW() darf NICHT im Predicate stehen (Postgres verlangt deterministische
+-- Ausdruecke in Index-Bedingungen). expires_at wird stattdessen zum
+-- Sortier-Key gemacht — filtern uebernimmt die REST-API.
 CREATE INDEX IF NOT EXISTS idx_partner_invites_active
-  ON partner_invites(mother_id)
-  WHERE uses_count < max_uses AND expires_at > NOW();
+  ON partner_invites(mother_id, expires_at)
+  WHERE uses_count < max_uses;
 
 -- ============================================================
 -- Fertig.

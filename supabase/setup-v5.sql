@@ -99,9 +99,12 @@ UPDATE partner_invites SET uses_count = max_uses WHERE used_at IS NOT NULL AND u
 ALTER TABLE partner_invites DROP CONSTRAINT IF EXISTS partner_invites_uses_bounds;
 ALTER TABLE partner_invites ADD CONSTRAINT partner_invites_uses_bounds
   CHECK (uses_count >= 0 AND uses_count <= max_uses AND max_uses > 0 AND max_uses <= 20);
+-- Partial index — nur nicht ausgeschöpfte Invites. NOW() darf hier NICHT
+-- im Predicate stehen (nicht deterministisch fuer PG). expires_at filtert
+-- die REST-API separat.
 CREATE INDEX IF NOT EXISTS idx_partner_invites_active
-  ON partner_invites(mother_id)
-  WHERE uses_count < max_uses AND expires_at > NOW();
+  ON partner_invites(mother_id, expires_at)
+  WHERE uses_count < max_uses;
 
 CREATE TABLE IF NOT EXISTS partner_links (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
