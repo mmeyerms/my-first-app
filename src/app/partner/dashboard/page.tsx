@@ -115,6 +115,12 @@ export default async function PartnerDashboardPage() {
       motherName={profile.name}
       babyName={babyName}
       partnerLabel={partnerLabel}
+      partnerRole={
+        partnerRole === 'papa' || partnerRole === 'mama' || partnerRole === 'oma' ||
+        partnerRole === 'opa' || partnerRole === 'bestie' || partnerRole === 'andere'
+          ? partnerRole
+          : null
+      }
       ssw={ssw}
       tip={tip}
       locale={locale}

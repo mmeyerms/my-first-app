@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { LoginForm } from '@/components/auth/LoginForm'
 import { LocaleSelector } from '@/components/i18n/LocaleSelector'
 import { Logo } from '@/components/brand/Logo'
+import { AppDisclaimerNote } from '@/components/legal/AppDisclaimerNote'
 import { getServerLocale } from '@/lib/i18n/server'
 import { getMessages } from '@/lib/i18n/messages'
 
@@ -26,6 +27,9 @@ export default async function LoginPage() {
           <Suspense fallback={null}>
             <LoginForm />
           </Suspense>
+        </div>
+        <div className="mt-6">
+          <AppDisclaimerNote variant="footer" />
         </div>
       </div>
     </main>

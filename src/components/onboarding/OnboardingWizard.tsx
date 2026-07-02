@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/select'
 import { useLocale, useT } from '@/lib/i18n/client'
 import type { Locale } from '@/lib/i18n/types'
+import { AppDisclaimerNote } from '@/components/legal/AppDisclaimerNote'
 
 type Mode = 'planning' | 'pregnant'
 type BabyGender = 'female' | 'male' | 'diverse' | 'surprise' | 'unknown'
@@ -506,6 +507,9 @@ export function OnboardingWizard() {
   return (
     <div>
       <StepIndicator current={step} total={TOTAL_STEPS} />
+      <div className="mb-6">
+        <AppDisclaimerNote />
+      </div>
 
       {step === 1 && (
         <Step1Name

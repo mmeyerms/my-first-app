@@ -6,7 +6,9 @@ import { createClient } from '@/lib/supabase/client'
 import { Badge } from '@/components/ui/badge'
 import { PartnerTodosBlock, type PartnerTodoItem } from '@/components/partner/PartnerTodosBlock'
 import { PartnerPreparationBlock } from '@/components/partner/PartnerPreparationBlock'
+import { PartnerFeaturesGrid } from '@/components/partner/PartnerFeaturesGrid'
 import { RealtimeIndicator, type RealtimeStatus } from '@/components/partner/RealtimeIndicator'
+import type { PartnerRoleKey } from '@/lib/partner/features-content'
 import { QUESTIONS, getQuestionLabel, type Question } from '@/lib/questions'
 import { getPartnerTipText, getPartnerTipLabel, type PartnerTip } from '@/lib/partnerTips'
 import type { PreparationTask } from '@/lib/partnerPreparation'
@@ -32,6 +34,8 @@ interface PartnerDashboardClientProps {
   motherName: string
   babyName: string
   partnerLabel: string
+  /** From partner_links.role — drives which of the 10 features are shown. */
+  partnerRole: PartnerRoleKey | null
   ssw: number
   tip: PartnerTip
   locale: Locale
@@ -64,6 +68,7 @@ export function PartnerDashboardClient({
   motherName,
   babyName,
   partnerLabel,
+  partnerRole,
   ssw,
   tip,
   locale,
@@ -428,7 +433,17 @@ export function PartnerDashboardClient({
           />
         </section>
 
-        {/* ─────────────  4. GEBURTSPLAN  ─────────────
+        {/* ─────────────  4. FÜR DICH ALS PARTNER  ─────────────
+            Zehn Features aus PROJ-12 Konzept 2.0: Wochen-Impulse, Fragen-Bibliothek,
+            Elternzeit, Peer-Texte, Damals-Heute, Fernhilfe, Besuchs-Etikette,
+            Bestie-Rituale, Geschenke, PPD-Awareness. Rollen-adaptiv. */}
+        <PartnerFeaturesGrid
+          partnerRole={partnerRole}
+          ssw={ssw}
+          motherName={motherName}
+        />
+
+        {/* ─────────────  5. GEBURTSPLAN  ─────────────
             Nur wenn die Mutter das teilt — sonst nicht anzeigen. */}
         {visibility.geburtsplan && (
           <section aria-label={t.partner.birthPlanHeading}>

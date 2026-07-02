@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { RegisterForm } from '@/components/auth/RegisterForm'
 import { LocaleSelector } from '@/components/i18n/LocaleSelector'
 import { Logo } from '@/components/brand/Logo'
+import { AppDisclaimerNote } from '@/components/legal/AppDisclaimerNote'
 import { getServerLocale } from '@/lib/i18n/server'
 import { getMessages } from '@/lib/i18n/messages'
 
@@ -29,6 +30,9 @@ export default async function RegisterPage() {
           <Suspense fallback={null}>
             <RegisterForm />
           </Suspense>
+        </div>
+        <div className="mt-6">
+          <AppDisclaimerNote variant="footer" />
         </div>
       </div>
     </main>

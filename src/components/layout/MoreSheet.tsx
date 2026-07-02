@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
+  AlertOctagon,
   Baby,
   ChevronRight,
   HandHeart,
@@ -21,6 +22,7 @@ import {
   UserCircle2,
   Users,
 } from 'lucide-react'
+import { EmergencySheet } from '@/components/emergency/EmergencySheet'
 
 import {
   Sheet,
@@ -108,6 +110,22 @@ export function MoreSheet({ trigger }: MoreSheetProps) {
         </SheetHeader>
 
         <div className="space-y-6 px-5 py-5">
+          {/* Emergency — sits at top so it's always instantly reachable. */}
+          <EmergencySheet
+            trigger={
+              <button
+                type="button"
+                className="flex w-full items-center gap-3 rounded-lg border-2 border-alert bg-alert/5 px-3 py-3 text-left text-sm font-semibold text-alert transition-colors hover:bg-alert/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-alert"
+              >
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-alert text-paper">
+                  <AlertOctagon className="h-4 w-4" strokeWidth={1.5} />
+                </span>
+                <span className="flex-1">Notfall &amp; Hilfe-Nummern</span>
+                <ChevronRight className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+              </button>
+            }
+          />
+
           {/* Section: Meine Reise */}
           <MoreSection heading={ms.sections.journey}>
             <MoreLink
@@ -215,6 +233,14 @@ export function MoreSheet({ trigger }: MoreSheetProps) {
               destructive
             />
           </MoreSection>
+
+          {/* Legal — Impressum + DSE als kleine Links am Ende. */}
+          <div className="pt-2 text-center text-[10px] leading-relaxed text-muted-foreground">
+            <a href="/impressum" className="hover:text-primary hover:underline">Impressum</a>
+            <span className="mx-2">·</span>
+            <a href="/datenschutz" className="hover:text-primary hover:underline">Datenschutz</a>
+            <p className="mt-1">MamaMap ist eine Lifestyle-App, keine medizinische Beratung.</p>
+          </div>
         </div>
       </SheetContent>
     </Sheet>
