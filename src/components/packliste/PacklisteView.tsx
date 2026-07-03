@@ -19,7 +19,12 @@ import { ChecklistItemNote } from '@/components/checklist/ChecklistItemNote'
 
 const STORAGE_KEY = 'mamamap-packliste'
 
-export function PacklisteView() {
+interface PacklisteViewProps {
+  /** Mehrlings-Schwangerschaft — zeigt den Doppelte-Mengen-Banner. */
+  isMultiple?: boolean
+}
+
+export function PacklisteView({ isMultiple = false }: PacklisteViewProps) {
   const { locale, t } = useLocale()
   const { prefs } = usePreferences()
   const presetHidden = useMemo(
@@ -143,6 +148,13 @@ export function PacklisteView() {
   return (
     <div className="space-y-5">
       <ChecklistPresetBanner presets={prefs.listPresets} />
+
+      {/* Mehrlinge: doppelte Mengen einplanen */}
+      {isMultiple && (
+        <p className="rounded-xl border border-dashed border-accent/60 bg-secondary/30 p-4 font-display text-xs italic leading-relaxed text-muted-foreground">
+          👶👶 {t.packliste.multiplesBanner}
+        </p>
+      )}
 
       {/* Progress card — editorial: serif count, eyebrow label */}
       <section

@@ -62,6 +62,13 @@ export default async function WochePage() {
   const info = getSswInfo(ssw)
   const babyName = active?.baby_name ?? profile.baby_name
 
+  // Mehrlinge: alle Namen mit "&" verbinden ("Emma & Mia"), Hinweis-Flag.
+  const isMultiple = active?.is_multiple ?? false
+  const joinedNames = isMultiple && Array.isArray(active?.baby_names)
+    ? active.baby_names.filter((n) => n && n.trim()).join(' & ')
+    : ''
+  const displayBabyName = joinedNames || babyName
+
   const locale = await getServerLocale()
   const t = getMessages(locale)
   const theme = await getServerTheme()
@@ -151,8 +158,15 @@ export default async function WochePage() {
           )}
 
           <p className="mt-6 font-display text-base italic text-muted-foreground">
-            {t.woche.forBaby.replace('{babyName}', babyName ?? t.partner.fallbackBabyName)}
+            {t.woche.forBaby.replace('{babyName}', displayBabyName ?? t.partner.fallbackBabyName)}
           </p>
+
+          {/* Mehrlings-Hinweis: Größen/Gewichte gelten für Einlinge */}
+          {isMultiple && (
+            <p className="mt-3 rounded-lg border border-dashed border-accent/60 bg-secondary/30 p-3 font-display text-xs italic leading-relaxed text-muted-foreground">
+              {t.woche.multiplesNote}
+            </p>
+          )}
 
           {/* Progress style */}
           {prefs.wocheProgressStyle !== 'none' && (

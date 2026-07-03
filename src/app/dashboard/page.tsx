@@ -71,6 +71,68 @@ function currentTimeOfDay(): 'morning' | 'day' | 'evening' {
   return 'evening'
 }
 
+type NowItemKey =
+  | 'woche' | 'tipps' | 'termine' | 'tagebuch' | 'tracker' | 'geburtsplan'
+  | 'packliste' | 'einkaufsliste' | 'wochenbett' | 'wochenbettChef'
+  | 'notfallKarte' | 'kinderwunsch' | 'partner'
+
+interface PhaseLink { key: NowItemKey; href: string; emoji: string }
+
+/**
+ * Stufe 3 des Route-Konzepts: welche Bereiche JETZT zur Phase passen.
+ * Max. 6 Einträge — die Auswahl folgt der Stations-Logik der JourneyRoute.
+ */
+function phaseLinks(mode: 'planning' | 'pregnant', ssw: number | null): PhaseLink[] {
+  if (mode === 'planning') {
+    return [
+      { key: 'kinderwunsch', href: '/kinderwunsch', emoji: '🌷' },
+      { key: 'tagebuch', href: '/tagebuch', emoji: '📔' },
+      { key: 'partner', href: '/partner', emoji: '💑' },
+      { key: 'notfallKarte', href: '/notfall-karte', emoji: '🆘' },
+    ]
+  }
+  const week = ssw ?? 20
+  if (week <= 12) {
+    return [
+      { key: 'woche', href: '/woche', emoji: '🤰' },
+      { key: 'tipps', href: '/tipps', emoji: '💡' },
+      { key: 'termine', href: '/termine', emoji: '📅' },
+      { key: 'tagebuch', href: '/tagebuch', emoji: '📔' },
+      { key: 'tracker', href: '/tracker', emoji: '🌡️' },
+      { key: 'partner', href: '/partner', emoji: '💑' },
+    ]
+  }
+  if (week <= 27) {
+    return [
+      { key: 'woche', href: '/woche', emoji: '🤰' },
+      { key: 'tagebuch', href: '/tagebuch', emoji: '📔' },
+      { key: 'termine', href: '/termine', emoji: '📅' },
+      { key: 'tracker', href: '/tracker', emoji: '🌡️' },
+      { key: 'geburtsplan', href: '/geburtsplan', emoji: '📋' },
+      { key: 'einkaufsliste', href: '/einkaufsliste', emoji: '🛍️' },
+    ]
+  }
+  if (week <= 36) {
+    return [
+      { key: 'geburtsplan', href: '/geburtsplan', emoji: '📋' },
+      { key: 'packliste', href: '/packliste', emoji: '🏥' },
+      { key: 'tracker', href: '/tracker', emoji: '🌡️' },
+      { key: 'einkaufsliste', href: '/einkaufsliste', emoji: '🛍️' },
+      { key: 'wochenbett', href: '/wochenbett', emoji: '💞' },
+      { key: 'termine', href: '/termine', emoji: '📅' },
+    ]
+  }
+  // Zielgerade 37+
+  return [
+    { key: 'packliste', href: '/packliste', emoji: '🏥' },
+    { key: 'geburtsplan', href: '/geburtsplan', emoji: '📋' },
+    { key: 'notfallKarte', href: '/notfall-karte', emoji: '🆘' },
+    { key: 'wochenbettChef', href: '/wochenbett-chef', emoji: '🤝' },
+    { key: 'tracker', href: '/tracker', emoji: '🌡️' },
+    { key: 'termine', href: '/termine', emoji: '📅' },
+  ]
+}
+
 interface DbTermin {
   title: string
   date: string
@@ -345,6 +407,29 @@ export default async function DashboardPage() {
             helpRequestsOpen={helpRequestsOpen}
           />
         )}
+
+        {/* "Jetzt wichtig" — Stufe 3 des Route-Konzepts: phasen-gefilterte
+            Quick-Links. Was zur aktuellen SSW passt ist prominent; alles
+            andere bleibt hinter dem "Alle Bereiche anzeigen"-Toggle. */}
+        <section aria-label={t.dashboard.nowSection.title} className="mb-6">
+          <h2 className="mb-3 px-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            {t.dashboard.nowSection.title}
+          </h2>
+          <div className="grid grid-cols-2 gap-2">
+            {phaseLinks(mode, ssw).map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-card px-3.5 py-3 text-sm font-medium text-foreground shadow-sm transition-colors hover:border-primary/40 hover:bg-secondary/40"
+              >
+                <span aria-hidden="true" className="text-base">{item.emoji}</span>
+                <span className="min-w-0 flex-1 truncate">
+                  {t.dashboard.nowSection.items[item.key]}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
 
         {/* All sections — collapsed by default on mobile, expanded on desktop via CSS could be added later */}
         <SectionsCollapsible

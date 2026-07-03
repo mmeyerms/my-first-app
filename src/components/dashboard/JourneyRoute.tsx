@@ -41,23 +41,30 @@ interface Station {
 }
 
 /**
- * Die 6 Stationen der Reise. Werte für X/Y so gewählt, dass die Linie
- * links unten startet, sanft nach rechts oben verläuft und mit einem Pin
- * am Wochenbett-Ende ankommt.
+ * Die 6 Stationen der Reise als Wanderweg: der Pfad schlängelt sich in
+ * sanften Serpentinen durch eine angedeutete Hügellandschaft — wie auf
+ * einer Wanderkarte, nicht wie ein Chart. Kein "Aufstieg", sondern ein
+ * Weg mit Kurven, der beim Herz-Pin (Wochenbett = Ankommen) endet.
  */
 const STATIONS: Station[] = [
-  { id: 'start', label: 'Positive Linie', eyebrow: 'Start', ssw: 4, href: '/dashboard', x: 5, y: 82 },
-  { id: 's1', label: 'Ankommen', eyebrow: 'SSW 4–12', ssw: 8, href: '/woche', x: 22, y: 68 },
-  { id: 's2', label: 'Wachsen', eyebrow: 'SSW 13–27', ssw: 20, href: '/woche', x: 44, y: 50 },
-  { id: 's3', label: 'Vorbereiten', eyebrow: 'SSW 28–36', ssw: 32, href: '/packliste', x: 66, y: 34 },
-  { id: 's4', label: 'Zielgerade', eyebrow: 'SSW 37–40', ssw: 39, href: '/geburtsplan', x: 82, y: 20 },
-  { id: 'wochenbett', label: 'Wochenbett', eyebrow: 'Die ersten Wochen', ssw: 45, href: '/wochenbett-chef', x: 95, y: 10 },
+  { id: 'start', label: 'Positive Linie', eyebrow: 'Start', ssw: 4, href: '/dashboard', x: 5, y: 75 },
+  { id: 's1', label: 'Ankommen', eyebrow: 'SSW 4–12', ssw: 8, href: '/woche', x: 22, y: 47 },
+  { id: 's2', label: 'Wachsen', eyebrow: 'SSW 13–27', ssw: 20, href: '/woche', x: 42, y: 67 },
+  { id: 's3', label: 'Vorbereiten', eyebrow: 'SSW 28–36', ssw: 32, href: '/packliste', x: 62, y: 42 },
+  { id: 's4', label: 'Zielgerade', eyebrow: 'SSW 37–40', ssw: 39, href: '/geburtsplan', x: 80, y: 60 },
+  { id: 'wochenbett', label: 'Wochenbett', eyebrow: 'Die ersten Wochen', ssw: 45, href: '/wochenbett-chef', x: 94, y: 35 },
 ]
 
-/** Der Pfad der Route — kubische Bezier von Start zu Wochenbett. */
+/** Serpentinen-Pfad — glatte kubische Segmente DURCH die Stationspunkte. */
 const ROUTE_PATH =
-  'M 10 165 Q 90 130, 175 100 T 340 45 T 480 15'
+  'M 25 150 C 60 132, 80 99, 110 94 C 150 88, 175 134, 210 134 C 248 134, 275 89, 310 84 C 345 80, 368 122, 400 120 C 432 118, 452 88, 470 70'
 const ROUTE_PATH_VIEWBOX = { w: 500, h: 200 }
+
+/** Sanfte Hügel-Silhouetten im Hintergrund — reine Deko, sehr leise. */
+const HILLS = [
+  'M 0 185 Q 90 150, 190 178 T 400 180 L 500 172 L 500 200 L 0 200 Z',
+  'M 0 195 Q 140 168, 280 190 T 500 186 L 500 200 L 0 200 Z',
+]
 
 function scaleX(x: number): number {
   return (x / 100) * ROUTE_PATH_VIEWBOX.w
@@ -73,7 +80,7 @@ export function JourneyRoute({ ssw, mode, className }: Props) {
   const { currentX, currentY, currentStation } = useMemo(() => {
     // Planning-Mode → am Start, vor Station 1
     if (mode === 'planning' || ssw === null) {
-      return { currentX: scaleX(3), currentY: scaleY(85), currentStation: 'planning' }
+      return { currentX: scaleX(5), currentY: scaleY(75), currentStation: 'planning' }
     }
     // Nach Geburt (SSW > 42): am Wochenbett-Pin
     if (ssw > 42) {
@@ -143,6 +150,11 @@ export function JourneyRoute({ ssw, mode, className }: Props) {
           role="img"
           aria-label="Route der Schwangerschafts-Reise mit deiner aktuellen Position"
         >
+          {/* Hügellandschaft — sehr leise Silhouetten am unteren Rand */}
+          {HILLS.map((d, i) => (
+            <path key={i} d={d} fill="hsl(var(--accent))" opacity={i === 0 ? 0.1 : 0.16} />
+          ))}
+
           {/* Full route — dashed champagne outline for the not-yet-walked portion */}
           <path
             d={ROUTE_PATH}
@@ -206,10 +218,10 @@ export function JourneyRoute({ ssw, mode, className }: Props) {
                     opacity={isPast ? 1 : 0.55}
                   />
                 )}
-                {/* Station label above/below alternately for spacing */}
+                {/* Station label: über "Bergen" (y<55), unter "Tälern" — folgt der Serpentine */}
                 <text
                   x={stationScaledX}
-                  y={scaleY(s.y) + (i % 2 === 0 ? -14 : 20)}
+                  y={scaleY(s.y) + (s.y < 55 ? -14 : 22)}
                   textAnchor="middle"
                   fontSize="9"
                   fontFamily="system-ui, -apple-system, sans-serif"

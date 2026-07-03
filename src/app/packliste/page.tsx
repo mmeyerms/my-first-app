@@ -3,12 +3,15 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getServerLocale } from '@/lib/i18n/server'
 import { getMessages } from '@/lib/i18n/messages'
+import { getActivePregnancy } from '@/lib/pregnancy/server'
 import { PacklisteView } from '@/components/packliste/PacklisteView'
 
 export default async function PacklistePage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+  const active = await getActivePregnancy(supabase, user.id)
+  const isMultiple = active?.is_multiple ?? false
   const locale = await getServerLocale()
   const t = getMessages(locale)
 
@@ -27,7 +30,7 @@ export default async function PacklistePage() {
           </Link>
         </div>
         <p className="mb-6 text-sm text-muted-foreground">{t.packliste.intro}</p>
-        <PacklisteView />
+        <PacklisteView isMultiple={isMultiple} />
       </div>
     </main>
   )
