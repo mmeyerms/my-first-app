@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getServerLocale } from '@/lib/i18n/server'
 import { getMessages } from '@/lib/i18n/messages'
 import { WochenbettTabs } from '@/components/wochenbett/WochenbettTabs'
+import { SituationNotes } from '@/components/situation/SituationNotes'
 
 interface PageProps {
   searchParams: Promise<{ tab?: string }>
@@ -34,6 +35,7 @@ export default async function WochenbettPage({ searchParams }: PageProps) {
           </Link>
         </div>
         <p className="mb-6 text-sm text-muted-foreground">{t.wochenbett.intro}</p>
+        <SituationNotes context="wochenbett" />
         <WochenbettTabs initialTab={initialTab} />
       </div>
     </main>

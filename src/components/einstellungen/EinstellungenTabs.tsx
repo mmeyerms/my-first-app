@@ -4,6 +4,7 @@ import type { UserPreferences } from '@/lib/preferences/types'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useT } from '@/lib/i18n/client'
 import { DesignSection } from './sections/DesignSection'
+import { SituationSection } from './sections/SituationSection'
 import { SnapshotSection } from './sections/SnapshotSection'
 import { GreetingSection } from './sections/GreetingSection'
 import { WocheSection } from './sections/WocheSection'
@@ -37,6 +38,7 @@ export function EinstellungenTabs({ initialPrefs: _initialPrefs, pregnancyMode }
         <div className="mb-6 -mx-4 overflow-x-auto px-4">
           <TabsList className="flex w-max gap-1">
             <TabsTrigger value="design">{tabs.design}</TabsTrigger>
+            <TabsTrigger value="situation">{tabs.situation}</TabsTrigger>
             <TabsTrigger value="snapshot">{tabs.snapshot}</TabsTrigger>
             <TabsTrigger value="greeting">{tabs.greeting}</TabsTrigger>
             <TabsTrigger value="woche">{tabs.woche}</TabsTrigger>
@@ -52,6 +54,7 @@ export function EinstellungenTabs({ initialPrefs: _initialPrefs, pregnancyMode }
         </div>
 
         <TabsContent value="design"><DesignSection /></TabsContent>
+        <TabsContent value="situation"><SituationSection /></TabsContent>
         <TabsContent value="snapshot"><SnapshotSection /></TabsContent>
         <TabsContent value="greeting"><GreetingSection /></TabsContent>
         <TabsContent value="woche"><WocheSection /></TabsContent>

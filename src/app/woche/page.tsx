@@ -20,6 +20,7 @@ import {
 import { localized } from '@/lib/i18n/localized'
 import { BabyIllustration } from '@/components/ssw/BabyIllustration'
 import { NeedsDueDateNotice } from '@/components/shared/NeedsDueDateNotice'
+import { SituationNotes } from '@/components/situation/SituationNotes'
 
 interface Profile {
   name: string
@@ -196,6 +197,9 @@ export default async function WochePage() {
             </div>
           )}
         </header>
+
+        {/* Lebensumstands-Hinweise: nach Verlust / Befund / Risiko */}
+        <SituationNotes context="woche" ssw={ssw} />
 
         {/* Development */}
         {info && showBlock('development') && (

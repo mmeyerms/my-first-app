@@ -7,6 +7,7 @@ import { getServerLocale } from '@/lib/i18n/server'
 import { getMessages } from '@/lib/i18n/messages'
 import { getActivePregnancy } from '@/lib/pregnancy/server'
 import { NeedsDueDateNotice } from '@/components/shared/NeedsDueDateNotice'
+import { SituationNotes } from '@/components/situation/SituationNotes'
 
 export default async function GeburtsplanPage() {
   const supabase = await createClient()
@@ -56,6 +57,7 @@ export default async function GeburtsplanPage() {
             {subtitle}
           </p>
         </div>
+        <SituationNotes context="geburtsplan" />
         <GeburtsplanView
           initialAnswers={(plan?.answers as Record<string, unknown>) ?? {}}
           ssw={ssw}

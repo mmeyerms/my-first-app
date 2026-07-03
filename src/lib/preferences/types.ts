@@ -88,6 +88,30 @@ export interface SecurityPreferences {
  * Rendered as lock-screen image + wallet PDF. All fields optional — the
  * card renders only what's present.
  */
+/**
+ * Lebensumstaende (PROJ-Sonderfaelle): 8 Flags die Ansprache und Inhalte
+ * app-weit anpassen. Bewusst in den Preferences (nicht auf pregnancies):
+ * privat, ohne Partner-RLS-Exposition, sofort ohne Migration nutzbar.
+ */
+export interface LifeCircumstances {
+  /** Regenbogen-Schwangerschaft — schwanger nach Verlust. Sanftere Fruehphasen-Ansprache. */
+  afterLoss: boolean
+  /** Baby frueh geboren / NICU — Wochenbett-Inhalte angepasst, Fruehchen-Anlaufstellen. */
+  premature: boolean
+  /** Risikoschwangerschaft — keine pauschalen Bewegungs-Tipps, engmaschige Betreuung. */
+  riskPregnancy: boolean
+  /** Verordnete Bettruhe — Hilfe-Organisation schon vor der Geburt prominent. */
+  bedRest: boolean
+  /** Solo-Mama — Formulierungen ohne Paar-Annahme, Support-Netz im Fokus. */
+  soloMama: boolean
+  /** Geplanter Kaiserschnitt — Sectio-Infos, laengere Wochenbett-Erholung. */
+  plannedSectio: boolean
+  /** Kinderwunschbehandlung / IVF — Behandlungs-Phasen-Begleitung. */
+  ivf: boolean
+  /** Auffaelliger Praenataldiagnostik-Befund — wuerdevolle Verweise statt Auto-Tipps. */
+  prenatalFinding: boolean
+}
+
 export interface NotfallKarte {
   bloodType: string
   allergies: string
@@ -146,6 +170,9 @@ export interface UserPreferences {
 
   // Notfall-Karte (PROJ-13)
   notfallKarte: NotfallKarte
+
+  // Lebensumstaende (Sonderfaelle)
+  lifeCircumstances: LifeCircumstances
 }
 
 export const DEFAULT_PREFERENCES: UserPreferences = {
@@ -223,6 +250,17 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
     emergencyContactName: '',
     emergencyContactPhone: '',
   },
+
+  lifeCircumstances: {
+    afterLoss: false,
+    premature: false,
+    riskPregnancy: false,
+    bedRest: false,
+    soloMama: false,
+    plannedSectio: false,
+    ivf: false,
+    prenatalFinding: false,
+  },
 }
 
 /**
@@ -266,6 +304,10 @@ export function mergePreferences(
     notfallKarte: {
       ...DEFAULT_PREFERENCES.notfallKarte,
       ...(partial.notfallKarte ?? {}),
+    },
+    lifeCircumstances: {
+      ...DEFAULT_PREFERENCES.lifeCircumstances,
+      ...(partial.lifeCircumstances ?? {}),
     },
   }
 }
