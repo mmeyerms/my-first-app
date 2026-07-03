@@ -144,21 +144,21 @@ export function PacklisteView() {
     <div className="space-y-5">
       <ChecklistPresetBanner presets={prefs.listPresets} />
 
-      {/* Progress card */}
+      {/* Progress card — editorial: serif count, eyebrow label */}
       <section
         aria-label={t.packliste.progressAria}
         className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm"
       >
         <div className="mb-2 flex items-baseline justify-between">
-          <span className="text-sm font-medium text-foreground">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
             {t.packliste.progressLabel}
           </span>
-          <span className="text-sm text-muted-foreground">
-            {checkedCount} / {totalVisible}
+          <span className="font-display text-lg font-medium tabular-nums text-primary">
+            {checkedCount}<span className="text-muted-foreground"> / {totalVisible}</span>
           </span>
         </div>
         <Progress value={progress} className="h-2" />
-        <p className="mt-3 text-sm text-muted-foreground">
+        <p className="mt-3 font-display text-sm italic text-muted-foreground">
           {allDone
             ? t.packliste.allDone
             : checkedCount === 0
@@ -202,14 +202,17 @@ export function PacklisteView() {
               className="flex w-full items-center justify-between px-5 py-4 text-left"
             >
               <div className="flex items-center gap-3">
-                <span className="text-2xl" aria-hidden="true">
+                <span
+                  aria-hidden="true"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary/70 text-base"
+                >
                   {cat.emoji}
                 </span>
                 <div>
-                  <h2 className="text-base font-semibold text-foreground">
+                  <h2 className="font-display text-base font-medium text-foreground">
                     {localized(cat.title, locale)}
                   </h2>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
                     {t.packliste.catProgress
                       .replace('{checked}', String(catChecked))
                       .replace('{total}', String(totalVisibleInCat))}
@@ -248,8 +251,8 @@ export function PacklisteView() {
                             {localized(item.label, locale)}
                           </Label>
                           {item.tip && (
-                            <p className="mt-1 text-xs text-muted-foreground">
-                              💡 {localized(item.tip, locale)}
+                            <p className="mt-1 border-l-2 border-accent/50 pl-2 font-display text-xs italic text-muted-foreground">
+                              {localized(item.tip, locale)}
                             </p>
                           )}
                           <ChecklistItemNote
@@ -299,8 +302,8 @@ export function PacklisteView() {
                             </Badge>
                           </Label>
                           {c.tip && (
-                            <p className="mt-1 text-xs text-muted-foreground">
-                              💡 {c.tip}
+                            <p className="mt-1 border-l-2 border-accent/50 pl-2 font-display text-xs italic text-muted-foreground">
+                              {c.tip}
                             </p>
                           )}
                           <ChecklistItemNote

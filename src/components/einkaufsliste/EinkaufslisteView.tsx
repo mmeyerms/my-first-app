@@ -171,23 +171,28 @@ export function EinkaufslisteView() {
             <header className="px-5 pt-5">
               <div className="mb-1 flex items-center justify-between">
                 <h2
-                  className={`flex items-center gap-2 text-base font-semibold ${
+                  className={`flex items-center gap-3 font-display text-base font-medium ${
                     isSkip ? 'text-muted-foreground' : 'text-foreground'
                   }`}
                 >
-                  <span className="text-xl" aria-hidden="true">
+                  <span
+                    aria-hidden="true"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary/70 text-base"
+                  >
                     {PRIORITY_EMOJI[priority]}
                   </span>
                   {title}
                 </h2>
                 <Badge variant="secondary">{meta.badge}</Badge>
               </div>
-              <p className="text-xs text-muted-foreground">{meta.description}</p>
+              <p className="font-display text-xs italic text-muted-foreground">{meta.description}</p>
               <div className="mt-3">
-                <div className="mb-1 flex items-baseline justify-between text-xs">
-                  <span className="text-muted-foreground">{t.einkaufsliste.progressLabel}</span>
-                  <span className="text-muted-foreground">
-                    {sectionChecked} / {sectionTotal}
+                <div className="mb-1 flex items-baseline justify-between">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    {t.einkaufsliste.progressLabel}
+                  </span>
+                  <span className="font-display text-sm font-medium tabular-nums text-primary">
+                    {sectionChecked}<span className="text-muted-foreground"> / {sectionTotal}</span>
                   </span>
                 </div>
                 <Progress value={sectionProgress} className="h-1.5" />
@@ -207,14 +212,14 @@ export function EinkaufslisteView() {
                   <div key={cat.id}>
                     <div className="mb-2 flex items-center justify-between">
                       <h3
-                        className={`flex items-center gap-2 text-sm font-medium ${
+                        className={`flex items-center gap-2 font-display text-sm font-medium ${
                           isSkip ? 'text-muted-foreground' : 'text-foreground'
                         }`}
                       >
-                        <span aria-hidden="true">{cat.emoji}</span>
+                        <span aria-hidden="true" className="text-xs opacity-70">{cat.emoji}</span>
                         {localized(cat.title, locale)}
                       </h3>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-[11px] uppercase tracking-[0.12em] tabular-nums text-muted-foreground">
                         {catChecked} / {totalVisibleInCat}
                       </span>
                     </div>
@@ -245,9 +250,9 @@ export function EinkaufslisteView() {
                                 {localized(item.label, locale)}
                               </Label>
                               {item.tip && (
-                                <p className="mt-1 text-xs text-muted-foreground">
-                                  💡 {localized(item.tip, locale)}
-                                </p>
+                                <p className="mt-1 border-l-2 border-accent/50 pl-2 font-display text-xs italic text-muted-foreground">
+                              {localized(item.tip, locale)}
+                            </p>
                               )}
                               <ChecklistItemNote
                                 itemId={item.id}
