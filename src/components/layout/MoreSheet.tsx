@@ -129,7 +129,7 @@ export function MoreSheet({ trigger }: MoreSheetProps) {
           {/* Section: Meine Reise */}
           <MoreSection heading={ms.sections.journey}>
             <MoreLink
-              href="/profil?tab=pregnancies"
+              href="/profil#pregnancies"
               icon={<Baby className="h-4 w-4" strokeWidth={1.5} />}
               label={ms.pregnancies}
               onNavigate={() => setOpen(false)}
@@ -197,7 +197,7 @@ export function MoreSheet({ trigger }: MoreSheetProps) {
             <MoreLink
               href="/einstellungen"
               icon={<Sliders className="h-4 w-4" strokeWidth={1.5} />}
-              label="Personalisierung"
+              label={ms.personalization}
               onNavigate={() => setOpen(false)}
             />
             <MoreButton

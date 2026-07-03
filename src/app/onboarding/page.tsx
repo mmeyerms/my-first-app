@@ -12,6 +12,12 @@ export default async function OnboardingPage() {
   // signed up via /partner/accept/[token] and never was a mother).
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  // Ohne Konto kein Onboarding: der Wizard wuerde erst beim Speichern (401)
+  // scheitern — schlechte UX nach 3 ausgefuellten Schritten. Registrierung
+  // zuerst, danach landet sie automatisch wieder hier.
+  if (!user && process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    redirect('/register?next=/onboarding')
+  }
   if (user) {
     const { data: existingProfile } = await supabase
       .from('profiles')

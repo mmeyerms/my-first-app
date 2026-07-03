@@ -26,9 +26,9 @@
 | PROJ-10 | Push-Notifications | In Progress | [PROJ-10-push-notifications.md](PROJ-10-push-notifications.md) | 2026-07-02 |
 | PROJ-11 | Wochenbett-Chef+ (iCal, Wunschzettel, Danke) | In Progress | [PROJ-11-wochenbett-chef-plus.md](PROJ-11-wochenbett-chef-plus.md) | 2026-07-02 |
 | PROJ-12 | Partner-Features 2.0 (10 rollen-adaptive Features) | Deployed | — | 2026-07-02 |
-| PROJ-13 | Notfall-Karte (Lock-Screen + PDF) | Planned | — | 2026-07-03 |
-| PROJ-14 | Vorsorge-Autoplan (12 Fenster als Terminvorschläge) | Planned | — | 2026-07-03 |
-| PROJ-15 | Kick-Counter + Symptom-/Gewichtstagebuch | Planned | — | 2026-07-03 |
+| PROJ-13 | Notfall-Karte (Lock-Screen + PDF) | Deployed | — | 2026-07-03 |
+| PROJ-14 | Vorsorge-Autoplan (12 Fenster als Terminvorschläge) | Deployed | — | 2026-07-03 |
+| PROJ-15 | Kick-Counter + Symptom-/Gewichtstagebuch | Deployed | — | 2026-07-03 |
 | PROJ-16 | Wochenbett-Chef 3.0 (Meal-Train + Besuchs-Slots) | Planned | — | 2026-07-03 |
 | PROJ-17 | Behörden-Navigator (Elterngeld, Kindergeld, Fristen) | Planned | — | 2026-07-03 |
 | PROJ-18 | Digitaler Mutterpass | Planned | — | 2026-07-03 |

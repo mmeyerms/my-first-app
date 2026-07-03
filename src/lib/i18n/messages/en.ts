@@ -682,6 +682,7 @@ export const en = {
     einkaufsliste: 'Baby essentials',
     packliste: 'Hospital bag',
     profile: 'Profile',
+    personalization: 'Personalization',
     replayTour: 'Show app intro again',
     language: 'Language',
     theme: 'Appearance',

@@ -46,7 +46,7 @@ export default async function ProfilPage() {
             <ProfilForm profile={profile} />
           </div>
           <div className="card-elevated rounded-2xl bg-card p-6">
-            <PregnancyOverview />
+            <div id="pregnancies" className="scroll-mt-24"><PregnancyOverview /></div>
           </div>
           <div className="card-elevated rounded-2xl bg-card p-6">
             <LocaleSection />
