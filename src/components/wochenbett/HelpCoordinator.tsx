@@ -420,6 +420,7 @@ function HelpListCard({
               <SlotRow
                 key={slot.id}
                 slot={slot}
+                requestId={list.id}
                 tc={tc}
                 onDelete={() => deleteSlot(slot.id)}
               />
@@ -516,6 +517,7 @@ function HelpListCard({
 
 interface SlotRowProps {
   slot: HelpSlot
+  requestId: string
   tc: ReturnType<typeof useLocale>['t']['helpCoordinator']
   onDelete: () => void
 }
@@ -548,10 +550,24 @@ const THANK_YOU_TEMPLATES: Record<string, string[]> = {
   ],
 }
 
-function SlotRow({ slot, tc, onDelete }: SlotRowProps) {
+function SlotRow({ slot, requestId, tc, onDelete }: SlotRowProps) {
   const isClaimed = !!slot.helper_name && slot.helper_name.trim() !== ''
   const [showThankYou, setShowThankYou] = useState(false)
+  const [thanksSent, setThanksSent] = useState(!!slot.thanks_sent_at)
   const templates = THANK_YOU_TEMPLATES[slot.category] ?? []
+
+  async function markThanksSent() {
+    if (thanksSent) return
+    setThanksSent(true) // optimistic
+    try {
+      await fetch(`/api/help-requests/${requestId}/slots/${slot.id}/thanks`, {
+        method: 'POST',
+      })
+    } catch {
+      // Rollback on network failure so user can retry.
+      setThanksSent(false)
+    }
+  }
   const dateLabel = slot.date
     ? slot.time
       ? `${formatDate(slot.date)} · ${slot.time}`
@@ -587,7 +603,11 @@ function SlotRow({ slot, tc, onDelete }: SlotRowProps) {
         )}
         {isClaimed && templates.length > 0 && (
           <div className="mt-2">
-            {!showThankYou ? (
+            {thanksSent && !showThankYou ? (
+              <span className="inline-flex items-center gap-1 rounded-full border border-sage/40 bg-sage/10 px-2.5 py-1 text-[11px] font-medium text-sage">
+                <Heart className="h-3 w-3 fill-current" strokeWidth={1.5} /> Danke gesagt ✓
+              </span>
+            ) : !showThankYou ? (
               <button
                 type="button"
                 onClick={() => setShowThankYou(true)}
@@ -612,6 +632,9 @@ function SlotRow({ slot, tc, onDelete }: SlotRowProps) {
                             await navigator.clipboard.writeText(text)
                             alert('In Zwischenablage kopiert!')
                           }
+                          // Persist that Mama has already reached out for this slot.
+                          void markThanksSent()
+                          setShowThankYou(false)
                         } catch {
                           // user cancelled share
                         }
