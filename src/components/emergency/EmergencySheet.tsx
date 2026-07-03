@@ -1,6 +1,7 @@
 'use client'
 
-import { AlertOctagon, Phone } from 'lucide-react'
+import Link from 'next/link'
+import { AlertOctagon, ChevronRight, IdCard, Phone } from 'lucide-react'
 import {
   Sheet,
   SheetContent,
@@ -137,6 +138,23 @@ export function EmergencySheet({ trigger }: Props) {
               </li>
             ))}
           </ul>
+
+          {/* PROJ-13: Notfall-Karte einrichten */}
+          <Link
+            href="/notfall-karte"
+            className="flex items-center gap-3 rounded-lg border border-primary/40 bg-secondary/40 p-3 text-sm font-medium text-primary transition-colors hover:bg-secondary/70"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+              <IdCard className="h-4 w-4" strokeWidth={1.5} />
+            </span>
+            <span className="flex-1">
+              Meine Notfall-Karte
+              <span className="block text-[11px] font-normal text-muted-foreground">
+                Blutgruppe, Klinik &amp; Kontakte — als Sperrbildschirm-Bild
+              </span>
+            </span>
+            <ChevronRight className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+          </Link>
 
           <p className="pt-2 text-center text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
             Nummern kostenlos aus dem deutschen Fest- und Mobilfunknetz

@@ -47,6 +47,21 @@ const config: Config = {
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',
   			ring: 'hsl(var(--ring))',
+  			/* Editorial brand palette — fixed values used by EmergencySheet,
+  			   PartnerFeaturesGrid, NotfallKarte. Not theme-variable on purpose:
+  			   alert/sage carry semantic meaning that must not shift with the
+  			   user's accent color. */
+  			alert: '#A56347',
+  			sage: '#4A6653',
+  			paper: {
+  				DEFAULT: '#F5F0E9',
+  				soft: '#EFE6D5',
+  			},
+  			ink: {
+  				DEFAULT: '#2A1F1F',
+  				body: '#4A3838',
+  			},
+  			champagne: '#C9A780',
   			chart: {
   				'1': 'hsl(var(--chart-1))',
   				'2': 'hsl(var(--chart-2))',

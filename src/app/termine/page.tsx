@@ -50,7 +50,7 @@ export default async function TerminePage() {
             {t.termine.intro}
           </p>
         </header>
-        <TermineView ssw={ssw} />
+        <TermineView ssw={ssw} dueDate={dueDate} />
       </div>
     </main>
   )

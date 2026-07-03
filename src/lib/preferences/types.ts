@@ -83,6 +83,23 @@ export interface SecurityPreferences {
   autoLogoutMinutes: number | null
 }
 
+/**
+ * Notfall-Karte (PROJ-13): medical emergency data the mother fills in once.
+ * Rendered as lock-screen image + wallet PDF. All fields optional — the
+ * card renders only what's present.
+ */
+export interface NotfallKarte {
+  bloodType: string
+  allergies: string
+  medications: string
+  conditions: string
+  clinicName: string
+  clinicAddress: string
+  clinicPhone: string
+  emergencyContactName: string
+  emergencyContactPhone: string
+}
+
 export interface UserPreferences {
   // Design
   accentColor: AccentColor
@@ -126,6 +143,9 @@ export interface UserPreferences {
 
   // Security (auto-logout etc.)
   security: SecurityPreferences
+
+  // Notfall-Karte (PROJ-13)
+  notfallKarte: NotfallKarte
 }
 
 export const DEFAULT_PREFERENCES: UserPreferences = {
@@ -191,6 +211,18 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
   security: {
     autoLogoutMinutes: null,
   },
+
+  notfallKarte: {
+    bloodType: '',
+    allergies: '',
+    medications: '',
+    conditions: '',
+    clinicName: '',
+    clinicAddress: '',
+    clinicPhone: '',
+    emergencyContactName: '',
+    emergencyContactPhone: '',
+  },
 }
 
 /**
@@ -230,6 +262,10 @@ export function mergePreferences(
     security: {
       ...DEFAULT_PREFERENCES.security,
       ...(partial.security ?? {}),
+    },
+    notfallKarte: {
+      ...DEFAULT_PREFERENCES.notfallKarte,
+      ...(partial.notfallKarte ?? {}),
     },
   }
 }

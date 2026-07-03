@@ -35,11 +35,14 @@ import {
 import type { Termin, TerminTypeId, TerminCategory } from '@/lib/termine/types'
 import { TerminForm, type RecurrenceConfig } from './TerminForm'
 import { MonthCalendar } from './MonthCalendar'
+import { VorsorgeplanTimeline } from './VorsorgeplanTimeline'
 
 const STORAGE_KEY = 'mamamap-termine'
 
 interface TermineViewProps {
   ssw: number
+  /** ISO due date — enables calendar-date windows in the Vorsorgeplan. */
+  dueDate?: string | null
 }
 
 function isTermin(x: unknown): x is Termin {
@@ -116,7 +119,7 @@ function daysFromToday(iso: string, todayIsoStr: string): number {
   return Math.round((b - a) / (1000 * 60 * 60 * 24))
 }
 
-export function TermineView({ ssw }: TermineViewProps) {
+export function TermineView({ ssw, dueDate = null }: TermineViewProps) {
   const t = useT()
   const { locale } = useLocale()
   const { theme } = useTheme()
@@ -568,6 +571,16 @@ export function TermineView({ ssw }: TermineViewProps) {
           </ul>
         )}
       </section>
+
+      {/* Vorsorgeplan (PROJ-14) — full-pregnancy timeline of recommended windows */}
+      {!selectedDate && (
+        <VorsorgeplanTimeline
+          ssw={ssw}
+          dueDate={dueDate}
+          termine={termine.map((x) => ({ type: x.type, done: x.done ?? false }))}
+          onSchedule={(typeId, title) => openAdd({ type: typeId, title })}
+        />
+      )}
 
       {/* Recommended */}
       {recommended.length > 0 && !selectedDate && (
