@@ -5,7 +5,7 @@ import { Heart, HandHeart } from 'lucide-react'
 import { usePreferences } from '@/lib/preferences/client'
 import { useT } from '@/lib/i18n/client'
 
-type SituationContext = 'dashboard' | 'woche' | 'geburtsplan' | 'wochenbett' | 'kinderwunsch'
+type SituationContext = 'dashboard' | 'woche' | 'geburtsplan' | 'wochenbett' | 'kinderwunsch' | 'einkaufsliste'
 
 interface Props {
   context: SituationContext
@@ -30,6 +30,8 @@ interface Props {
  *   soloMama         → dashboard
  *   plannedSectio    → geburtsplan + wochenbett
  *   ivf              → kinderwunsch
+ *   bottleFeeding    → wochenbett + einkaufsliste
+ *   queerFamily      → dashboard + geburtsplan
  */
 export function SituationNotes({ context, ssw = null }: Props) {
   const { prefs } = usePreferences()
@@ -65,10 +67,18 @@ export function SituationNotes({ context, ssw = null }: Props) {
     if (lc.soloMama) {
       blocks.push({ key: 'solo', text: n.soloDashboard })
     }
+    if (lc.queerFamily) {
+      blocks.push({ key: 'queer', text: n.queerDashboard })
+    }
   }
 
-  if (context === 'geburtsplan' && lc.plannedSectio) {
-    blocks.push({ key: 'sectio', text: n.sectioGeburtsplan })
+  if (context === 'geburtsplan') {
+    if (lc.plannedSectio) {
+      blocks.push({ key: 'sectio', text: n.sectioGeburtsplan })
+    }
+    if (lc.queerFamily) {
+      blocks.push({ key: 'queer', text: n.queerGeburtsplan })
+    }
   }
 
   if (context === 'wochenbett') {
@@ -78,10 +88,17 @@ export function SituationNotes({ context, ssw = null }: Props) {
     if (lc.premature) {
       blocks.push({ key: 'premature', text: n.prematureWochenbett })
     }
+    if (lc.bottleFeeding) {
+      blocks.push({ key: 'bottle', text: n.bottleWochenbett })
+    }
   }
 
   if (context === 'kinderwunsch' && lc.ivf) {
     blocks.push({ key: 'ivf', text: n.ivfKinderwunsch })
+  }
+
+  if (context === 'einkaufsliste' && lc.bottleFeeding) {
+    blocks.push({ key: 'bottle', text: n.bottleEinkaufsliste })
   }
 
   if (blocks.length === 0) return null

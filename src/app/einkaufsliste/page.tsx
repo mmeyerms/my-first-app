@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getServerLocale } from '@/lib/i18n/server'
 import { getMessages } from '@/lib/i18n/messages'
 import { EinkaufslisteView } from '@/components/einkaufsliste/EinkaufslisteView'
+import { SituationNotes } from '@/components/situation/SituationNotes'
 
 export default async function EinkaufslistePage() {
   const supabase = await createClient()
@@ -27,6 +28,7 @@ export default async function EinkaufslistePage() {
           </Link>
         </div>
         <p className="mb-6 text-sm text-muted-foreground">{t.einkaufsliste.intro}</p>
+        <SituationNotes context="einkaufsliste" />
         <EinkaufslisteView />
       </div>
     </main>

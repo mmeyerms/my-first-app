@@ -796,6 +796,8 @@ export const en = {
       plannedSectio: { label: 'Planned c-section', hint: 'Section-specific info in the birth plan and longer recovery in postpartum.' },
       ivf: { label: 'Fertility treatment / IVF', hint: 'Companionship through stimulation, transfer and the two-week wait.' },
       prenatalFinding: { label: 'Concerning finding', hint: 'Prenatal diagnostics raised questions — we show dignified resources instead of auto-tips.' },
+      bottleFeeding: { label: 'Bottle instead of breast', hint: 'Whether not possible or not wanted: fed is best. Content goes pressure-free — and the shopping list thinks of bottle equipment.' },
+      queerFamily: { label: 'We are a rainbow family', hint: 'Two moms, two dads or queer — phrasing adapts, legal specifics (second-parent adoption) appear where relevant.' },
     },
     notes: {
       afterLossWoche: 'This pregnancy is new — and it may feel different from the last one. Fear and joy are allowed to stand side by side. If the worry grows too big: your midwife may know about it, and pregnancy-after-loss support groups understand where you are.',
@@ -809,6 +811,10 @@ export const en = {
       sectioGeburtsplan: 'With a planned c-section, specific questions pay off: Who may join in the OR? Bonding right after birth? Scar care and breastfeeding start? Discuss these with your clinic and note wishes here.',
       sectioWochenbett: 'After a c-section your body needs longer: no heavy lifting for 6 weeks (nothing above baby weight), take scar care seriously, accepting help is a duty, not a luxury.',
       ivfKinderwunsch: 'Fertility treatment is a marathon in stages: stimulation · retrieval · transfer · the two-week wait. The waiting time is emotionally the hardest stretch — consciously plan pleasant distractions. Professional fertility counselling networks can support you.',
+      bottleWochenbett: 'Fed is best: a baby growing up full and loved is the goal — the path there is yours, nobody else\'s. Bottle practice: formula covers the whole first year, boiled water at 40 °C, discard opened bottles after 1 hour. Never let anyone give you a guilty conscience.',
+      bottleEinkaufsliste: 'For the bottle start: 4–6 wide-neck bottles with size-1 teats, formula (small packs for testing — babies have taste!), bottle brush, sterilizer or simply boiling. A thermos makes night bottles calmer.',
+      queerDashboard: 'Good to know for two-mother families in Germany: the co-mother currently becomes the legal second parent only via second-parent adoption — even when married. You can prepare the application during pregnancy (family court, often takes 6–12 months). Counselling: LSVD rainbow family centres (lsvd.de).',
+      queerGeburtsplan: 'For the delivery room: your partner has the same rights as any partner — presence, bonding, first hours. If clinic staff seem unsure: you owe nobody an explanation. A healthcare proxy for the birth adds security while the adoption is pending.',
     },
   },
   tracker: {

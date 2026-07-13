@@ -110,6 +110,10 @@ export interface LifeCircumstances {
   ivf: boolean
   /** Auffaelliger Praenataldiagnostik-Befund — wuerdevolle Verweise statt Auto-Tipps. */
   prenatalFinding: boolean
+  /** Flaeschchen statt Stillen (nicht moeglich oder nicht gewollt) — druckfreie Inhalte. */
+  bottleFeeding: boolean
+  /** Gleichgeschlechtliches Paar / Co-Mutter — Sprache + Stiefkindadoptions-Hinweise. */
+  queerFamily: boolean
 }
 
 export interface NotfallKarte {
@@ -260,6 +264,8 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
     plannedSectio: false,
     ivf: false,
     prenatalFinding: false,
+    bottleFeeding: false,
+    queerFamily: false,
   },
 }
 

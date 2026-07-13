@@ -796,6 +796,8 @@ export const de = {
       plannedSectio: { label: 'Geplanter Kaiserschnitt', hint: 'Sectio-spezifische Infos im Geburtsplan und längere Erholungszeit im Wochenbett.' },
       ivf: { label: 'Kinderwunschbehandlung / IVF', hint: 'Begleitung durch Stimulation, Transfer und die zwei Wochen Warten.' },
       prenatalFinding: { label: 'Auffälliger Befund', hint: 'Pränataldiagnostik hat Fragen aufgeworfen — wir zeigen würdevolle Anlaufstellen statt Auto-Tipps.' },
+      bottleFeeding: { label: 'Fläschchen statt Stillen', hint: 'Ob nicht möglich oder nicht gewollt: Fed is best. Inhalte werden druckfrei — und die Einkaufsliste denkt an Flaschen-Ausstattung.' },
+      queerFamily: { label: 'Wir sind eine Regenbogenfamilie', hint: 'Zwei Mamas, zwei Papas oder queer — Formulierungen passen sich an, rechtliche Besonderheiten (Stiefkindadoption) erscheinen wo relevant.' },
     },
     notes: {
       afterLossWoche: 'Diese Schwangerschaft ist neu — und darf sich anders anfühlen als die letzte. Angst und Vorfreude dürfen nebeneinander stehen. Wenn die Sorge zu groß wird: Deine Hebamme darf davon wissen, und die Initiative Regenbogen e.V. versteht, wo du stehst.',
@@ -809,6 +811,10 @@ export const de = {
       sectioGeburtsplan: 'Bei einem geplanten Kaiserschnitt lohnen eigene Fragen: Wer darf mit in den OP? Bonding direkt nach der Geburt? Kaiserschnitt-Naht und Stillstart? Sprich diese Punkte mit deiner Klinik durch und halte Wünsche hier fest.',
       sectioWochenbett: 'Nach einem Kaiserschnitt braucht dein Körper länger: 6 Wochen keine schweren Lasten (nichts über Babygewicht), Narbenpflege ernst nehmen, Hilfe annehmen ist Pflicht, nicht Kür.',
       ivfKinderwunsch: 'Kinderwunschbehandlung ist ein Marathon in Etappen: Stimulation · Punktion · Transfer · die zwei Wochen Warten. Besonders die Wartezeit ist emotional die härteste Strecke — plane bewusst schöne Ablenkung ein. Das BKiD-Portal (bkid.de) vermittelt psychosoziale Kinderwunsch-Beratung.',
+      bottleWochenbett: 'Fed is best: Ein satt und geliebt aufwachsendes Baby ist das Ziel — der Weg dorthin ist eure Sache, niemandes sonst. Praktisch fürs Fläschchen: Pre-Nahrung reicht das ganze erste Jahr, abgekochtes Wasser auf 40 °C, angebrochene Flasche nach 1 Std. entsorgen. Lass dir von niemandem ein schlechtes Gewissen machen.',
+      bottleEinkaufsliste: 'Für den Fläschchen-Start: 4–6 Weithals-Flaschen mit Sauger Gr. 1, Pre-Nahrung (kleine Packungen zum Testen — Babys haben Geschmack!), Flaschenbürste, ggf. Sterilisator oder einfach auskochen. Ein Thermobehälter macht Nachtfläschchen entspannter.',
+      queerDashboard: 'Gut zu wissen für Zwei-Mütter-Familien: Die Co-Mutter wird in Deutschland aktuell nur über die Stiefkindadoption rechtlich zweiter Elternteil — auch bei Ehe. Den Antrag könnt ihr schon in der Schwangerschaft vorbereiten (Familiengericht, dauert oft 6–12 Monate). Beratung: LSVD-Regenbogenfamilienzentren (lsvd.de) und das Familienportal des BMFSFJ.',
+      queerGeburtsplan: 'Für den Kreißsaal: Deine Partnerin hat als Begleitperson dieselben Rechte wie jeder Partner — Anwesenheit, Bonding, erste Stunden. Falls das Klinikpersonal unsicher wirkt: ihr müsst nichts erklären oder rechtfertigen. Eine Vorsorgevollmacht für den Geburtsfall gibt zusätzliche Sicherheit, solange die Adoption läuft.',
     },
   },
   tracker: {
